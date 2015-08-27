@@ -13,7 +13,7 @@ from pdfminer.layout import LAParams, LTChar, LTImage, LTPage
 from pdfminer.converter import PDFPageAggregator
 
 class PDF(object):
-    def __init__(self, file_or_buffer, pandas=False, laparams={}):
+    def __init__(self, file_or_buffer, pages=None, pandas=False, laparams={}):
         self.pandas = pandas
         self.laparams = LAParams(**laparams)
 
@@ -23,7 +23,9 @@ class PDF(object):
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 
         self.pages = []
-        for page in PDFPage.create_pages(self.doc):
+        page_iter = (p for i, p in enumerate(PDFPage.create_pages(self.doc))
+            if pages == None or i+1 in pages)
+        for page in page_iter:
             self.interpreter.process_page(page)
             layout = self.device.get_result()
             self.pages.append(layout)
