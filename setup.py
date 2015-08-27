@@ -9,7 +9,7 @@ base_reqs = [
 
 setup(
     name="pdfplumber",
-    version="0.0.0",
+    version="0.0.1",
     packages=find_packages(exclude=["test",]),
     tests_require=[ "nose", "pandas" ] + base_reqs,
     install_requires=base_reqs,
