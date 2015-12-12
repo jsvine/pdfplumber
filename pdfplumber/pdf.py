@@ -13,9 +13,9 @@ from pdfminer.layout import LAParams, LTChar, LTImage, LTPage
 from pdfminer.converter import PDFPageAggregator
 
 class PDF(object):
-    def __init__(self, file_or_buffer, pages=None, pandas=False, laparams={}):
+    def __init__(self, file_or_buffer, pages=None, pandas=False, laparams=None):
         self.pandas = pandas
-        self.laparams = LAParams(**laparams)
+        self.laparams = None if laparams == None else LAParams(**laparams)
 
         rsrcmgr = PDFResourceManager()
         self.doc = PDFDocument(PDFParser(file_or_buffer))
