@@ -39,20 +39,22 @@ if len(pdf.lines):
 ### Loading a PDF
 
 `pdfplumber` provides two main ways to load a PDF:
-    - `pdfplumber.load(file_like_object)`
-    - `pdfplumber.from_path("path/to/file.pdf")`
+
+- `pdfplumber.load(file_like_object)`
+- `pdfplumber.from_path("path/to/file.pdf")`
 
 Both methods return an instance of the `pdfplumber.PDF` class.
 
 ### Objects
 
 Each instance of `pdfplumber.PDF` provides access to six types of PDF objects. The following properties each return a Python list of the matching objects:
-    - `.chars`, each representing a single text character.
-    - `.annos`, each representing a single annotation-text character.
-    - `.lines`, each representing a single 1-dimensional line.
-    - `.rects`, each representing a single 2-dimensional rectangle.
-    - `.images`, each representing a single image.
-    - `.figures`, each representing a single figure.
+
+- `.chars`, each representing a single text character.
+- `.annos`, each representing a single annotation-text character.
+- `.lines`, each representing a single 1-dimensional line.
+- `.rects`, each representing a single 2-dimensional rectangle.
+- `.images`, each representing a single image.
+- `.figures`, each representing a single figure.
 
 ### Object Properties
 
