@@ -19,7 +19,7 @@ pip install pdfplumber
 ### Basic Example
 
 ```sh
-curl "https://github.com/jsvine/pdfplumber/blob/master/examples/background-checks.pdf" > background-checks.pdf
+curl "https://cdn.rawgit.com/jsvine/pdfplumber/master/examples/background-checks.pdf" > background-checks.pdf
 pdfplumber < background-checks.pdf > background-checks.csv
 ```
 
