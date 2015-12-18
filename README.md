@@ -2,7 +2,7 @@ __WARNING: This software is in its very early days, and is not guaranteed to wor
 
 # PDFPlumber
 
-Plumb a PDF for detailed information about each text character, rectangle, line, and image. Built on [`pdfminer`](https://github.com/euske/pdfminer) and [`pdfminer.six`](https://github.com/goulu/pdfminer).
+Plumb a PDF for detailed information about each text character, rectangle, and line. Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer`](https://github.com/euske/pdfminer) and [`pdfminer.six`](https://github.com/goulu/pdfminer).
 
 - [Installation](#installation)
 - [Command Line Interface](#command-line-interface)
@@ -22,6 +22,8 @@ pip install pdfplumber
 curl "https://cdn.rawgit.com/jsvine/pdfplumber/master/examples/background-checks.pdf" > background-checks.pdf
 pdfplumber < background-checks.pdf > background-checks.csv
 ```
+
+The output will be a CSV containing info about every character, line, and rectangle in the PDF.
 
 ### Options
 
