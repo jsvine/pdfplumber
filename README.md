@@ -21,11 +21,6 @@ import pdfplumber
 
 pdf = pdfplumber.from_path("path/to/file.pdf")
 
-# OR
-
-with open("path/to/file.pdf") as f:
-    pdf = pdfplumber.load(f)
-
 if len(pdf.chars):
     print(pdf.chars[0])
 
