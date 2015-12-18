@@ -1,10 +1,12 @@
-__WARNING: This software is in its very early days, might not work well, and might change dramatically in future versions.__
+__WARNING: This software is in its very early days, and is not guaranteed to work well. Use at your own risk.__
 
 # PDFPlumber
 
-Plumb a PDF for detailed information about each text character, rectangle, line, and image.
+Plumb a PDF for detailed information about each text character, rectangle, line, and image. Built on [`pdfminer`](https://github.com/euske/pdfminer) and [`pdfminer.six`](https://github.com/goulu/pdfminer).
 
-Built on [`pdfminer`](https://github.com/euske/pdfminer) and [`pdfminer.six`](https://github.com/goulu/pdfminer).
+- [Installation](#installation)
+- [Command Line Interface](#command-line-interface)
+- [Python Library](#python-library)
 
 ## Installation
 
@@ -12,7 +14,22 @@ Built on [`pdfminer`](https://github.com/euske/pdfminer) and [`pdfminer.six`](ht
 pip install pdfplumber
 ```
 
-## Usage
+## Command Line Interface
+
+### Basic Example
+
+```sh
+curl "https://github.com/jsvine/pdfplumber/blob/master/examples/background-checks.pdf" > background-checks.pdf
+pdfplumber < background-checks.pdf > background-checks.csv
+```
+
+### Options
+
+- `--format [format]`: `csv` or `json`
+- `--pages [list of pages]`: A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.
+- `--types [list of object types to extract]`: Choices are `char`, `anno`, `line`, `rect`, `image`, `figure`. Default: `char anno line rect`.
+
+## Python Library
 
 ### Basic Example
 
@@ -70,7 +87,7 @@ Each object is represented as a simple Python `dict`, with the following propert
     - `y1`: Distance of top of character from bottom of page.
     - `top`: Distance of top of character from top of page.
     - `doctop`: Distance of top of character from top of document.
-    - `kind`: "LTChar" / "LTAnno"
+    - `object_type`: "char" / "anno"
 
 - `line`:
     - `pageid`: Page ID on which this line was found.
@@ -83,7 +100,7 @@ Each object is represented as a simple Python `dict`, with the following propert
     - `top`: Distance of top of line from top of page.
     - `doctop`: Distance of top of line from top of document.
     - `linewidth`: Thickness of line.
-    - `kind`: "LTLine"
+    - `object_type`: "line"
 
 - `rect`:
     - `pageid`: Page ID on which this rectangle was found.
@@ -96,7 +113,7 @@ Each object is represented as a simple Python `dict`, with the following propert
     - `top`: Distance of top of rectangle from top of page.
     - `doctop`: Distance of top of rectangle from top of document.
     - `linewidth`: Thickness of line.
-    - `kind`: "LTRect"
+    - `object_type`: "rect"
 
 - `image`: TK
 

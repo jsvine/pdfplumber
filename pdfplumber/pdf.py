@@ -1,10 +1,6 @@
 from six import string_types
 from six.moves import cStringIO
 
-try:
-    import pandas
-except: pass
-
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
@@ -12,9 +8,11 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.layout import LAParams, LTChar, LTImage, LTPage
 from pdfminer.converter import PDFPageAggregator
 
+import re
+lt_pat = re.compile(r"^LT")
+
 class PDF(object):
-    def __init__(self, file_or_buffer, pages=None, pandas=False, laparams=None):
-        self.pandas = pandas
+    def __init__(self, file_or_buffer, pages=None, laparams=None):
         self.laparams = None if laparams == None else LAParams(**laparams)
 
         rsrcmgr = PDFResourceManager()
@@ -49,8 +47,8 @@ class PDF(object):
                 if isinstance(v, (float, int, string_types))
                     and k[0] != "_")
 
-            kind = obj.__class__.__name__
-            attr["kind"] = kind
+            kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
+            attr["object_type"] = kind
             attr["pageid"] = page.pageid
 
             if hasattr(obj, "get_text"):
@@ -79,49 +77,26 @@ class PDF(object):
 
         return objects
 
-    def emit(self, objs):
-        return pandas.DataFrame(objs) if self.pandas else objs
-        
     @property
     def rects(self):
-        x = self.objects.get("LTRect", [])
-        return self.emit(x)
+        return self.objects.get("rect", [])
 
     @property
     def lines(self):
-        x = self.objects.get("LTLine", [])
-        return self.emit(x)
+        return self.objects.get("line", [])
 
     @property
     def images(self):
-        x = self.objects.get("LTImage", [])
-        return self.emit(x)
+        return self.objects.get("image", [])
 
     @property
     def figures(self):
-        x = self.objects.get("LTFigure", [])
-        return self.emit(x)
+        return self.objects.get("figure", [])
 
     @property
     def chars(self):
-        x = self.objects.get("LTChar", [])
-        return self.emit(x)
+        return self.objects.get("char", [])
 
     @property
     def annos(self):
-        x = self.objects.get("LTAnno", [])
-        return self.emit(x)
-
-    @property
-    def text_lines(self):
-        h = self.objects.get("LTTextLineHorizontal", [])
-        v = self.objects.get("LTTextLineVertical", [])
-        x = h + v
-        return self.emit(x)
-
-    @property
-    def text_boxes(self):
-        h = self.objects.get("LTTextBoxHorizontal", [])
-        v = self.objects.get("LTTextBoxVertical", [])
-        x = h + v
-        return self.emit(x)
+        return self.objects.get("anno", [])

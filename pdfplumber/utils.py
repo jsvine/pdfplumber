@@ -10,6 +10,8 @@ def compatible_iter(thing):
         return enumerate(thing)
 
 def collate_chars(chars, x_tolerance=0, y_tolerance=0):
+    if not isinstance(chars, pd.DataFrame):
+        chars = pd.DataFrame(chars)
     coll = ""
     last_x1 = None
     last_top = None
@@ -32,6 +34,8 @@ def collate_chars(chars, x_tolerance=0, y_tolerance=0):
     return coll
 
 def detect_gutters(chars, max_density=0, min_width=5):
+    if not isinstance(chars, pd.DataFrame):
+        chars = pd.DataFrame(chars)
     nonblank = chars[chars["text"].apply(str.strip) != ""]
     x0s = nonblank["x0"].value_counts()
     x1s = nonblank["x1"].value_counts()
