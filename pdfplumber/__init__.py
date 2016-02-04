@@ -1,4 +1,5 @@
 from pdfplumber.pdf import PDF
+import pdfplumber.utils
 import pdfminer
 import pdfminer.pdftypes
 pdfminer.pdftypes.STRICT = False
