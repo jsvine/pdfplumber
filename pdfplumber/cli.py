@@ -23,7 +23,7 @@ def parse_args():
         default="csv")
 
     parser.add_argument("--types", nargs="+",
-        choices=[ "char", "anno", "line", "rect", "image", "figure" ],
+        choices=[ "char", "anno", "line", "rect" ],
         default=[ "char", "anno", "line", "rect" ])
 
     parser.add_argument("--pages", nargs="+",

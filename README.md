@@ -1,4 +1,4 @@
-__WARNING: This software is in its very early days, and is not guaranteed to work well. Use at your own risk.__
+__This software is in its very early days, and is not guaranteed to work well. Use at your own risk.__
 
 # PDFPlumber
 
@@ -29,7 +29,7 @@ The output will be a CSV containing info about every character, line, and rectan
 
 - `--format [format]`: `csv` or `json`
 - `--pages [list of pages]`: A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.
-- `--types [list of object types to extract]`: Choices are `char`, `anno`, `line`, `rect`, `image`, `figure`. Default: `char anno line rect`.
+- `--types [list of object types to extract]`: Choices are `char`, `anno`, `line`, `rect`. Default: `char anno line rect`.
 
 ## Python Library
 
@@ -67,8 +67,6 @@ Each instance of `pdfplumber.PDF` provides access to six types of PDF objects. T
 - `.annos`, each representing a single annotation-text character.
 - `.lines`, each representing a single 1-dimensional line.
 - `.rects`, each representing a single 2-dimensional rectangle.
-- `.images`, each representing a single image.
-- `.figures`, each representing a single figure.
 
 ### Object Properties
 
@@ -116,10 +114,6 @@ Each object is represented as a simple Python `dict`, with the following propert
     - `doctop`: Distance of top of rectangle from top of document.
     - `linewidth`: Thickness of line.
     - `object_type`: "rect"
-
-- `image`: TK
-
-- `figure`: TK
 
 ## Python Support
 
