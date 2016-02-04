@@ -11,7 +11,8 @@ base_reqs = [
 
 setup(
     name="pdfplumber",
-    version="0.0.3",
+    description="Plumb a PDF for detailed information about each char, rectangle, line, etc.",
+    version="0.1.0",
     packages=find_packages(exclude=["test",]),
     tests_require=[ "nose" ] + base_reqs,
     install_requires=base_reqs,
