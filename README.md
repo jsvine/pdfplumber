@@ -7,6 +7,7 @@ Plumb a PDF for detailed information about each text character, rectangle, and l
 - [Installation](#installation)
 - [Command Line Interface](#command-line-interface)
 - [Python Library](#python-library)
+- [Demos](#demos)
 
 ## Installation
 
@@ -125,7 +126,7 @@ The `pdfplumber` Python library comes with a set of useful helper methods, acces
 
 - `within_bbox(objs, bbox)`: Takes a list or dataframe of objects (`chars`, `rects`, etc.) and returns those that are fully contained within a `bbox` of `(x0, top0, x1, top1)`.
 
-### Demos
+## Demos
 
 - [Use `pdfplumber.utils` to extract data from the FBI's National Instant Criminal Background Check System PDFs.](examples/notebooks/utils-nics.ipynb)
 
