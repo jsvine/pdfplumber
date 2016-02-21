@@ -19,7 +19,7 @@ pip install pdfplumber
 ### Basic Example
 
 ```sh
-curl "https://cdn.rawgit.com/jsvine/pdfplumber/master/examples/background-checks.pdf" > background-checks.pdf
+curl "https://cdn.rawgit.com/jsvine/pdfplumber/master/examples/pdfs/background-checks.pdf" > background-checks.pdf
 pdfplumber < background-checks.pdf > background-checks.csv
 ```
 
@@ -114,6 +114,20 @@ Each object is represented as a simple Python `dict`, with the following propert
     - `doctop`: Distance of top of rectangle from top of document.
     - `linewidth`: Thickness of line.
     - `object_type`: "rect"
+
+### Utils / Helpers
+
+The `pdfplumber` Python library comes with a set of useful helper methods, accessible via `pdfplumber.utils`. They are:
+
+- `collate_chars(chars, x_tolerance=0, y_tolerance=0)`: Takes a list or dataframe of character objects and condenses them into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.
+
+- `extract_columns(chars, x_tolerance=0, y_tolerance=0, gutter_min_width=5)`: Takes a list or dataframe of chars, looks for columns — vertical clumps of text separated by vertical "gutters" of non-text — and returns a representation of those columns. Passes `x_tolerance` and `y_tolerance` to `collate_chars(...)` (see above). Considers characters whose `doctop`s are within `y_tolerance` of one another to be on the same "line". For a gutter to be detected, it must be at least `gutter_min_width` pixels wide and have no character begin or end within it.
+
+- `within_bbox(objs, bbox)`: Takes a list or dataframe of objects (`chars`, `rects`, etc.) and returns those that are fully contained within a `bbox` of `(x0, top0, x1, top1)`.
+
+### Demonstrations
+
+- [Use `pdfplumber.utils` to extract data from the FBI's National Instant Criminal Background Check System PDFs.](examples/notebooks/utils-nics.ipynb)
 
 ## Python Support
 
