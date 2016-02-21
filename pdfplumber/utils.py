@@ -10,6 +10,23 @@ def compatible_iter(thing):
     else:
         return enumerate(thing)
 
+def cluster_list(xs, tolerance=0):
+    if tolerance == 0: return [ [x] for x in xs ]
+    if len(xs) < 2: return [ [x] for x in xs ]
+    groups = []
+    xs = list(sorted(xs))
+    current_group = [xs[0]]
+    last = xs[0]
+    for x in xs[1:]:
+        if x <= (last + tolerance):
+            current_group.append(x)
+        else:
+            groups.append(current_group)
+            current_group = [x]
+        last = x
+    groups.append(current_group)
+    return groups
+
 def collate_chars(chars, x_tolerance=0, y_tolerance=0):
     using_pandas = isinstance(chars, pd.DataFrame)
     if not using_pandas:
@@ -23,7 +40,7 @@ def collate_chars(chars, x_tolerance=0, y_tolerance=0):
     else:
         iterator = enumerate(chars)
 
-    for i, char in chars.iterrows():
+    for i, char in chars.sort_values([ "x0", "doctop" ]).iterrows():
         if last_x1 != None:
             if char["doctop"] > (last_top + y_tolerance):
                 coll += "\n"
@@ -35,7 +52,7 @@ def collate_chars(chars, x_tolerance=0, y_tolerance=0):
 
     return coll
 
-def detect_gutters(chars, max_density=0, min_width=5):
+def detect_gutters(chars, min_width=5):
     using_pandas = isinstance(chars, pd.DataFrame)
     if not using_pandas:
         chars = pd.DataFrame(chars)
@@ -47,7 +64,7 @@ def detect_gutters(chars, max_density=0, min_width=5):
         "x1": x1s
     }).sum(axis=1)
     dense_ix = pd.Series(totals[
-        totals > max_density
+        totals > 0
     ].sort_index().index)
     gutters = pd.DataFrame({
         "begin": dense_ix,
@@ -70,34 +87,15 @@ def gutters_to_columns(gutters):
     col_end = gutters["begin"].tolist() + [ None ]
     return list(zip(col_beg, col_end))
 
-def cluster_list(xs, tolerance=0):
-    if tolerance == 0: return xs
-    if len(xs) < 2: return xs
-    groups = []
-    xs = list(sorted(xs))
-    current_group = [xs[0]]
-    last = xs[0]
-    for x in xs[1:]:
-        if x <= (last + tolerance):
-            current_group.append(x)
-        else:
-            groups.append(current_group)
-            current_group = [x]
-        last = x
-    groups.append(current_group)
-    return groups
-
 def extract_columns(chars,
-    gutter_max_density=0, gutter_min_width=5,
-    x_tolerance=0, y_tolerance=0):
+    x_tolerance=0, y_tolerance=0,
+    gutter_min_width=5):
 
     using_pandas = isinstance(chars, pd.DataFrame)
     if not using_pandas:
         chars = pd.DataFrame(chars)
 
-    gutters = detect_gutters(chars,
-        min_width=gutter_min_width,
-        max_density=gutter_max_density)
+    gutters = detect_gutters(chars, min_width=gutter_min_width)
 
     columns = gutters_to_columns(gutters)
 
@@ -113,9 +111,10 @@ def extract_columns(chars,
     collator = lambda x: collate_chars(x, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
 
     doctop_groups = cluster_list(_chars["doctop"].unique(), y_tolerance)
-    doctop_group_dict = dict(itertools.chain(*[
-        [ (doctop, i) for doctop in doctops ]
-            for i, doctops in enumerate(doctop_groups) ]))
+
+    nested_doctop_group_tuples = [ [ (doctop, i) for doctop in doctops ]
+        for i, doctops in enumerate(doctop_groups) ]
+    doctop_group_dict = dict(itertools.chain(*nested_doctop_group_tuples))
 
     _chars["doctop_group"] = _chars["doctop"].apply(doctop_group_dict.get)
 
@@ -123,21 +122,23 @@ def extract_columns(chars,
         .apply(collator)\
         .unstack(level="column")
 
+    collated.columns = list(map(int, collated.columns))
+
     if using_pandas:
         return collated
     else:
-        return collated.to_dict("records")
+        return collated.fillna("").to_dict("records")
 
 def within_bbox(objs, bbox):
-    x0, y0, x1, y1 = bbox
+    x0, top0, x1, top1 = bbox
     using_pandas = isinstance(objs, pd.DataFrame)
     if not using_pandas:
         objs = pd.DataFrame(objs)
     matching = objs[
         (objs["x0"] >= x0 ) &
-        (objs["y0"] >= y0 ) &
+        (objs["top"] >= top0 ) &
         (objs["x0"] < x1 ) &
-        (objs["y0"] < y1 )
+        (objs["top"] < top1 )
     ]
     if using_pandas:
         return matching.copy()
