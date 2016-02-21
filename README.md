@@ -125,7 +125,7 @@ The `pdfplumber` Python library comes with a set of useful helper methods, acces
 
 - `within_bbox(objs, bbox)`: Takes a list or dataframe of objects (`chars`, `rects`, etc.) and returns those that are fully contained within a `bbox` of `(x0, top0, x1, top1)`.
 
-### Demonstrations
+### Demos
 
 - [Use `pdfplumber.utils` to extract data from the FBI's National Instant Criminal Background Check System PDFs.](examples/notebooks/utils-nics.ipynb)
 
