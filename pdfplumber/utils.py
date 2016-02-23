@@ -40,7 +40,7 @@ def collate_chars(chars, x_tolerance=0, y_tolerance=0):
     else:
         iterator = enumerate(chars)
 
-    for i, char in chars.sort_values([ "x0", "doctop" ]).iterrows():
+    for i, char in chars.sort_values([ "doctop", "x0" ]).iterrows():
         if last_x1 != None:
             if char["doctop"] > (last_top + y_tolerance):
                 coll += "\n"
