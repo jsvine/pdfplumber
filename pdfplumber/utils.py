@@ -1,9 +1,6 @@
 import pandas as pd
 import itertools
 
-INF = float("inf")
-NEG_INF = float("-inf")
-
 def compatible_iter(thing):
     if hasattr(thing, "iterrows"):
         return thing.iterrows()
@@ -11,8 +8,8 @@ def compatible_iter(thing):
         return enumerate(thing)
 
 def cluster_list(xs, tolerance=0):
-    if tolerance == 0: return [ [x] for x in xs ]
-    if len(xs) < 2: return [ [x] for x in xs ]
+    if tolerance == 0: return [ [x] for x in sorted(xs) ]
+    if len(xs) < 2: return [ [x] for x in sorted(xs) ]
     groups = []
     xs = list(sorted(xs))
     current_group = [xs[0]]
@@ -27,29 +24,36 @@ def cluster_list(xs, tolerance=0):
     groups.append(current_group)
     return groups
 
+def make_cluster_dict(values, tolerance):
+    clusters = cluster_list(set(values), tolerance)
+
+    nested_tuples = [ [ (val, i) for val in value_cluster ]
+        for i, value_cluster in enumerate(clusters) ]
+
+    cluster_dict = dict(itertools.chain(*nested_tuples))
+    return cluster_dict 
+
 def collate_chars(chars, x_tolerance=0, y_tolerance=0):
     using_pandas = isinstance(chars, pd.DataFrame)
-    if not using_pandas:
-        chars = pd.DataFrame(chars)
-    coll = ""
-    last_x1 = None
-    last_top = None
-
-    if hasattr(chars, "iterrows"):
-        iterator = chars.iterrows()
+    if using_pandas:
+        _chars = chars.copy()
     else:
-        iterator = enumerate(chars)
+        _chars = pd.DataFrame(chars)
 
-    for i, char in chars.sort_values([ "doctop", "x0" ]).iterrows():
-        if last_x1 != None:
-            if char["doctop"] > (last_top + y_tolerance):
-                coll += "\n"
-            if char["x0"] > (last_x1 + x_tolerance):
+    def collate_line(line_chars):
+        coll = ""
+        last_x1 = None
+        for i, char in line_chars.sort_values("x0").iterrows():
+            if last_x1 != None and char["x0"] > (last_x1 + x_tolerance):
                 coll += " "
-        last_x1 = char["x1"]
-        last_top = char["doctop"]
-        coll += char["text"]
+            last_x1 = char["x1"]
+            coll += char["text"]
+        return coll
 
+    doctop_clusters = make_cluster_dict(_chars["doctop"], y_tolerance)
+    _chars["doctop_cluster"] = _chars["doctop"].apply(doctop_clusters.get)
+    dc_grp = _chars.sort_values("doctop_cluster").groupby("doctop_cluster")
+    coll = "\n".join(dc_grp.apply(collate_line))
     return coll
 
 def detect_gutters(chars, min_width=5):
@@ -110,15 +114,10 @@ def extract_columns(chars,
 
     collator = lambda x: collate_chars(x, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
 
-    doctop_groups = cluster_list(_chars["doctop"].unique(), y_tolerance)
+    doctop_clusters = make_cluster_dict(_chars["doctop"], y_tolerance)
+    _chars["doctop_cluster"] = _chars["doctop"].apply(doctop_clusters.get)
 
-    nested_doctop_group_tuples = [ [ (doctop, i) for doctop in doctops ]
-        for i, doctops in enumerate(doctop_groups) ]
-    doctop_group_dict = dict(itertools.chain(*nested_doctop_group_tuples))
-
-    _chars["doctop_group"] = _chars["doctop"].apply(doctop_group_dict.get)
-
-    collated = _chars.groupby([ "doctop_group", "column" ])\
+    collated = _chars.groupby([ "doctop_cluster", "column" ])\
         .apply(collator)\
         .unstack(level="column")
 
