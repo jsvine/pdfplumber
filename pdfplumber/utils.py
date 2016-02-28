@@ -60,7 +60,7 @@ def detect_gutters(chars, min_width=5):
     using_pandas = isinstance(chars, pd.DataFrame)
     if not using_pandas:
         chars = pd.DataFrame(chars)
-    nonblank = chars[chars["text"].apply(str.strip) != ""]
+    nonblank = chars[chars["text"].str.strip() != ""]
     x0s = nonblank["x0"].value_counts()
     x1s = nonblank["x1"].value_counts()
     totals = pd.DataFrame({
