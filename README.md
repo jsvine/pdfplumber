@@ -30,7 +30,7 @@ The output will be a CSV containing info about every character, line, and rectan
 
 - `--format [format]`: `csv` or `json`
 - `--pages [list of pages]`: A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.
-- `--types [list of object types to extract]`: Choices are `char`, `anno`, `line`, `rect`. Default: `char anno line rect`.
+- `--types [list of object types to extract]`: Choices are `char`, `anno`, `line`, `rect`. Defaults to all four.
 
 ## Python Library
 
@@ -120,11 +120,11 @@ Each object is represented as a simple Python `dict`, with the following propert
 
 The `pdfplumber` Python library comes with a set of useful helper methods, accessible via `pdfplumber.utils`. They are:
 
-- `collate_chars(chars, x_tolerance=0, y_tolerance=0)`: Takes a list or dataframe of character objects and condenses them into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.
+- __`collate_chars(chars, x_tolerance=0, y_tolerance=0)`__: Takes a list or dataframe of character objects and condenses them into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.
 
-- `extract_columns(chars, x_tolerance=0, y_tolerance=0, gutter_min_width=5)`: Takes a list or dataframe of chars, looks for columns — vertical clumps of text separated by vertical "gutters" of non-text — and returns a representation of those columns. Passes `x_tolerance` and `y_tolerance` to `collate_chars(...)` (see above). Considers characters whose `doctop`s are within `y_tolerance` of one another to be on the same "line". For a gutter to be detected, it must be at least `gutter_min_width` pixels wide and have no character begin or end within it.
+- __`extract_columns(chars, x_tolerance=0, y_tolerance=0, gutter_min_width=5)`__: Takes a list or dataframe of chars, looks for columns — vertical clumps of text separated by vertical "gutters" of non-text — and returns a representation of those columns. Passes `x_tolerance` and `y_tolerance` to `collate_chars(...)` (see above). Considers characters whose `doctop`s are within `y_tolerance` of one another to be on the same "line". For a gutter to be detected, it must be at least `gutter_min_width` pixels wide and have no character begin or end within it.
 
-- `within_bbox(objs, bbox)`: Takes a list or dataframe of objects (`chars`, `rects`, etc.) and returns those that are fully contained within a `bbox` of `(x0, top0, x1, top1)`.
+- __`within_bbox(objs, bbox)`__: Takes a list or dataframe of objects (`chars`, `rects`, etc.) and returns those that are fully contained within a `bbox` of `(x0, top0, x1, top1)`.
 
 ## Demos
 
@@ -132,7 +132,13 @@ The `pdfplumber` Python library comes with a set of useful helper methods, acces
 
 ## Python Support
 
-Support for Python 3 is rough around the edges and largely dependent on the progress of [`pdfminer.six`](https://github.com/goulu/pdfminer).
+Support for Python 3 is decent, but rough around the edges and largely dependent on the progress of [`pdfminer.six`](https://github.com/goulu/pdfminer).
+
+Currently [tested](tests/) on [Python 2.7, 3.1, 3.3, 3.4, and 3.5](tox.ini).
+
+## Acknowledgments / Contributors
+
+Special thanks to [Jacob Fenton](https://github.com/jsfenfen).
 
 ## Feedback
 
