@@ -21,8 +21,10 @@ class PDF(object):
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 
         self.pages = []
+
         page_iter = (p for i, p in enumerate(PDFPage.create_pages(self.doc))
             if pages == None or i+1 in pages)
+
         for page in page_iter:
             self.interpreter.process_page(page)
             layout = self.device.get_result()
@@ -31,13 +33,6 @@ class PDF(object):
         self.objects = self.parse()
 
     def parse(self):
-        try:
-            # pdfminer < 20131022
-            _pages = self.doc.get_pages()
-        except AttributeError:
-            # pdfminer >= 20131022
-            _pages = PDFPage.create_pages(self.doc)
-
         objects = {}
 
         def process_object(obj, page):
