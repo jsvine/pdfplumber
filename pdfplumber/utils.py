@@ -1,37 +1,5 @@
 import pandas as pd
-import itertools
-
-def compatible_iter(thing):
-    if hasattr(thing, "iterrows"):
-        return thing.iterrows()
-    else:
-        return enumerate(thing)
-
-def cluster_list(xs, tolerance=0):
-    if tolerance == 0: return [ [x] for x in sorted(xs) ]
-    if len(xs) < 2: return [ [x] for x in sorted(xs) ]
-    groups = []
-    xs = list(sorted(xs))
-    current_group = [xs[0]]
-    last = xs[0]
-    for x in xs[1:]:
-        if x <= (last + tolerance):
-            current_group.append(x)
-        else:
-            groups.append(current_group)
-            current_group = [x]
-        last = x
-    groups.append(current_group)
-    return groups
-
-def make_cluster_dict(values, tolerance):
-    clusters = cluster_list(set(values), tolerance)
-
-    nested_tuples = [ [ (val, i) for val in value_cluster ]
-        for i, value_cluster in enumerate(clusters) ]
-
-    cluster_dict = dict(itertools.chain(*nested_tuples))
-    return cluster_dict 
+from pdfplumber import helpers
 
 def collate_chars(chars, x_tolerance=0, y_tolerance=0):
     using_pandas = isinstance(chars, pd.DataFrame)
@@ -50,7 +18,7 @@ def collate_chars(chars, x_tolerance=0, y_tolerance=0):
             coll += char["text"]
         return coll
 
-    doctop_clusters = make_cluster_dict(_chars["doctop"], y_tolerance)
+    doctop_clusters = helpers.make_cluster_dict(_chars["doctop"], y_tolerance)
     _chars["doctop_cluster"] = _chars["doctop"].apply(doctop_clusters.get)
     dc_grp = _chars.sort_values("doctop_cluster").groupby("doctop_cluster")
     coll = "\n".join(dc_grp.apply(collate_line))
@@ -114,7 +82,7 @@ def extract_columns(chars,
 
     collator = lambda x: collate_chars(x, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
 
-    doctop_clusters = make_cluster_dict(_chars["doctop"], y_tolerance)
+    doctop_clusters = helpers.make_cluster_dict(_chars["doctop"], y_tolerance)
     _chars["doctop_cluster"] = _chars["doctop"].apply(doctop_clusters.get)
 
     collated = _chars.groupby([ "doctop_cluster", "column" ])\
