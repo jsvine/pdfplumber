@@ -81,8 +81,10 @@ class PDF(Container):
 
     @property
     def objects(self):
+        if hasattr(self, "_objects"): return self._objects
         all_objects = {}
         for p in self.pages:
             for kind in p.objects.keys():
                 all_objects[kind] = all_objects.get(kind, []) + p.objects[kind]
-        return all_objects
+        self._objects = all_objects
+        return self._objects
