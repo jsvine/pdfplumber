@@ -64,8 +64,8 @@ class Page(Container):
                 attr["text"] = obj.get_text()
 
             if attr.get("y0") != None:
-                attr["top"] = _round(self.layout.height - attr["y1"])
-                attr["doctop"] = _round(self.initial_doctop + attr["top"])
+                attr["top"] = self.layout.height - attr["y1"]
+                attr["doctop"] = self.initial_doctop + attr["top"]
 
             if objects.get(kind) == None:
                 objects[kind] = []
