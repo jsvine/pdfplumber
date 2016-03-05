@@ -67,7 +67,7 @@ class Test(unittest.TestCase):
             colsum = sum(row[c] or 0 for row in parsed_table)
             assert(colsum == (total * 2))
 
-        month_chars = within_bbox(chars, (0, 35, self.PDF_WIDTH, 60))
+        month_chars = within_bbox(chars, (0, 35, self.PDF_WIDTH, 65))
         month_text = collate_chars(month_chars, x_tolerance=2)
         assert(month_text == "November - 2015")
 
@@ -89,6 +89,6 @@ class Test(unittest.TestCase):
             colsum = table[c].sum()
             assert(colsum == (total * 2))
 
-        month_chars = within_bbox(chars, (0, 35, self.PDF_WIDTH, 60))
+        month_chars = within_bbox(chars, (0, 35, self.PDF_WIDTH, 65))
         month_text = collate_chars(month_chars, x_tolerance=2)
         assert(month_text == "November - 2015")

@@ -24,12 +24,10 @@ def parse_results_line(chars):
     return { "text": left, "aff": mid, "votes": right }
 
 class PrecinctPage(object):
-    def __init__(self, pdf, pageid):
-        z = lambda objs: pd.DataFrame([ x
-            for x in objs if x["pageid"] == pageid])
-        self.chars = z(pdf.chars)
-        self.lines = z(pdf.lines)
-        self.rects = z(pdf.rects)
+    def __init__(self, page):
+        self.chars = pd.DataFrame(page.chars)
+        self.lines = pd.DataFrame(page.lines)
+        self.rects = pd.DataFrame(page.rects)
         self.bboxes = self.get_bboxes()
     
     def get_bboxes(self):
@@ -115,7 +113,7 @@ class Test(unittest.TestCase):
         pass
 
     def test_pandas(self):
-        p1 = PrecinctPage(self.pdf, 1).to_dict()
+        p1 = PrecinctPage(self.pdf.pages[0]).to_dict()
         assert(p1["registered_voters"] == 1100)
         assert(p1["ballots_cast"] == 327)
         assert(p1["precinct"] == "0050003A|ACTON")
