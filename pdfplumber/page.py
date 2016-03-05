@@ -113,38 +113,51 @@ class Page(Container):
         y_tolerance=0):
 
         def use_strategy(param, name):
+            # If dividers are explicitly passed
             if isinstance(param, (list, tuple)):
                 return param
-            if param in TABLE_STRATEGIES:
-                if param == "lines":
-                    if name == "v":
-                        return self.get_edge_positions("v",
-                            min_length=line_min_height,
-                            tolerance=x_tolerance)
-                    if name == "h":
-                        return self.get_edge_positions("h",
-                            min_length=line_min_width,
-                            tolerance=y_tolerance)
-                if param == "lines_strict":
-                    pass
+            else:
+                if param not in TABLE_STRATEGIES:
+                    msg = "{0} must be list/tuple of ints/floats or one of {1}"\
+                        .format(name, TABLE_STRATEGIES)
+                    raise ValueError(msg)
 
-                if param == "gutters":
-                    if name == "v":
-                        return utils.find_gutters(self.chars, "v",
-                            min_size=gutter_min_width)
-                    if name == "h":
-                        return utils.find_gutters(self.chars, "h",
-                            min_size=gutter_min_height)
+            if param == "lines":
+                if name == "v":
+                    return self.get_edge_positions("v",
+                        min_length=line_min_height,
+                        tolerance=x_tolerance)
+                if name == "h":
+                    return self.get_edge_positions("h",
+                        min_length=line_min_width,
+                        tolerance=y_tolerance)
 
-            msg = "`{0}` must be list/tuple of ints/floats or one of {1}"\
-                .format(name, TABLE_STRATEGIES)
-            raise Exception(msg)
-        
+            if param == "lines_strict":
+                if name == "v":
+                    return self.get_edge_positions("v",
+                        edge_type="line",
+                        min_length=line_min_height,
+                        tolerance=x_tolerance)
+                if name == "h":
+                    return self.get_edge_positions("h",
+                        edge_type="line",
+                        min_length=line_min_width,
+                        tolerance=y_tolerance)
+
+            if param == "gutters":
+                if name == "v":
+                    return utils.find_gutters(self.chars, "v",
+                        min_size=gutter_min_width)
+                if name == "h":
+                    return utils.find_gutters(self.chars, "h",
+                        min_size=gutter_min_height)
+
         h = use_strategy(h, "h")
         v = use_strategy(v, "v")
 
-        table = utils.extract_table(self.chars,
-            v, h, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
+        table = utils.extract_table(self.chars, v, h,
+            x_tolerance=x_tolerance,
+            y_tolerance=y_tolerance)
 
         return table
 

@@ -146,17 +146,15 @@ def within_bbox(objs, bbox, strict=True, crop=False):
 def dividers_to_bounds(dividers):
     return list(zip(dividers, dividers[1:]))
 
-def extract_table(chars,
-    v_dividers=None,
-    h_dividers=None,
+def extract_table(chars, v, h,
     x_tolerance=0,
     y_tolerance=0):
 
     initial_type = type(chars)
     chars = to_list(chars)
 
-    v_bounds = dividers_to_bounds(v_dividers)
-    h_bounds = dividers_to_bounds(h_dividers)
+    v_bounds = dividers_to_bounds(v)
+    h_bounds = dividers_to_bounds(h)
 
     table_arr = []
     for hb in h_bounds:
