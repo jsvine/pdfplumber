@@ -1,7 +1,6 @@
 from pdfplumber import helpers
 from operator import itemgetter
 import itertools
-import pandas as pd
 
 def is_dataframe(collection):
     cls = collection.__class__
@@ -13,9 +12,6 @@ def to_list(collection):
         return collection.to_dict("records")
     else:
         return collection
-
-def to_dataframe(thing):
-    return pd.DataFrame(thing)
 
 def collate_line(line_chars, tolerance=0):
     coll = ""
@@ -132,9 +128,8 @@ def within_bbox(objs, bbox, strict=True, crop=False):
         return dict((k, within_bbox(v, bbox, strict=strict, crop=crop))
             for k,v in objs.items())
 
-    using_pandas = isinstance(objs, pd.DataFrame)
-    if using_pandas:
-        objs = objs.to_dict("records")
+    initial_type = type(objs)
+    objs = to_list(objs)
 
     scores = ((obj, obj_inside_bbox_score(obj, bbox)) for obj in objs)
 
@@ -146,10 +141,7 @@ def within_bbox(objs, bbox, strict=True, crop=False):
     else:
         matching = [ s[0] for s in scores if s[1] > 0 ]
     
-    if using_pandas:
-        return pd.DataFrame(matching)
-    else:
-        return matching
+    return initial_type(matching)
 
 def dividers_to_bounds(dividers):
     return list(zip(dividers, dividers[1:]))
@@ -160,7 +152,7 @@ def extract_table(chars,
     x_tolerance=0,
     y_tolerance=0):
 
-    using_pandas = is_dataframe(chars)
+    initial_type = type(chars)
     chars = to_list(chars)
 
     v_bounds = dividers_to_bounds(v_dividers)
@@ -183,7 +175,4 @@ def extract_table(chars,
             row_arr.append(cell_value)
         table_arr.append(row_arr)
 
-    if using_pandas:
-        return pd.DataFrame(table_arr)
-    else:
-        return table_arr
+    return initial_type(table_arr)

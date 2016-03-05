@@ -5,7 +5,6 @@ import subprocess
 base_reqs = [
     "chardet",
     "pycrypto",
-    "pandas>=0.17.1",
     "pdfminer.six>=20151013"
 ]
 
