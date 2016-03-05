@@ -32,14 +32,12 @@ def collate_chars(chars, x_tolerance=0, y_tolerance=0):
     chars = to_list(chars)
 
     doctops = map(itemgetter("doctop"), chars)
-
     doctop_clusters = helpers.make_cluster_dict(doctops, y_tolerance)
 
     with_cluster = ((char, doctop_clusters.get(char["doctop"]))
         for char in chars)
 
     groups = itertools.groupby(sorted(with_cluster, key=get_1), key=get_1)
-
     lines = (collate_line(map(get_0, items), x_tolerance)
         for k, items in groups)
 
