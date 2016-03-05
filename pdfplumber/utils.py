@@ -30,9 +30,10 @@ def collate_line(line_chars, tolerance=0):
 get_0 = itemgetter(0)
 get_1 = itemgetter(1)
 def collate_chars(chars, x_tolerance=0, y_tolerance=0):
-    chars = to_list(chars)
     if len(chars) == 0:
         raise Exception("List of chars is empty.")
+
+    chars = to_list(chars)
 
     doctops = map(itemgetter("doctop"), chars)
 
@@ -48,6 +49,7 @@ def collate_chars(chars, x_tolerance=0, y_tolerance=0):
 
     coll = "\n".join(lines)
     return coll
+
 
 def find_gutters(chars, orientation, min_size=5, include_outer=True):
     if orientation not in ("h", "v"):
@@ -158,27 +160,24 @@ def extract_table(chars,
     x_tolerance=0,
     y_tolerance=0):
 
-    using_pandas = isinstance(chars, pd.DataFrame)
-    if not using_pandas:
-        chars = pd.DataFrame(chars)
+    using_pandas = is_dataframe(chars)
+    chars = to_list(chars)
 
     v_bounds = dividers_to_bounds(v_dividers)
     h_bounds = dividers_to_bounds(h_dividers)
 
     table_arr = []
     for hb in h_bounds:
-        row = chars[
-            (chars["top"] >= hb[0]) &
-            (chars["top"] < hb[1])
-        ]
+        test = lambda c: (c["top"] >= hb[0]) & (c["top"] < hb[1])
+        row = list(filter(test, chars))
         row_arr = []
         for vb in v_bounds:
-            cell = row[
-                (row["x0"] >= vb[0]) &
-                (row["x0"] < vb[1])
-            ]
+            test = lambda c: (c["x0"] >= vb[0]) & (c["x0"] < vb[1])
+            cell = list(filter(test, row))
             if len(cell):
-                cell_value = collate_chars(cell, x_tolerance=x_tolerance, y_tolerance=y_tolerance).strip()
+                cell_value = collate_chars(cell,
+                    x_tolerance=x_tolerance,
+                    y_tolerance=y_tolerance).strip()
             else:
                 cell_value = None
             row_arr.append(cell_value)
