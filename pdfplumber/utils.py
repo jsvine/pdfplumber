@@ -2,6 +2,8 @@ import pandas as pd
 from pdfplumber import helpers
 
 def collate_chars(chars, x_tolerance=0, y_tolerance=0):
+    if len(chars) == 0:
+        raise Exception("List of chars is empty.")
     using_pandas = isinstance(chars, pd.DataFrame)
     if using_pandas:
         _chars = chars.copy()
@@ -96,18 +98,117 @@ def extract_columns(chars,
     else:
         return collated.fillna("").to_dict("records")
 
-def within_bbox(objs, bbox):
-    x0, top0, x1, top1 = bbox
+def point_inside_bbox(point, bbox):
+    px, py = point
+    bx0, by0, bx1, by1 = bbox
+    return (px >= bx0) and (px <= bx1) and (py >= by0) and (py <= by1)
+
+def obj_inside_bbox_score(obj, bbox):
+    corners = (
+        (obj["x0"], obj["top"]),
+        (obj["x0"], obj["bottom"]),
+        (obj["x1"], obj["top"]),
+        (obj["x1"], obj["bottom"]),
+    )
+    score = sum(point_inside_bbox(c, bbox) for c in corners)
+    return score
+
+def crop_obj(obj, bbox, score=None):
+    if score == None:
+        score = obj_inside_bbox_score(obj, bbox)
+    if score == 0: return None
+    if score == 4: return obj
+    x0, top, x1, bottom = bbox
+
+    copy = dict(obj)
+    x_changed = False
+    y_changed = False
+    if copy["x0"] < x0:
+        copy["x0"] = x0
+        x_changed = True
+    if copy["x1"] > x1:
+        copy["x1"] = x1
+        x_changed = True
+    if copy["top"] < top:
+        diff = top - copy["top"]
+        copy["top"] = top
+        copy["doctop"] = copy["doctop"] - diff
+        copy["y1"] = copy["y1"] - diff
+        y_changed = True
+    if copy["bottom"] > bottom:
+        diff = bottom - copy["bottom"]
+        copy["bottom"] = bottom
+        copy["y0"] = copy["y0"] + diff
+        y_changed = True
+
+    if x_changed:
+        copy["width"] = copy["x1"] - copy["x0"]
+    if y_changed:
+        copy["height"] = copy["bottom"] - copy["top"]
+
+    return copy
+
+def within_bbox(objs, bbox, strict=True, crop=False):
+    """
+    strict: Include only objects that are fully within the box?
+    crop: Crop lines and rectangles to the box?
+    """
+    if isinstance(objs, dict):
+        return dict((k, within_bbox(v, bbox, strict=strict, crop=crop))
+            for k,v in objs.items())
+
     using_pandas = isinstance(objs, pd.DataFrame)
-    if not using_pandas:
-        objs = pd.DataFrame(objs)
-    matching = objs[
-        (objs["x0"] >= x0 ) &
-        (objs["top"] >= top0 ) &
-        (objs["x0"] < x1 ) &
-        (objs["top"] < top1 )
-    ]
     if using_pandas:
-        return matching.copy()
+        objs = objs.to_dict("records")
+
+    scores = ((obj, obj_inside_bbox_score(obj, bbox)) for obj in objs)
+
+    if crop:
+        matching = [ (crop_obj(s[0], bbox, s[1]) if s[1] < 4 else s[0])
+            for s in scores if s[1] > 0 ]
+    elif strict:
+        matching = [ s[0] for s in scores if s[1] == 4 ]
     else:
-        return matching.to_dict("records")
+        matching = [ s[0] for s in scores if s[1] > 0 ]
+    
+    if using_pandas:
+        return pd.DataFrame(matching)
+    else:
+        return matching
+
+def dividers_to_bounds(dividers):
+    return list(zip(dividers, dividers[1:]))
+
+def extract_table(chars,
+    v_dividers=None,
+    h_dividers=None,
+    x_tolerance=0,
+    y_tolerance=0):
+
+    using_pandas = isinstance(chars, pd.DataFrame)
+    if not using_pandas:
+        chars = pd.DataFrame(chars)
+
+    v_bounds = dividers_to_bounds(v_dividers)
+    h_bounds = dividers_to_bounds(h_dividers)
+
+    table_arr = []
+    for hb in h_bounds:
+        row = chars[
+            (chars["top"] >= hb[0]) &
+            (chars["top"] < hb[1])
+        ]
+        row_arr = []
+        for vb in v_bounds:
+            cell = row[
+                (row["x0"] >= vb[0]) &
+                (row["x0"] < vb[1])
+            ]
+            cell_text = collate_chars(cell, x_tolerance=x_tolerance, y_tolerance=y_tolerance).strip()
+            row_arr.append(cell_text)
+        table_arr.append(row_arr)
+
+    if using_pandas:
+        return pd.DataFrame(table_arr)
+    else:
+        return table_arr
