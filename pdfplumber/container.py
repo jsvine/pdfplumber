@@ -31,7 +31,7 @@ def rect_to_edges(rect):
 
 def line_to_edge(line):
     edge = dict(line)
-    edge["is_horizontal"] = line["y0"] == line["y1"]
+    edge["orientation"] = "h" if (line["y0"] == line["y1"]) else "v"
     return edge
 
 class Container(object):
