@@ -3,26 +3,26 @@ from itertools import chain
 def rect_to_edges(rect):
     top, bottom, left, right = [ dict(rect) for x in range(4) ]
     top.update({
-        "object_type": "edge_top",
+        "object_type": "rect_edge",
         "height": 0,
         "y0": rect["y1"],
         "orientation": "h"
     })
     bottom.update({
-        "object_type": "edge_bottom",
+        "object_type": "rect_edge",
         "height": 0,
         "doctop": rect["doctop"] + rect["height"],
         "y1": rect["y0"],
         "orientation": "h"
     })
     left.update({
-        "object_type": "edge_left",
+        "object_type": "rect_edge",
         "width": 0,
         "x1": rect["x0"],
         "orientation": "v"
     })
     right.update({
-        "object_type": "edge_right",
+        "object_type": "rect_edge",
         "width": 0,
         "x0": rect["x1"],
         "orientation": "v"
