@@ -23,11 +23,12 @@ def collate_line(line_chars, tolerance=0):
         coll += char["text"]
     return coll
 
-get_0 = itemgetter(0)
-get_1 = itemgetter(1)
 def collate_chars(chars, x_tolerance=0, y_tolerance=0):
     if len(chars) == 0:
         raise Exception("List of chars is empty.")
+
+    get_0 = itemgetter(0)
+    get_1 = itemgetter(1)
 
     chars = to_list(chars)
 
@@ -45,25 +46,30 @@ def collate_chars(chars, x_tolerance=0, y_tolerance=0):
     return coll
 
 
-def find_gutters(chars, orientation, min_size=5, include_outer=True):
+def find_gutters(chars, orientation, min_size=5):
     if orientation not in ("h", "v"):
         raise ValueError('`orientation` must be "h" or "v".')
 
-    prop = "x0" if orientation == "v" else "top"
+    start_prop = "x0" if orientation == "v" else "top"
+    end_prop = "x1" if orientation == "v" else "bottom"
 
-    pos = sorted(set(c[prop] for c in chars))
+    get_start = itemgetter(start_prop)
+    get_end = itemgetter(end_prop)
 
-    pos_gaps = ((p1, p2 - p1)
-        for p1, p2 in zip(pos, pos[1:]))
+    starts = list(sorted(set(map(get_start, chars))))
+    ends = list(sorted(set(map(get_end, chars))))
 
-    centers = [ g[0] + g[1]/2
-        for g in pos_gaps
+    start_gaps = ((p1, p2 - p1)
+        for p1, p2 in zip(starts, starts[1:]))
+
+    gutters = [ g[0] + g[1]/2
+        for g in start_gaps
             if g[1] >= min_size ]
 
-    if include_outer:
-        gutters = [ pos[0] ] + centers + [ pos[-1] + 1 ]
-    else:
-        gutters = centers
+    if starts[0] < gutters[0]:
+        gutters = [ starts[0] ] + gutters
+    if ends[-1] > gutters[-1]:
+        gutters = gutters + [ ends[-1] + 0.001 ]
     return gutters
 
 
