@@ -1,4 +1,5 @@
 from itertools import chain
+from pdfplumber import helpers, utils
 
 def rect_to_edges(rect):
     top, bottom, left, right = [ dict(rect) for x in range(4) ]
@@ -35,6 +36,14 @@ def line_to_edge(line):
     return edge
 
 class Container(object):
+    cached_properties = [ "_rect_edges", "_edges", "_objects" ]
+
+    def flush_cache(self, properties=None):
+        props = self.cached_properties if properties == None else properties
+        for p in props:
+            if hasattr(self, p):
+                delattr(self, p)
+
     @property
     def rects(self):
         return self.objects.get("rect", [])

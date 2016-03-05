@@ -59,8 +59,7 @@ class Page(Container):
 import atexit
 
 class PDF(Container):
-    def __init__(self, file_or_buffer, pages=None, laparams=None):
-        self.laparams = None if laparams == None else LAParams(**laparams)
+    cached_properties = Container.cached_properties + [ "_pages" ]
 
     def __init__(self, stream, pages=None, laparams=None):
         self.laparams = None if laparams == None else LAParams(**laparams)
