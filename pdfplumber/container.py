@@ -60,10 +60,15 @@ class Container(object):
         return self.objects.get("anno", [])
 
     @property
+    def rect_edges(self):
+        if hasattr(self, "_rect_edges"): return self._edges
+        rect_edges_gen = (rect_to_edges(r) for r in self.rects)
+        self._rect_edges = list(chain(*rect_edges_gen))
+        return self._rect_edges
+
+    @property
     def edges(self):
         if hasattr(self, "_edges"): return self._edges
-        rect_edges_gen = (rect_to_edges(r) for r in self.rects)
-        rect_edges = list(chain(*rect_edges_gen))
         line_edges = list(map(line_to_edge, self.lines))
-        self._edges = rect_edges + line_edges
+        self._edges = self.rect_edges + line_edges
         return self._edges
