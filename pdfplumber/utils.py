@@ -1,102 +1,75 @@
-import pandas as pd
 from pdfplumber import helpers
+from operator import itemgetter
+import itertools
+import pandas as pd
 
-def collate_chars(chars, x_tolerance=0, y_tolerance=0):
-    if len(chars) == 0:
-        raise Exception("List of chars is empty.")
-    using_pandas = isinstance(chars, pd.DataFrame)
-    if using_pandas:
-        _chars = chars.copy()
+def is_dataframe(collection):
+    cls = collection.__class__
+    name = ".".join([ cls.__module__, cls.__name__ ])
+    return name == "pandas.core.frame.DataFrame"
+
+def to_list(collection):
+    if is_dataframe(collection):
+        return collection.to_dict("records")
     else:
-        _chars = pd.DataFrame(chars)
+        return collection
 
-    def collate_line(line_chars):
-        coll = ""
-        last_x1 = None
-        for i, char in line_chars.sort_values("x0").iterrows():
-            if last_x1 != None and char["x0"] > (last_x1 + x_tolerance):
-                coll += " "
-            last_x1 = char["x1"]
-            coll += char["text"]
-        return coll
+def to_dataframe(thing):
+    return pd.DataFrame(thing)
 
-    doctop_clusters = helpers.make_cluster_dict(_chars["doctop"], y_tolerance)
-    _chars["doctop_cluster"] = _chars["doctop"].apply(doctop_clusters.get)
-    dc_grp = _chars.sort_values("doctop_cluster").groupby("doctop_cluster")
-    coll = "\n".join(dc_grp.apply(collate_line))
+def collate_line(line_chars, tolerance=0):
+    coll = ""
+    last_x1 = None
+    for char in sorted(line_chars, key=itemgetter("x0")):
+        if last_x1 != None and char["x0"] > (last_x1 + tolerance):
+            coll += " "
+        last_x1 = char["x1"]
+        coll += char["text"]
     return coll
 
-def detect_gutters(chars, min_width=5):
-    using_pandas = isinstance(chars, pd.DataFrame)
-    if not using_pandas:
-        chars = pd.DataFrame(chars)
-    nonblank = chars[chars["text"].str.strip() != ""]
-    x0s = nonblank["x0"].value_counts()
-    x1s = nonblank["x1"].value_counts()
-    totals = pd.DataFrame({
-        "x0": x0s,
-        "x1": x1s
-    }).sum(axis=1)
-    dense_ix = pd.Series(totals[
-        totals > 0
-    ].sort_index().index)
-    gutters = pd.DataFrame({
-        "begin": dense_ix,
-        "end": dense_ix.shift(-1)
-    })
-    gutters["width"] = gutters["end"] - gutters["begin"]
-    min_gutters = gutters[
-        gutters["width"] >= min_width
-    ].reset_index(drop=True)
-    if using_pandas:
-        return min_gutters
+get_0 = itemgetter(0)
+get_1 = itemgetter(1)
+def collate_chars(chars, x_tolerance=0, y_tolerance=0):
+    chars = to_list(chars)
+    if len(chars) == 0:
+        raise Exception("List of chars is empty.")
+
+    doctops = map(itemgetter("doctop"), chars)
+
+    doctop_clusters = helpers.make_cluster_dict(doctops, y_tolerance)
+
+    with_cluster = ((char, doctop_clusters.get(char["doctop"]))
+        for char in chars)
+
+    groups = itertools.groupby(sorted(with_cluster, key=get_1), key=get_1)
+
+    lines = (collate_line(map(get_0, items), x_tolerance)
+        for k, items in groups)
+
+    coll = "\n".join(lines)
+    return coll
+
+def find_gutters(chars, orientation, min_size=5, include_outer=True):
+    if orientation not in ("h", "v"):
+        raise ValueError('`orientation` must be "h" or "v".')
+
+    prop = "x0" if orientation == "v" else "top"
+
+    pos = sorted(set(c[prop] for c in chars))
+
+    pos_gaps = ((p1, p2 - p1)
+        for p1, p2 in zip(pos, pos[1:]))
+
+    centers = [ g[0] + g[1]/2
+        for g in pos_gaps
+            if g[1] >= min_size ]
+
+    if include_outer:
+        gutters = [ pos[0] ] + centers + [ pos[-1] + 1 ]
     else:
-        return min_gutters.to_dict("records")
+        gutters = centers
+    return gutters
 
-def gutters_to_columns(gutters):
-    using_pandas = isinstance(gutters, pd.DataFrame)
-    if not using_pandas:
-        gutters = pd.DataFrame(gutters)
-    col_beg = [ None ] + gutters["end"].tolist()
-    col_end = gutters["begin"].tolist() + [ None ]
-    return list(zip(col_beg, col_end))
-
-def extract_columns(chars,
-    x_tolerance=0, y_tolerance=0,
-    gutter_min_width=5):
-
-    using_pandas = isinstance(chars, pd.DataFrame)
-    if not using_pandas:
-        chars = pd.DataFrame(chars)
-
-    gutters = detect_gutters(chars, min_width=gutter_min_width)
-
-    columns = gutters_to_columns(gutters)
-
-    _chars = chars.copy()
-
-    for i, col in enumerate(columns):
-        begin, end = col
-        _chars.loc[(
-            (_chars["x0"] >= (begin or 0)) &
-            (_chars["x0"] < (end or (chars["x0"].max() + 1)))
-        ), "column"] = i
-
-    collator = lambda x: collate_chars(x, x_tolerance=x_tolerance, y_tolerance=y_tolerance)
-
-    doctop_clusters = helpers.make_cluster_dict(_chars["doctop"], y_tolerance)
-    _chars["doctop_cluster"] = _chars["doctop"].apply(doctop_clusters.get)
-
-    collated = _chars.groupby([ "doctop_cluster", "column" ])\
-        .apply(collator)\
-        .unstack(level="column")
-
-    collated.columns = list(map(int, collated.columns))
-
-    if using_pandas:
-        return collated
-    else:
-        return collated.fillna("").to_dict("records")
 
 def point_inside_bbox(point, bbox):
     px, py = point
@@ -204,8 +177,11 @@ def extract_table(chars,
                 (row["x0"] >= vb[0]) &
                 (row["x0"] < vb[1])
             ]
-            cell_text = collate_chars(cell, x_tolerance=x_tolerance, y_tolerance=y_tolerance).strip()
-            row_arr.append(cell_text)
+            if len(cell):
+                cell_value = collate_chars(cell, x_tolerance=x_tolerance, y_tolerance=y_tolerance).strip()
+            else:
+                cell_value = None
+            row_arr.append(cell_value)
         table_arr.append(row_arr)
 
     if using_pandas:

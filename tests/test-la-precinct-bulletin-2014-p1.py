@@ -2,7 +2,7 @@
 import unittest
 import pandas as pd
 import pdfplumber
-from pdfplumber.utils import within_bbox, extract_columns, collate_chars
+from pdfplumber.utils import within_bbox, collate_chars
 import sys, os
 import re
 

@@ -130,23 +130,11 @@ class Page(Container):
 
                 if param == "gutters":
                     if name == "v":
-                        pos = sorted(set(c["x0"] for c in self.chars))
-                        pos_gaps = ((p1, p2 - p1)
-                            for p1, p2 in zip(pos, pos[1:]))
-                        centers = [ g[0] + g[1]/2
-                            for g in pos_gaps
-                                if g[1] >= gutter_min_width ]
-                        dividers = [ pos[0] ] + centers + [ pos[-1] + 1 ]
-                        return dividers
+                        return utils.find_gutters(self.chars, "v",
+                            min_size=gutter_min_width)
                     if name == "h":
-                        pos = sorted(set(c["top"] for c in self.chars))
-                        pos_gaps = ((p1, p2 - p1)
-                            for p1, p2 in zip(pos, pos[1:]))
-                        centers = [ g[0] + g[1]/2
-                            for g in pos_gaps
-                                if g[1] >= gutter_min_height ]
-                        dividers = [ pos[0] ] + centers + [ pos[-1] + 1 ]
-                        return dividers
+                        return utils.find_gutters(self.chars, "h",
+                            min_size=gutter_min_height)
 
             msg = "`{0}` must be list/tuple of ints/floats or one of {1}"\
                 .format(name, TABLE_STRATEGIES)
