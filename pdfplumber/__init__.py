@@ -12,8 +12,7 @@ def load(file_or_buffer, **kwargs):
     return PDF(file_or_buffer, **kwargs)
 
 def from_path(path, **kwargs):
-    with open(path, "rb") as f:
-        return PDF(f, **kwargs)
+    return PDF(open(path, "rb"), **kwargs)
 
 def set_debug(debug=0):
     pdfminer.debug = debug

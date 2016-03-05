@@ -56,28 +56,42 @@ class Page(Container):
             process_object(obj)
 
         return objects
+import atexit
 
 class PDF(Container):
     def __init__(self, file_or_buffer, pages=None, laparams=None):
         self.laparams = None if laparams == None else LAParams(**laparams)
 
+    def __init__(self, stream, pages=None, laparams=None):
+        self.laparams = None if laparams == None else LAParams(**laparams)
+        self.stream = stream
+        self.pages_to_parse = pages
         rsrcmgr = PDFResourceManager()
-        self.doc = PDFDocument(PDFParser(file_or_buffer))
+        self.doc = PDFDocument(PDFParser(stream))
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
+        atexit.register(self.close)
 
-        self.pages = []
+    @property
+    def pages(self):
+        if hasattr(self, "_pages"): return self._pages
 
-        page_iter = (p for i, p in enumerate(PDFPage.create_pages(self.doc))
-            if pages == None or i+1 in pages)
+        def process_page(page):
+            self.interpreter.process_page(page)
+            return self.device.get_result()
 
         doctop = 0
-        for page in page_iter:
-            self.interpreter.process_page(page)
-            layout = self.device.get_result()
-            p = Page(layout, initial_doctop=doctop)
-            self.pages.append(p)
-            doctop += p.layout.height
+        pp = self.pages_to_parse
+        self._pages = []
+        for i, page in enumerate(PDFPage.create_pages(self.doc)):
+            if pp != None and i+1 not in pp: continue
+            p = Page(page, process_page, initial_doctop=doctop)
+            self._pages.append(p)
+            doctop += p.height
+        return self._pages
+
+    def close(self):
+        self.stream.close()
 
     @property
     def objects(self):
