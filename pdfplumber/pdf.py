@@ -19,6 +19,9 @@ class PDF(Container):
         self.pages_to_parse = pages
         rsrcmgr = PDFResourceManager()
         self.doc = PDFDocument(PDFParser(stream))
+        self.metadata = {}
+        for info in self.doc.info:
+            self.metadata.update(info)
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
         atexit.register(self.close)
