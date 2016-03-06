@@ -6,8 +6,6 @@ from six import string_types
 import re
 lt_pat = re.compile(r"^LT")
 
-TABLE_STRATEGIES = ("lines", "lines_strict", "gutters")
-
 class Page(Container):
     cached_properties = Container.cached_properties + [ "_layout" ]
 
@@ -101,6 +99,7 @@ class Page(Container):
 
         return edge_means
 
+    TABLE_STRATEGIES = ("lines", "lines_strict", "gutters")
     def extract_table(self,
         v="lines",
         h="lines",
@@ -111,15 +110,22 @@ class Page(Container):
         gutter_min_height=5,
         x_tolerance=0,
         y_tolerance=0):
+        """
+        For the purposes of this method, "lines" refers to all
+        two-dimensional lines, including "rect_edge" objects.
+
+        To use only actual "line" objects, choose the
+        "lines_strict" strategy.
+        """
 
         def use_strategy(param, name):
             # If dividers are explicitly passed
             if isinstance(param, (list, tuple)):
                 return param
             else:
-                if param not in TABLE_STRATEGIES:
+                if param not in self.TABLE_STRATEGIES:
                     msg = "{0} must be list/tuple of ints/floats or one of {1}"\
-                        .format(name, TABLE_STRATEGIES)
+                        .format(name, self.TABLE_STRATEGIES)
                     raise ValueError(msg)
 
             if param == "lines":
