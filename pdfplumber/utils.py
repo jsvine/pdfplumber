@@ -93,7 +93,7 @@ def crop_obj(obj, bbox, score=None):
         score = obj_inside_bbox_score(obj, bbox)
     if score == 0: return None
     if score == 4: return obj
-    x0, top, x1, bottom = bbox
+    x0, top, x1, bottom = map(float, bbox)
 
     copy = dict(obj)
     x_changed = False
@@ -107,7 +107,7 @@ def crop_obj(obj, bbox, score=None):
     if copy["top"] < top:
         diff = top - copy["top"]
         copy["top"] = top
-        copy["doctop"] = copy["doctop"] - diff
+        copy["doctop"] = copy["doctop"] + diff
         copy["y1"] = copy["y1"] - diff
         y_changed = True
     if copy["bottom"] > bottom:
