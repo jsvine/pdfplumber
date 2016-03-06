@@ -104,7 +104,6 @@ class Page(Container):
     def extract_table(self,
         v="lines",
         h="lines",
-        bbox=None,
         line_min_height=1,
         line_min_width=1,
         gutter_min_width=5,
