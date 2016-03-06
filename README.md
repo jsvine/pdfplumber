@@ -30,7 +30,7 @@ The output will be a CSV containing info about every character, line, and rectan
 
 - `--format [format]`: `csv` or `json`
 - `--pages [list of pages]`: A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.
-- `--types [list of object types to extract]`: Choices are `char`, `anno`, `line`, `rect`. Defaults to all four.
+- `--types [list of object types to extract]`: Choices are `char`, `anno`, `line`, `rect`, `rect_edge`. Defaults to `char`, `anno`, `line`, `rect`.
 
 ## Python Library
 
