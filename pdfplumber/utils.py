@@ -47,8 +47,15 @@ def collate_chars(chars, x_tolerance=0, y_tolerance=0):
 
 
 def find_gutters(chars, orientation, min_size=5):
+    """
+    The size of a gutter is the distance between the beginning
+    of the current character and the beginning of the next character.
+    """
     if orientation not in ("h", "v"):
         raise ValueError('`orientation` must be "h" or "v".')
+
+    if len(chars) == 0:
+        raise ValueError("No chars.")
 
     start_prop = "x0" if orientation == "v" else "top"
     end_prop = "x1" if orientation == "v" else "bottom"
