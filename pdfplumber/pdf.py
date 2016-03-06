@@ -1,5 +1,6 @@
 from pdfplumber.container import Container
 from pdfplumber.page import Page
+from pdfplumber.utils import decode_text
 
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
@@ -22,6 +23,10 @@ class PDF(Container):
         self.metadata = {}
         for info in self.doc.info:
             self.metadata.update(info)
+        for k, v in self.metadata.items():
+            if hasattr(v, "resolve"):
+                v = v.resolve()
+            self.metadata[k] = decode_text(v)
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
         atexit.register(self.close)
