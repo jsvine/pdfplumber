@@ -13,10 +13,11 @@ class Page(Container):
         self.pdf = pdf
         self.page_obj = page_obj
         self.mediabox = page_obj.attrs["MediaBox"]
-        self.width = self.mediabox[2] - self.mediabox[0]
-        self.height = self.mediabox[3] - self.mediabox[1]
+        d = lambda x: utils.decimalize(x, self.pdf.precision)
+        self.width = d(self.mediabox[2] - self.mediabox[0])
+        self.height = d(self.mediabox[3] - self.mediabox[1])
         self.pageid = page_obj.pageid
-        self.initial_doctop = initial_doctop
+        self.initial_doctop = d(initial_doctop)
 
     @property
     def layout(self):
@@ -35,6 +36,9 @@ class Page(Container):
 
         d = utils.decimalize
         q = self.pdf.precision
+        h = self.height
+        idc = self.initial_doctop
+        pid = self.pageid
 
         def process_object(obj):
 
@@ -44,15 +48,15 @@ class Page(Container):
 
             kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
             attr["object_type"] = kind
-            attr["pageid"] = self.pageid
+            attr["pageid"] = pid
 
             if hasattr(obj, "get_text"):
                 attr["text"] = obj.get_text()
 
             if attr.get("y0") != None:
-                attr["top"] = self.height - attr["y1"]
-                attr["bottom"] = self.height - attr["y0"]
-                attr["doctop"] = self.initial_doctop + attr["top"]
+                attr["top"] = h - attr["y1"]
+                attr["bottom"] = h - attr["y0"]
+                attr["doctop"] = idc + attr["top"]
 
             if objects.get(kind) == None:
                 objects[kind] = []
