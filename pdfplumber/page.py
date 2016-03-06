@@ -173,17 +173,24 @@ class Page(Container):
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance)
 
-    def crop(self, bbox):
-        return CroppedPage(self, bbox)
+    def crop(self, bbox, strict=False):
+        return CroppedPage(self, bbox, strict=strict)
 
 class CroppedPage(Page):
-    def __init__(self, parent_page, bbox):
+    def __init__(self, parent_page, bbox, strict=False):
         self.parent_page = parent_page
         self.bbox = bbox
+        self.strict = strict
 
     @property
     def objects(self):
         if hasattr(self, "_objects"): return self._objects
-        self._objects = utils.within_bbox(self.parent_page.objects, self.bbox,
-            crop=True) 
+        if self.strict:
+            kwargs = { "strict": True }
+        else:
+            kwargs = { "crop": True }
+        self._objects = utils.within_bbox(
+            self.parent_page.objects,
+            self.bbox,
+            **kwargs)
         return self._objects
