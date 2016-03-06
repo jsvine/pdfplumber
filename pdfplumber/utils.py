@@ -64,7 +64,7 @@ def find_gutters(chars, orientation, min_size=5):
     get_end = itemgetter(end_prop)
 
     starts = list(sorted(set(map(get_start, chars))))
-    ends = list(sorted(set(map(get_end, chars))))
+    end_max = max(map(get_end, chars))
 
     start_gaps = ((p1, p2 - p1)
         for p1, p2 in zip(starts, starts[1:]))
@@ -75,8 +75,8 @@ def find_gutters(chars, orientation, min_size=5):
 
     if starts[0] < gutters[0]:
         gutters = [ starts[0] ] + gutters
-    if ends[-1] > gutters[-1]:
-        gutters = gutters + [ ends[-1] + 0.001 ]
+    if end_max > gutters[-1]:
+        gutters = gutters + [ end_max + 0.001 ]
     return gutters
 
 
