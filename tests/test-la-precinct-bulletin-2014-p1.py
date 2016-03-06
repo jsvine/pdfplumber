@@ -109,9 +109,6 @@ class Test(unittest.TestCase):
         self.pdf = pdfplumber.from_path(path)
         self.PDF_WIDTH = self.pdf.pages[0].width
 
-    def test_plain(self):
-        pass
-
     def test_pandas(self):
         p1 = PrecinctPage(self.pdf.pages[0]).to_dict()
         assert(p1["registered_voters"] == 1100)
