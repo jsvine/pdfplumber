@@ -1,9 +1,17 @@
+#!/usr/bin/env python
 import pdfplumber
 import pandas as pd
 import argparse
 from itertools import chain
 import json
 import sys
+from decimal import Decimal, ROUND_HALF_UP
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Decimal):
+            return float(o.quantize(Decimal('.0001'), rounding=ROUND_HALF_UP))
+        return super(DecimalEncoder, self).default(o)
 
 def parse_page_spec(p_str):
     if "-" in p_str:
@@ -50,9 +58,18 @@ def to_csv(pdf, types):
     data[cols].to_csv(sys.stdout, index=False, encoding="utf-8")
 
 def to_json(pdf, types):
-    data = dict((t + "s", getattr(pdf, t + "s"))
-        for t in types)
-    json.dump(data, sys.stdout)
+    data = { "metadata": pdf.metadata }
+
+    def get_page_data(page):
+        d = dict((t + "s", getattr(page, t + "s"))
+            for t in types)
+        d["width"] = page.width
+        d["height"] = page.height
+        return d
+
+    data["pages"] = list(map(get_page_data, pdf.pages))
+
+    json.dump(data, sys.stdout, cls=DecimalEncoder)
 
 def main():
     args = parse_args()

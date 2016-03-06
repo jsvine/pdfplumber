@@ -14,10 +14,11 @@ import atexit
 class PDF(Container):
     cached_properties = Container.cached_properties + [ "_pages" ]
 
-    def __init__(self, stream, pages=None, laparams=None):
+    def __init__(self, stream, pages=None, laparams=None, precision=0.001):
         self.laparams = None if laparams == None else LAParams(**laparams)
         self.stream = stream
         self.pages_to_parse = pages
+        self.precision = precision
         rsrcmgr = PDFResourceManager()
         self.doc = PDFDocument(PDFParser(stream))
         self.metadata = {}
@@ -31,20 +32,20 @@ class PDF(Container):
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
         atexit.register(self.close)
 
+    def process_page(self, page):
+        self.interpreter.process_page(page)
+        return self.device.get_result()
+
     @property
     def pages(self):
         if hasattr(self, "_pages"): return self._pages
-
-        def process_page(page):
-            self.interpreter.process_page(page)
-            return self.device.get_result()
 
         doctop = 0
         pp = self.pages_to_parse
         self._pages = []
         for i, page in enumerate(PDFPage.create_pages(self.doc)):
             if pp != None and i+1 not in pp: continue
-            p = Page(page, process_page, initial_doctop=doctop)
+            p = Page(self, page, initial_doctop=doctop)
             self._pages.append(p)
             doctop += p.height
         return self._pages

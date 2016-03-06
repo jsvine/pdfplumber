@@ -9,19 +9,19 @@ lt_pat = re.compile(r"^LT")
 class Page(Container):
     cached_properties = Container.cached_properties + [ "_layout" ]
 
-    def __init__(self, obj, processor, initial_doctop=0):
-        self.obj = obj
-        self.processor = processor
-        self.mediabox = obj.attrs["MediaBox"]
+    def __init__(self, pdf, page_obj, initial_doctop=0):
+        self.pdf = pdf
+        self.page_obj = page_obj
+        self.mediabox = page_obj.attrs["MediaBox"]
         self.width = self.mediabox[2] - self.mediabox[0]
         self.height = self.mediabox[3] - self.mediabox[1]
-        self.pageid = obj.pageid
+        self.pageid = page_obj.pageid
         self.initial_doctop = initial_doctop
 
     @property
     def layout(self):
         if hasattr(self, "_layout"): return self._layout
-        self._layout = self.processor(self.obj)
+        self._layout = self.pdf.process_page(self.page_obj)
         return self._layout
 
     @property
@@ -33,11 +33,12 @@ class Page(Container):
     def parse_objects(self):
         objects = {}
 
-        _round = lambda x: round(x, 3) if type(x) == float else x
+        d = utils.decimalize
+        q = self.pdf.precision
 
         def process_object(obj):
 
-            attr = dict((k, _round(v)) for k, v in obj.__dict__.items()
+            attr = dict((k, d(v, q)) for k, v in obj.__dict__.items()
                 if isinstance(v, (float, int, string_types))
                     and k[0] != "_")
 

@@ -1,7 +1,8 @@
 from pdfplumber import helpers
+from pdfminer.utils import PDFDocEncoding
+from decimal import Decimal, ROUND_HALF_UP
 from operator import itemgetter
 import itertools
-from pdfminer.utils import PDFDocEncoding
 import six
 
 def decode_text(s):
@@ -14,6 +15,16 @@ def decode_text(s):
     else:
         ords = (ord(c) if type(c) == str else c for c in s)
         return ''.join(PDFDocEncoding[o] for o in ords)
+
+def decimalize(v, q=None):
+    if type(v) == int: return Decimal(v)
+    if type(v) == float:
+        if q != None:
+            return Decimal(repr(v)).quantize(Decimal(repr(q)),
+                rounding=ROUND_HALF_UP)
+        else:
+            return Decimal(repr(v))
+    return v
 
 def is_dataframe(collection):
     cls = collection.__class__
@@ -89,13 +100,13 @@ def find_gutters(chars, orientation, min_size=5):
     if starts[0] < gutters[0]:
         gutters = [ starts[0] ] + gutters
     if end_max > gutters[-1]:
-        gutters = gutters + [ end_max + 0.001 ]
+        gutters = gutters + [ end_max + Decimal('0.001') ]
     return gutters
 
 
 def point_inside_bbox(point, bbox):
     px, py = point
-    bx0, by0, bx1, by1 = bbox
+    bx0, by0, bx1, by1 = map(decimalize, bbox)
     return (px >= bx0) and (px <= bx1) and (py >= by0) and (py <= by1)
 
 def obj_inside_bbox_score(obj, bbox):
@@ -113,7 +124,7 @@ def crop_obj(obj, bbox, score=None):
         score = obj_inside_bbox_score(obj, bbox)
     if score == 0: return None
     if score == 4: return obj
-    x0, top, x1, bottom = map(float, bbox)
+    x0, top, x1, bottom = map(decimalize, bbox)
 
     copy = dict(obj)
     x_changed = False
