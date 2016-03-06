@@ -14,7 +14,7 @@ setup(
     description="Plumb a PDF for detailed information about each char, rectangle, line, etc.",
     version="0.2.0",
     packages=find_packages(exclude=["test",]),
-    tests_require=[ "nose" ] + base_reqs,
+    tests_require=[ "nose", "pandas" ] + base_reqs,
     install_requires=base_reqs,
     entry_points={
         "console_scripts": [ "pdfplumber = pdfplumber.cli:main" ] 
