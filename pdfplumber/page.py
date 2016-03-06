@@ -168,6 +168,11 @@ class Page(Container):
 
         return table
 
+    def collate_chars(self, x_tolerance=0, y_tolerance=0):
+        return utils.collate_chars(self.chars,
+            x_tolerance=x_tolerance,
+            y_tolerance=y_tolerance)
+
     def crop(self, bbox):
         return CroppedPage(self, bbox)
 
