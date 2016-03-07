@@ -2,7 +2,7 @@ import sys, os
 from setuptools import setup, find_packages
 import subprocess
 
-version = __import__("pdfplumber").VERSION
+version = "0.3.2"
 
 base_reqs = [
     "chardet",
