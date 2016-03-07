@@ -2,7 +2,7 @@
 import unittest
 import pandas as pd
 import pdfplumber
-from pdfplumber.utils import within_bbox, extract_columns, collate_chars
+from pdfplumber.utils import within_bbox, collate_chars
 import sys, os
 
 import logging
@@ -46,18 +46,21 @@ class Test(unittest.TestCase):
         self.PDF_WIDTH = self.pdf.pages[0].width
 
     def test_plain(self):
-        chars = self.pdf.chars
-        table_chars = within_bbox(chars, (0, 77, self.PDF_WIDTH, 485))
-        table = extract_columns(table_chars, x_tolerance=2)
+        page = self.pdf.pages[0]
+        cropped = page.crop((0, 80, self.PDF_WIDTH, 485))
+        table = cropped.extract_table(h="gutters",
+            x_tolerance=5,
+            y_tolerance=5,
+            gutter_min_height=5)
 
         def parse_value(k, x):
             if k == 0: return x
-            if x == "": return None
+            if x == None: return None
             return int(x.replace(",", ""))
 
         def parse_row(row):
-            return dict((COLUMNS[k], parse_value(k, v))
-                for k, v in row.items())
+            return dict((COLUMNS[i], parse_value(i, v))
+                for i, v in enumerate(row))
 
         parsed_table = [ parse_row(row) for row in table ]
 
@@ -67,14 +70,20 @@ class Test(unittest.TestCase):
             colsum = sum(row[c] or 0 for row in parsed_table)
             assert(colsum == (total * 2))
 
-        month_chars = within_bbox(chars, (0, 35, self.PDF_WIDTH, 60))
+        month_chars = within_bbox(page.chars, (0, 35, self.PDF_WIDTH, 65))
         month_text = collate_chars(month_chars, x_tolerance=2)
         assert(month_text == "November - 2015")
 
     def test_pandas(self):
-        chars = pd.DataFrame(self.pdf.chars)
-        table_chars = within_bbox(chars, (0, 77, self.PDF_WIDTH, 485))
-        table = extract_columns(table_chars, x_tolerance=2)
+        page = self.pdf.pages[0]
+        cropped = page.crop((0, 80, self.PDF_WIDTH, 485))
+
+        _table = cropped.extract_table(h="gutters",
+            x_tolerance=5,
+            y_tolerance=5,
+            gutter_min_height=5)
+        
+        table = pd.DataFrame(_table)
 
         def parse_value(x):
             if pd.isnull(x): return None
@@ -89,6 +98,6 @@ class Test(unittest.TestCase):
             colsum = table[c].sum()
             assert(colsum == (total * 2))
 
-        month_chars = within_bbox(chars, (0, 35, self.PDF_WIDTH, 60))
+        month_chars = within_bbox(page.chars, (0, 35, self.PDF_WIDTH, 65))
         month_text = collate_chars(month_chars, x_tolerance=2)
         assert(month_text == "November - 2015")
