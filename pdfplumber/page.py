@@ -171,8 +171,8 @@ class Page(Container):
 
         return table
 
-    def get_text(self, x_tolerance=0, y_tolerance=0):
-        return utils.get_text(self.chars,
+    def extract_text(self, x_tolerance=0, y_tolerance=0):
+        return utils.extract_text(self.chars,
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance)
 
