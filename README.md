@@ -168,7 +168,7 @@ Note: Often it's helpful to crop a page before trying to extract the table. See 
 
 ## Demos
 
-- [Use `extract_table` on the FBI's National Instant Criminal Background Check System PDFs.](examples/notebooks/utils-nics.ipynb)
+- [Use `extract_table` on the FBI's National Instant Criminal Background Check System PDFs.](examples/notebooks/extract-table-nics.ipynb)
 
 ## Python Support
 
