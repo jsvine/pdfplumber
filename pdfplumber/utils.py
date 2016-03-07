@@ -47,7 +47,7 @@ def collate_line(line_chars, tolerance=0):
         coll += char["text"]
     return coll
 
-def get_text(chars, x_tolerance=0, y_tolerance=0):
+def extract_text(chars, x_tolerance=0, y_tolerance=0):
     if len(chars) == 0:
         raise Exception("List of chars is empty.")
 
@@ -69,7 +69,7 @@ def get_text(chars, x_tolerance=0, y_tolerance=0):
     coll = "\n".join(lines)
     return coll
 
-collate_chars = get_text
+collate_chars = extract_text
 
 def find_gutters(chars, orientation, min_size=5):
     """
