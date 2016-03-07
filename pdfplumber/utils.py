@@ -49,7 +49,7 @@ def collate_line(line_chars, tolerance=0):
 
 def extract_text(chars, x_tolerance=0, y_tolerance=0):
     if len(chars) == 0:
-        raise Exception("List of chars is empty.")
+        return None
 
     get_0 = itemgetter(0)
     get_1 = itemgetter(1)
