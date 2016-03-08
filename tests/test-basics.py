@@ -22,3 +22,12 @@ class Test(unittest.TestCase):
 
     def test_pagecount(self):
         assert(len(self.pdf.pages) == 1)
+
+    def test_crop_and_filter(self):
+        def test(obj):
+            return obj["object_type"] == "char"
+        bbox = (0, 0, 200, 200)
+        original = self.pdf.pages[0]
+        step_1 = original.crop(bbox)
+        step_2 = step_1.filter(test)
+        step_3 = step_2.crop(bbox)

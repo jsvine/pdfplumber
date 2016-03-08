@@ -188,8 +188,15 @@ class Page(Container):
 class CroppedPage(Page):
     def __init__(self, parent_page, bbox, strict=False):
         self.parent_page = parent_page
+        self.pageid = parent_page.pageid
+        self.decimalize = parent_page.decimalize
+
         self.bbox = bbox
         self.strict = strict
+
+        x0, top, x1, bottom = map(self.decimalize, bbox)
+        self.height = bottom - top
+        self.width = x1 - x0
 
     @property
     def objects(self):
@@ -205,15 +212,20 @@ class CroppedPage(Page):
         return self._objects
 
 class FilteredPage(Page):
-    def __init__(self, parent_page, fn):
+    def __init__(self, parent_page, test_function):
         self.parent_page = parent_page
-        self.fn = fn
+        self.test_function = test_function
+
+        self.pageid = parent_page.pageid
+        self.width = parent_page.width
+        self.height = parent_page.height
+        self.decimalize = parent_page.decimalize
 
     @property
     def objects(self):
         if hasattr(self, "_objects"): return self._objects
         self._objects = utils.filter_objects(
             self.parent_page.objects,
-            self.fn
+            self.test_function
         )
         return self._objects
