@@ -103,17 +103,26 @@ def extract_words(chars, x_tolerance=0, y_tolerance=0):
         chars_sorted = sorted(chars, key=itemgetter("x0"))
         words = []
         current_word = []
+
         for char in chars_sorted:
-            if len(current_word) == 0:
+            if char["text"] == " ":
+                if len(current_word) > 0:
+                    words.append(current_word)
+                    current_word = []
+                else: pass
+                continue
+            elif len(current_word) == 0:
                 current_word.append(char)
             else:
                 last_char = current_word[-1]
                 if char["x0"] > (last_char["x1"] + tolerance):
                     words.append(current_word)
-                    current_word = [ char ]
+                    current_word = []
                 else:
                     current_word.append(char)
-        words.append(current_word)
+
+        if len(current_word) > 0:
+            words.append(current_word)
         processed_words = list(map(process_word_chars, words))
         return processed_words
 
