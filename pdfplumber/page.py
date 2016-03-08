@@ -12,11 +12,11 @@ class Page(Container):
         self.pdf = pdf
         self.page_obj = page_obj
         self.mediabox = page_obj.attrs["MediaBox"]
-        d = lambda x: utils.decimalize(x, self.pdf.precision)
-        self.width = d(self.mediabox[2] - self.mediabox[0])
-        self.height = d(self.mediabox[3] - self.mediabox[1])
+        self.decimalize = lambda x: utils.decimalize(x, self.pdf.precision)
+        self.width = self.decimalize(self.mediabox[2] - self.mediabox[0])
+        self.height = self.decimalize(self.mediabox[3] - self.mediabox[1])
         self.pageid = page_obj.pageid
-        self.initial_doctop = d(initial_doctop)
+        self.initial_doctop = self.decimalize(initial_doctop)
 
     @property
     def layout(self):
@@ -33,15 +33,14 @@ class Page(Container):
     def parse_objects(self):
         objects = {}
 
-        d = utils.decimalize
-        q = self.pdf.precision
+        d = self.decimalize
         h = self.height
         idc = self.initial_doctop
         pid = self.pageid
 
         def process_object(obj):
 
-            attr = dict((k, d(v, q)) for k, v in obj.__dict__.items()
+            attr = dict((k, d(v)) for k, v in obj.__dict__.items()
                 if isinstance(v, (float, int, string_types))
                     and k[0] != "_")
 
