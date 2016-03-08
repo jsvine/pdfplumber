@@ -83,6 +83,8 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 
 - `.extract_text(x_tolerance=0, y_tolerance=0)`: Collates all of the page's character objects into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.
 
+- `.extract_words(x_tolerance=0, y_tolerance=0)`: Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`.
+
 - `.extract_table(...)`: Extracts tabular data from the page. For more details see "[Extracting tables](#extracting-tables)" below.
 
 ### Objects

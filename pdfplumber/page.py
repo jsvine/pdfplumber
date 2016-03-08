@@ -1,5 +1,4 @@
 from pdfplumber import utils
-from pdfplumber import helpers
 from pdfplumber.container import Container
 
 from six import string_types
@@ -99,7 +98,7 @@ class Page(Container):
 
         pos_var = "x0" if orientation == "v" else "top"
         edges_uniq = set(e[pos_var] for e in edges)
-        edges_clust = helpers.cluster_list(edges_uniq, tolerance=tolerance)
+        edges_clust = utils.cluster_list(edges_uniq, tolerance=tolerance)
         edge_means = list(sorted(sum(c) / len(c) for c in edges_clust))
 
         return edge_means
@@ -175,6 +174,12 @@ class Page(Container):
         return utils.extract_text(self.chars,
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance)
+
+    def extract_words(self, x_tolerance=0, y_tolerance=0):
+        return utils.extract_words(self.chars,
+            x_tolerance=x_tolerance,
+            y_tolerance=y_tolerance)
+
 
     def crop(self, bbox, strict=False):
         return CroppedPage(self, bbox, strict=strict)
