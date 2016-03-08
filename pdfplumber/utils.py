@@ -195,6 +195,16 @@ def find_gutters(chars, orientation, min_size=5):
         gutters = gutters + [ end_max + Decimal('0.001') ]
     return gutters
 
+def filter_objects(objs, fn):
+    if isinstance(objs, dict):
+        return dict((k, filter_objects(v, fn))
+            for k,v in objs.items())
+
+    initial_type = type(objs)
+    objs = to_list(objs)
+    filtered = filter(fn, objs)
+
+    return initial_type(filtered)
 
 def point_inside_bbox(point, bbox):
     px, py = point

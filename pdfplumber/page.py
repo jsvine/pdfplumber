@@ -180,9 +180,11 @@ class Page(Container):
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance)
 
-
     def crop(self, bbox, strict=False):
         return CroppedPage(self, bbox, strict=strict)
+
+    def filter(self, fn):
+        return FilteredPage(self, fn)
 
 class CroppedPage(Page):
     def __init__(self, parent_page, bbox, strict=False):
@@ -201,4 +203,18 @@ class CroppedPage(Page):
             self.parent_page.objects,
             self.bbox,
             **kwargs)
+        return self._objects
+
+class FilteredPage(Page):
+    def __init__(self, parent_page, fn):
+        self.parent_page = parent_page
+        self.fn = fn
+
+    @property
+    def objects(self):
+        if hasattr(self, "_objects"): return self._objects
+        self._objects = utils.filter_objects(
+            self.parent_page.objects,
+            self.fn
+        )
         return self._objects

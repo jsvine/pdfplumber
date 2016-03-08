@@ -101,3 +101,14 @@ class Test(unittest.TestCase):
         month_chars = within_bbox(page.chars, (0, 35, self.PDF_WIDTH, 65))
         month_text = collate_chars(month_chars, x_tolerance=2)
         assert(month_text == "November - 2015")
+
+    def test_filter(self):
+        page = self.pdf.pages[0]
+        def test(obj):
+            if obj["object_type"] == "char":
+                if obj["size"] < 20:
+                    return False
+            return True
+        filtered = page.filter(test)
+        text = filtered.extract_text(x_tolerance=2)
+        assert(text == "NICS Firearm Background Checks\nNovember - 2015")
