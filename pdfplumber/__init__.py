@@ -11,8 +11,9 @@ VERSION = ".".join(map(str, VERSION_TUPLE))
 def load(file_or_buffer, **kwargs):
     return PDF(file_or_buffer, **kwargs)
 
-def from_path(path, **kwargs):
-    return PDF(open(path, "rb"), **kwargs)
+open = PDF.open
+# Old idiom
+from_path = PDF.open 
 
 def set_debug(debug=0):
     pdfminer.debug = debug

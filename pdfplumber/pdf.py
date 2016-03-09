@@ -29,6 +29,10 @@ class PDF(Container):
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 
+    @classmethod
+    def open(cls, path, **kwargs):
+        return cls(open(path, "rb"), **kwargs)
+
     def process_page(self, page):
         self.interpreter.process_page(page)
         return self.device.get_result()

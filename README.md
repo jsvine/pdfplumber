@@ -41,19 +41,17 @@ The output will be a CSV containing info about every character, line, and rectan
 ```python
 import pdfplumber
 
-pdf = pdfplumber.from_path("path/to/file.pdf")
-first_page = pdf.pages[0]
-
-print(first_page.chars[0])
+with pdfplumber.open("path/to/file.pdf") as pdf:
+    first_page = pdf.pages[0]
+    print(first_page.chars[0])
 ```
 
 ### Loading a PDF
 
 `pdfplumber` provides two main ways to load a PDF:
 
+- `pdfplumber.open("path/to/file.pdf")`
 - `pdfplumber.load(file_like_object)`
-
-- `pdfplumber.from_path("path/to/file.pdf")`
 
 Both methods return an instance of the `pdfplumber.PDF` class.
 

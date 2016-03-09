@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
-        self.pdf = pdfplumber.from_path(path)
+        self.pdf = pdfplumber.open(path)
 
     def test_metadata(self):
         metadata = self.pdf.metadata
