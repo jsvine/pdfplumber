@@ -79,6 +79,8 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
     - By default, the cropped page retains objects that fall at least partly within the bounding box. If an object falls only partly within the box, its dimensions are sliced to fit the bounding box.
     - Calling `.crop` with `strict=True`, however, retains only objects that fall *entirely* within the bounding box.
 
+- `.filter(test_function)`: Returns a version of the page with only the `.objects` for which `test_function(obj)` returns `True`.
+
 - `.extract_text(x_tolerance=0, y_tolerance=0)`: Collates all of the page's character objects into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.
 
 - `.extract_words(x_tolerance=0, y_tolerance=0)`: Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`.
