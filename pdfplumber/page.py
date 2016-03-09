@@ -1,5 +1,4 @@
 from pdfplumber import utils
-from pdfplumber import helpers
 from pdfplumber.container import Container
 
 from six import string_types
@@ -13,11 +12,11 @@ class Page(Container):
         self.pdf = pdf
         self.page_obj = page_obj
         self.mediabox = page_obj.attrs["MediaBox"]
-        d = lambda x: utils.decimalize(x, self.pdf.precision)
-        self.width = d(self.mediabox[2] - self.mediabox[0])
-        self.height = d(self.mediabox[3] - self.mediabox[1])
+        self.decimalize = lambda x: utils.decimalize(x, self.pdf.precision)
+        self.width = self.decimalize(self.mediabox[2] - self.mediabox[0])
+        self.height = self.decimalize(self.mediabox[3] - self.mediabox[1])
         self.pageid = page_obj.pageid
-        self.initial_doctop = d(initial_doctop)
+        self.initial_doctop = self.decimalize(initial_doctop)
 
     @property
     def layout(self):
@@ -34,15 +33,14 @@ class Page(Container):
     def parse_objects(self):
         objects = {}
 
-        d = utils.decimalize
-        q = self.pdf.precision
+        d = self.decimalize
         h = self.height
         idc = self.initial_doctop
         pid = self.pageid
 
         def process_object(obj):
 
-            attr = dict((k, d(v, q)) for k, v in obj.__dict__.items()
+            attr = dict((k, d(v)) for k, v in obj.__dict__.items()
                 if isinstance(v, (float, int, string_types))
                     and k[0] != "_")
 
@@ -99,7 +97,7 @@ class Page(Container):
 
         pos_var = "x0" if orientation == "v" else "top"
         edges_uniq = set(e[pos_var] for e in edges)
-        edges_clust = helpers.cluster_list(edges_uniq, tolerance=tolerance)
+        edges_clust = utils.cluster_list(edges_uniq, tolerance=tolerance)
         edge_means = list(sorted(sum(c) / len(c) for c in edges_clust))
 
         return edge_means
@@ -176,14 +174,29 @@ class Page(Container):
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance)
 
+    def extract_words(self, x_tolerance=0, y_tolerance=0):
+        return utils.extract_words(self.chars,
+            x_tolerance=x_tolerance,
+            y_tolerance=y_tolerance)
+
     def crop(self, bbox, strict=False):
         return CroppedPage(self, bbox, strict=strict)
+
+    def filter(self, fn):
+        return FilteredPage(self, fn)
 
 class CroppedPage(Page):
     def __init__(self, parent_page, bbox, strict=False):
         self.parent_page = parent_page
+        self.pageid = parent_page.pageid
+        self.decimalize = parent_page.decimalize
+
         self.bbox = bbox
         self.strict = strict
+
+        x0, top, x1, bottom = map(self.decimalize, bbox)
+        self.height = bottom - top
+        self.width = x1 - x0
 
     @property
     def objects(self):
@@ -196,4 +209,23 @@ class CroppedPage(Page):
             self.parent_page.objects,
             self.bbox,
             **kwargs)
+        return self._objects
+
+class FilteredPage(Page):
+    def __init__(self, parent_page, test_function):
+        self.parent_page = parent_page
+        self.test_function = test_function
+
+        self.pageid = parent_page.pageid
+        self.width = parent_page.width
+        self.height = parent_page.height
+        self.decimalize = parent_page.decimalize
+
+    @property
+    def objects(self):
+        if hasattr(self, "_objects"): return self._objects
+        self._objects = utils.filter_objects(
+            self.parent_page.objects,
+            self.test_function
+        )
         return self._objects

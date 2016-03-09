@@ -1,5 +1,5 @@
 from itertools import chain
-from pdfplumber import helpers, utils
+from pdfplumber import utils
 
 def rect_to_edges(rect):
     top, bottom, left, right = [ dict(rect) for x in range(4) ]

@@ -9,8 +9,6 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.layout import LAParams
 from pdfminer.converter import PDFPageAggregator
 
-import atexit
-
 class PDF(Container):
     cached_properties = Container.cached_properties + [ "_pages" ]
 
@@ -30,7 +28,10 @@ class PDF(Container):
             self.metadata[k] = decode_text(v)
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
-        atexit.register(self.close)
+
+    @classmethod
+    def open(cls, path, **kwargs):
+        return cls(open(path, "rb"), **kwargs)
 
     def process_page(self, page):
         self.interpreter.process_page(page)
@@ -52,6 +53,13 @@ class PDF(Container):
 
     def close(self):
         self.stream.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.flush_cache()
+        self.close()
 
     @property
     def objects(self):

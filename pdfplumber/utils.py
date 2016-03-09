@@ -1,9 +1,37 @@
-from pdfplumber import helpers
 from pdfminer.utils import PDFDocEncoding
 from decimal import Decimal, ROUND_HALF_UP
 from operator import itemgetter
 import itertools
 import six
+
+def cluster_list(xs, tolerance=0):
+    tolerance = decimalize(tolerance)
+    if tolerance == 0: return [ [x] for x in sorted(xs) ]
+    if len(xs) < 2: return [ [x] for x in sorted(xs) ]
+    groups = []
+    xs = list(sorted(xs))
+    current_group = [xs[0]]
+    last = xs[0]
+    for x in xs[1:]:
+        if x <= (last + tolerance):
+            current_group.append(x)
+        else:
+            groups.append(current_group)
+            current_group = [x]
+        last = x
+    groups.append(current_group)
+    return groups
+
+def make_cluster_dict(values, tolerance):
+    tolerance = decimalize(tolerance)
+    clusters = cluster_list(set(values), tolerance)
+
+    nested_tuples = [ [ (val, i) for val in value_cluster ]
+        for i, value_cluster in enumerate(clusters) ]
+
+    cluster_dict = dict(itertools.chain(*nested_tuples))
+    return cluster_dict 
+
 
 def decode_text(s):
     """
@@ -38,6 +66,7 @@ def to_list(collection):
         return collection
 
 def collate_line(line_chars, tolerance=0):
+    tolerance = decimalize(tolerance)
     coll = ""
     last_x1 = None
     for char in sorted(line_chars, key=itemgetter("x0")):
@@ -47,9 +76,80 @@ def collate_line(line_chars, tolerance=0):
         coll += char["text"]
     return coll
 
+def get_bbox(objs):
+    return (
+        min(map(itemgetter("x0"), objs)),
+        min(map(itemgetter("top"), objs)),
+        max(map(itemgetter("x1"), objs)),
+        max(map(itemgetter("bottom"), objs)),
+    )
+
+def extract_words(chars, x_tolerance=0, y_tolerance=0):
+    x_tolerance = decimalize(x_tolerance)
+    y_tolerance = decimalize(y_tolerance)
+
+    def process_word_chars(chars):
+        x0, top, x1, bottom = get_bbox(chars)
+        return {
+            "x0": x0,
+            "x1": x1,
+            "top": top,
+            "bottom": bottom,
+            "text": "".join(map(itemgetter("text"), chars))
+        }
+        
+
+    def get_line_words(chars, tolerance=0):
+        chars_sorted = sorted(chars, key=itemgetter("x0"))
+        words = []
+        current_word = []
+
+        for char in chars_sorted:
+            if char["text"] == " ":
+                if len(current_word) > 0:
+                    words.append(current_word)
+                    current_word = []
+                else: pass
+                continue
+            elif len(current_word) == 0:
+                current_word.append(char)
+            else:
+                last_char = current_word[-1]
+                if char["x0"] > (last_char["x1"] + tolerance):
+                    words.append(current_word)
+                    current_word = []
+                else:
+                    current_word.append(char)
+
+        if len(current_word) > 0:
+            words.append(current_word)
+        processed_words = list(map(process_word_chars, words))
+        return processed_words
+
+    chars = to_list(chars)
+
+    doctops = map(itemgetter("doctop"), chars)
+    doctop_clusters = make_cluster_dict(doctops, y_tolerance)
+
+    with_cluster = ((char, doctop_clusters.get(char["doctop"]))
+        for char in chars)
+
+    get_0 = itemgetter(0)
+    get_1 = itemgetter(1)
+
+    with_cluster_sorted = sorted(with_cluster, key=get_1)
+
+    grouped = itertools.groupby(with_cluster_sorted, key=get_1)
+
+    nested = [ get_line_words(map(get_0, line_chars), tolerance=x_tolerance)
+        for k, line_chars in grouped ]
+
+    words = list(itertools.chain(*nested))
+    return words
+
 def extract_text(chars, x_tolerance=0, y_tolerance=0):
     if len(chars) == 0:
-        raise Exception("List of chars is empty.")
+        return None
 
     get_0 = itemgetter(0)
     get_1 = itemgetter(1)
@@ -57,14 +157,14 @@ def extract_text(chars, x_tolerance=0, y_tolerance=0):
     chars = to_list(chars)
 
     doctops = map(itemgetter("doctop"), chars)
-    doctop_clusters = helpers.make_cluster_dict(doctops, y_tolerance)
+    doctop_clusters = make_cluster_dict(doctops, y_tolerance)
 
     with_cluster = ((char, doctop_clusters.get(char["doctop"]))
         for char in chars)
 
-    groups = itertools.groupby(sorted(with_cluster, key=get_1), key=get_1)
+    grouped = itertools.groupby(sorted(with_cluster, key=get_1), key=get_1)
     lines = (collate_line(map(get_0, items), x_tolerance)
-        for k, items in groups)
+        for k, items in grouped)
 
     coll = "\n".join(lines)
     return coll
@@ -104,6 +204,16 @@ def find_gutters(chars, orientation, min_size=5):
         gutters = gutters + [ end_max + Decimal('0.001') ]
     return gutters
 
+def filter_objects(objs, fn):
+    if isinstance(objs, dict):
+        return dict((k, filter_objects(v, fn))
+            for k,v in objs.items())
+
+    initial_type = type(objs)
+    objs = to_list(objs)
+    filtered = filter(fn, objs)
+
+    return initial_type(filtered)
 
 def point_inside_bbox(point, bbox):
     px, py = point
