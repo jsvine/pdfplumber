@@ -63,8 +63,8 @@ def to_csv(pdf, types, encoding):
     ]
 
     cols = first_columns + list(sorted(set(fields) - set(first_columns)))
-    
-    w = unicodecsv.DictWriter(sys.stdout.buffer,
+    stdout = (sys.stdout.buffer if sys.version_info[0] >= 3 else sys.stdout)
+    w = unicodecsv.DictWriter(stdout,
         fieldnames=cols, encoding=encoding)
     w.writeheader()
     w.writerows(objs)
