@@ -118,8 +118,7 @@ def extract_words(chars, x_tolerance=0, y_tolerance=0):
                 if char["x0"] > (last_char["x1"] + tolerance):
                     words.append(current_word)
                     current_word = []
-                else:
-                    current_word.append(char)
+                current_word.append(char)
 
         if len(current_word) > 0:
             words.append(current_word)
