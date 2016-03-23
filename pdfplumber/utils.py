@@ -187,8 +187,10 @@ def find_gutters(chars, orientation, min_size=5):
     get_start = itemgetter(start_prop)
     get_end = itemgetter(end_prop)
 
-    starts = list(sorted(set(map(get_start, chars))))
-    end_max = max(map(get_end, chars))
+    is_nonspace = lambda x: x["text"] != " "
+    nonspace_chars = list(filter(is_nonspace, chars))
+    starts = list(sorted(set(map(get_start, nonspace_chars))))
+    end_max = max(map(get_end, nonspace_chars))
 
     start_gaps = ((p1, p2 - p1)
         for p1, p2 in zip(starts, starts[1:]))
