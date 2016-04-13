@@ -44,9 +44,11 @@ def decode_text(s):
         ords = (ord(c) if type(c) == str else c for c in s)
         return ''.join(PDFDocEncoding[o] for o in ords)
 
+import numbers
 def decimalize(v, q=None):
-    if type(v) == int: return Decimal(v)
-    if type(v) == float:
+    if isinstance(v, numbers.Integral):
+        return Decimal(int(v))
+    if isinstance(v, numbers.Real):
         if q != None:
             return Decimal(repr(v)).quantize(Decimal(repr(q)),
                 rounding=ROUND_HALF_UP)

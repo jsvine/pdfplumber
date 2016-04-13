@@ -160,8 +160,8 @@ class Page(Container):
                     return utils.find_gutters(self.chars, "h",
                         min_size=gutter_min_height)
 
-        h = use_strategy(h, "h")
-        v = use_strategy(v, "v")
+        h = list(map(self.decimalize, use_strategy(h, "h")))
+        v = list(map(self.decimalize, use_strategy(v, "v")))
 
         table = utils.extract_table(self.chars, v, h,
             x_tolerance=x_tolerance,
