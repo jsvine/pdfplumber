@@ -5,7 +5,7 @@ import pdfminer.pdftypes
 pdfminer.pdftypes.STRICT = False
 pdfminer.pdfinterp.STRICT = False
 
-VERSION_TUPLE = (0, 4, 2)
+VERSION_TUPLE = (0, 4, 3)
 VERSION = ".".join(map(str, VERSION_TUPLE))
 
 def load(file_or_buffer, **kwargs):
