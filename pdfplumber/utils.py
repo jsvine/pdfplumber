@@ -1,5 +1,6 @@
 from pdfminer.utils import PDFDocEncoding
 from decimal import Decimal, ROUND_HALF_UP
+import numbers
 from operator import itemgetter
 import itertools
 import six
@@ -44,7 +45,6 @@ def decode_text(s):
         ords = (ord(c) if type(c) == str else c for c in s)
         return ''.join(PDFDocEncoding[o] for o in ords)
 
-import numbers
 def decimalize(v, q=None):
     if isinstance(v, numbers.Integral):
         return Decimal(int(v))
