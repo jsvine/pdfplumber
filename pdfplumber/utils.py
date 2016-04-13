@@ -191,14 +191,18 @@ def find_gutters(chars, orientation, min_size=5):
 
     is_nonspace = lambda x: x["text"] != " "
     nonspace_chars = list(filter(is_nonspace, chars))
-    starts = list(sorted(set(map(get_start, nonspace_chars))))
-    end_max = max(map(get_end, nonspace_chars))
+    starts = list(map(get_start, nonspace_chars))
+    ends = list(map(get_end, nonspace_chars))
+    mids = list(sorted(set((start + end) / 2
+        for start, end in zip(starts, ends))))
+    end_max = max(ends)
 
-    start_gaps = ((p1, p2 - p1)
-        for p1, p2 in zip(starts, starts[1:]))
+    mid_gaps = ((p1, p2 - p1)
+        for p1, p2 in zip(mids, mids[1:]))
 
+    # g[0] = first mid; g[1] = gap width
     gutters = [ g[0] + g[1]/2
-        for g in start_gaps
+        for g in mid_gaps
             if g[1] >= min_size ]
 
     if starts[0] < gutters[0]:
@@ -307,14 +311,20 @@ def extract_table(chars, v, h,
 
     table_arr = []
     for hb in h_bounds:
-        test = lambda c: (c["top"] >= hb[0]) & (c["top"] < hb[1])
-        row = list(filter(test, chars))
+        def h_test(c):
+            mid = (c["top"] + c["bottom"]) / 2
+            return (mid >= hb[0]) and (mid < hb[1])
+
+        row = list(filter(h_test, chars))
         row_arr = []
         for vb in v_bounds:
-            test = lambda c: (c["x0"] >= vb[0]) & (c["x0"] < vb[1])
-            cell = list(filter(test, row))
+            def v_test(c):
+                mid = (c["x0"] + c["x1"]) / 2
+                return (mid >= vb[0]) and (mid < vb[1])
+
+            cell = list(filter(v_test, row))
             if len(cell):
-                cell_value = collate_chars(cell,
+                cell_value = extract_text(cell,
                     x_tolerance=x_tolerance,
                     y_tolerance=y_tolerance).strip()
             else:
