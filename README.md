@@ -67,7 +67,9 @@ The top-level `pdfplumber.PDF` class represents a single PDF and has two main pr
 
 The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll do with `pdfplumber` will revolve around this class. It has these main methods and properties:
 
-- `.pageid`: The internal ID assigned to this page. Often, this number will correspond to the page number, but not necessarily.
+- `.page_number`: The internal ID assigned to this page. Often, this number will correspond to the page number, but not necessarily.
+
+- `.page_id`: The internal ID the PDF assigns to this page. Often, this number corresponds to the page number, but not necessarily.
 
 - `.width`: The page's width.
 
@@ -99,7 +101,7 @@ Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to four 
 Each object is represented as a simple Python `dict`, with the following properties:
 
 - `char` / `anno`:
-    - `pageid`: Page ID on which this character was found.
+    - `page_number`: Page number on which this character was found.
     - `text`: E.g., "z", or "Z" or " ".
     - `fontname`: Name of the character's font face.
     - `size`: Font size.
@@ -117,7 +119,7 @@ Each object is represented as a simple Python `dict`, with the following propert
     - `object_type`: "char" / "anno"
 
 - `line`:
-    - `pageid`: Page ID on which this line was found.
+    - `page_number`: Page number on which this character was found.
     - `height`: Height of line.
     - `width`: Width of line.
     - `x0`: Distance of left-side extremity from left side of page.
@@ -131,7 +133,7 @@ Each object is represented as a simple Python `dict`, with the following propert
     - `object_type`: "line"
 
 - `rect`:
-    - `pageid`: Page ID on which this rectangle was found.
+    - `page_number`: Page number on which this character was found.
     - `height`: Height of rectangle.
     - `width`: Width of rectangle.
     - `x0`: Distance of left side of rectangle from left side of page.

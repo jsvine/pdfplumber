@@ -8,14 +8,15 @@ lt_pat = re.compile(r"^LT")
 class Page(Container):
     cached_properties = Container.cached_properties + [ "_layout" ]
 
-    def __init__(self, pdf, page_obj, initial_doctop=0):
+    def __init__(self, pdf, page_obj, page_number=None, initial_doctop=0):
         self.pdf = pdf
         self.page_obj = page_obj
         self.mediabox = page_obj.attrs["MediaBox"]
         self.decimalize = lambda x: utils.decimalize(x, self.pdf.precision)
         self.width = self.decimalize(self.mediabox[2] - self.mediabox[0])
         self.height = self.decimalize(self.mediabox[3] - self.mediabox[1])
-        self.pageid = page_obj.pageid
+        self.page_number = page_number
+        self.page_id = page_obj.pageid
         self.initial_doctop = self.decimalize(initial_doctop)
 
     @property
@@ -36,7 +37,7 @@ class Page(Container):
         d = self.decimalize
         h = self.height
         idc = self.initial_doctop
-        pid = self.pageid
+        pno = self.page_number
 
         def process_object(obj):
 
@@ -46,7 +47,7 @@ class Page(Container):
 
             kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
             attr["object_type"] = kind
-            attr["pageid"] = pid
+            attr["page_number"] = pno
 
             if hasattr(obj, "get_text"):
                 attr["text"] = obj.get_text()
@@ -194,7 +195,8 @@ class Page(Container):
 class CroppedPage(Page):
     def __init__(self, parent_page, bbox, strict=False):
         self.parent_page = parent_page
-        self.pageid = parent_page.pageid
+        self.page_number = parent_page.page_number
+        self.page_id = parent_page.page_id
         self.decimalize = parent_page.decimalize
 
         self.bbox = bbox
@@ -222,7 +224,8 @@ class FilteredPage(Page):
         self.parent_page = parent_page
         self.test_function = test_function
 
-        self.pageid = parent_page.pageid
+        self.page_number = parent_page.page_number
+        self.page_id = parent_page.page_id
         self.width = parent_page.width
         self.height = parent_page.height
         self.decimalize = parent_page.decimalize
