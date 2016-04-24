@@ -110,8 +110,8 @@ class Page(Container):
         line_min_width=1,
         gutter_min_width=5,
         gutter_min_height=5,
-        x_tolerance=0,
-        y_tolerance=0):
+        x_tolerance=utils.DEFAULT_X_TOLERANCE,
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
         """
         For the purposes of this method, "lines" refers to all
         two-dimensional lines, including "rect_edge" objects.
@@ -169,12 +169,18 @@ class Page(Container):
 
         return table
 
-    def extract_text(self, x_tolerance=0, y_tolerance=0):
+    def extract_text(self,
+        x_tolerance=utils.DEFAULT_X_TOLERANCE,
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
+
         return utils.extract_text(self.chars,
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance)
 
-    def extract_words(self, x_tolerance=0, y_tolerance=0):
+    def extract_words(self,
+        x_tolerance=utils.DEFAULT_X_TOLERANCE,
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
+
         return utils.extract_words(self.chars,
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance)

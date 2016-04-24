@@ -5,6 +5,9 @@ from operator import itemgetter
 import itertools
 import six
 
+DEFAULT_X_TOLERANCE = 5
+DEFAULT_Y_TOLERANCE = 5
+
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
     if tolerance == 0: return [ [x] for x in sorted(xs) ]
@@ -67,7 +70,7 @@ def to_list(collection):
     else:
         return collection
 
-def collate_line(line_chars, tolerance=0):
+def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
     tolerance = decimalize(tolerance)
     coll = ""
     last_x1 = None
@@ -86,7 +89,10 @@ def get_bbox(objs):
         max(map(itemgetter("bottom"), objs)),
     )
 
-def extract_words(chars, x_tolerance=0, y_tolerance=0):
+def extract_words(chars,
+    x_tolerance=DEFAULT_X_TOLERANCE,
+    y_tolerance=DEFAULT_Y_TOLERANCE):
+
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
 
@@ -101,7 +107,7 @@ def extract_words(chars, x_tolerance=0, y_tolerance=0):
         }
         
 
-    def get_line_words(chars, tolerance=0):
+    def get_line_words(chars, tolerance=DEFAULT_X_TOLERANCE):
         chars_sorted = sorted(chars, key=itemgetter("x0"))
         words = []
         current_word = []
@@ -148,7 +154,10 @@ def extract_words(chars, x_tolerance=0, y_tolerance=0):
     words = list(itertools.chain(*nested))
     return words
 
-def extract_text(chars, x_tolerance=0, y_tolerance=0):
+def extract_text(chars,
+    x_tolerance=DEFAULT_X_TOLERANCE,
+    y_tolerance=DEFAULT_Y_TOLERANCE):
+
     if len(chars) == 0:
         return None
 
@@ -300,8 +309,8 @@ def dividers_to_bounds(dividers):
     return list(zip(dividers, dividers[1:]))
 
 def extract_table(chars, v, h,
-    x_tolerance=0,
-    y_tolerance=0):
+    x_tolerance=DEFAULT_X_TOLERANCE,
+    y_tolerance=DEFAULT_Y_TOLERANCE):
 
     initial_type = type(chars)
     chars = to_list(chars)
