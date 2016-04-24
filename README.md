@@ -162,9 +162,9 @@ You can think of `Page.extract_table(...)` as a sort of scriptable [Tablula](htt
 
 - `gutter_min_height=[number]`: Minimum size of a character "gutter" to be used in the vertical "gutters" strategy. Defaults to `5`.
 
-- `x_tolerance=[number]`: The maximum horizontal distance between two consecutive characters to consider them part of the same word. (Otherwise, a space is inserted between them.) Defaults to `0`.
+- `x_tolerance=[number]`: The maximum horizontal distance between two consecutive characters to consider them part of the same word. (Otherwise, a space is inserted between them.) Defaults to `5`.
 
-- `x_tolerance=[number]`: The maximum vertical distance between two consecutive characters to consider them part of the same line. (Otherwise, a newline is inserted between them.) Defaults to `0`.
+- `x_tolerance=[number]`: The maximum vertical distance between two consecutive characters to consider them part of the same line. (Otherwise, a newline is inserted between them.) Defaults to `5`.
 
 Note: Often it's helpful to crop a page before trying to extract the table. See the first demo below for an example.
 
