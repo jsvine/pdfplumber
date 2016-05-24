@@ -25,7 +25,10 @@ class PDF(Container):
         for k, v in self.metadata.items():
             if hasattr(v, "resolve"):
                 v = v.resolve()
-            self.metadata[k] = decode_text(v)
+            if type(v) == list:
+                self.metadata[k] = list(map(decode_text, v))
+            else:
+                self.metadata[k] = decode_text(v)
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 
