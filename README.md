@@ -181,7 +181,10 @@ Currently [tested](tests/) on [Python 2.7, 3.1, 3.3, 3.4, and 3.5](tox.ini).
 
 ## Acknowledgments / Contributors
 
-Special thanks to [Jacob Fenton](https://github.com/jsfenfen).
+Many thanks to the following users who've contributed ideas, features, and fixes:
+
+- [Jacob Fenton](https://github.com/jsfenfen)
+- [Bob Lannon](https://github.com/boblannon-picwell)
 
 ## Feedback
 
