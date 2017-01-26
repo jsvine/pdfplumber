@@ -8,6 +8,7 @@ from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.layout import LAParams
 from pdfminer.converter import PDFPageAggregator
+from pdfminer.psparser import PSLiteral
 
 class PDF(Container):
     cached_properties = Container.cached_properties + [ "_pages" ]
@@ -25,7 +26,12 @@ class PDF(Container):
         for k, v in self.metadata.items():
             if hasattr(v, "resolve"):
                 v = v.resolve()
-            self.metadata[k] = decode_text(v)
+            if type(v) == list:
+                self.metadata[k] = list(map(decode_text, v))
+            elif isinstance(v, PSLiteral):
+                self.metadata[k] = decode_text(v.name)
+            else:
+                self.metadata[k] = decode_text(v)
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 

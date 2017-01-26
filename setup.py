@@ -2,7 +2,7 @@ import sys, os
 from setuptools import setup, find_packages
 import subprocess
 
-version = "0.4.3"
+version = "0.4.5"
 
 base_reqs = [
     "chardet",
