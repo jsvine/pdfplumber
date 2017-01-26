@@ -11,19 +11,28 @@ class Page(Container):
     def __init__(self, pdf, page_obj, page_number=None, initial_doctop=0):
         self.pdf = pdf
         self.page_obj = page_obj
-        self.mediabox = page_obj.attrs["MediaBox"]
-        self.decimalize = lambda x: utils.decimalize(x, self.pdf.precision)
-        self.width = self.decimalize(self.mediabox[2] - self.mediabox[0])
-        self.height = self.decimalize(self.mediabox[3] - self.mediabox[1])
         self.page_number = page_number
-        self.page_id = page_obj.pageid
+        self.page_obj.rotate = self.page_obj.attrs.get("Rotate", 0) % 360
+        self.layout = self.pdf.process_page(self.page_obj)
         self.initial_doctop = self.decimalize(initial_doctop)
 
+        cropbox = page_obj.attrs.get("CropBox", page_obj.attrs.get("MediaBox"))
+        self.cropbox = tuple(map(self.decimalize, cropbox))
+        self.bbox = self.layout.bbox
+        x0, bottom, x1, top = self.bbox
+        width = x1 - x0
+        height = top - bottom
+
+    def decimalize(self, x):
+        return utils.decimalize(x, self.pdf.precision)
+
     @property
-    def layout(self):
-        if hasattr(self, "_layout"): return self._layout
-        self._layout = self.pdf.process_page(self.page_obj)
-        return self._layout
+    def width(self):
+        return self.bbox[2] - self.bbox[0]
+
+    @property
+    def height(self):
+        return self.bbox[3] - self.bbox[1]
 
     @property
     def objects(self):
@@ -196,15 +205,11 @@ class CroppedPage(Page):
     def __init__(self, parent_page, bbox, strict=False):
         self.parent_page = parent_page
         self.page_number = parent_page.page_number
-        self.page_id = parent_page.page_id
+        self.page_number = parent_page.page_number
         self.decimalize = parent_page.decimalize
 
         self.bbox = bbox
         self.strict = strict
-
-        x0, top, x1, bottom = map(self.decimalize, bbox)
-        self.height = bottom - top
-        self.width = x1 - x0
 
     @property
     def objects(self):
@@ -225,9 +230,7 @@ class FilteredPage(Page):
         self.test_function = test_function
 
         self.page_number = parent_page.page_number
-        self.page_id = parent_page.page_id
-        self.width = parent_page.width
-        self.height = parent_page.height
+        self.page_number = parent_page.page_number
         self.decimalize = parent_page.decimalize
 
     @property
