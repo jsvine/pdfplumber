@@ -51,8 +51,9 @@ class PDF(Container):
         pp = self.pages_to_parse
         self._pages = []
         for i, page in enumerate(PDFPage.create_pages(self.doc)):
-            if pp != None and i+1 not in pp: continue
-            p = Page(self, page, initial_doctop=doctop)
+            page_number = i+1
+            if pp != None and page_number not in pp: continue
+            p = Page(self, page, page_number=page_number, initial_doctop=doctop)
             self._pages.append(p)
             doctop += p.height
         return self._pages

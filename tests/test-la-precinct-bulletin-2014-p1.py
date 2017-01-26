@@ -11,16 +11,13 @@ logging.disable(logging.ERROR)
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-def _collate_chars(x):
-    return collate_chars(x, x_tolerance=1)
-
 def parse_results_line(chars):
     _left = chars[chars["x0rel"] < 125]
-    left = _collate_chars(_left) if len(_left) else None
+    left = collate_chars(_left) if len(_left) else None
     _right = chars[(chars["x0rel"] > 155)]
-    right = int(_collate_chars(_right)) if len(_right) else None
+    right = int(collate_chars(_right)) if len(_right) else None
     _mid = chars[(chars["x0rel"] > 125) & (chars["x0rel"] < 155)]
-    mid = _collate_chars(_mid) if len(_mid) else None
+    mid = collate_chars(_mid) if len(_mid) else None
     return { "text": left, "aff": mid, "votes": right }
 
 class PrecinctPage(object):
@@ -49,20 +46,20 @@ class PrecinctPage(object):
         h1_left = list(self.bboxes["h1"])
         h1_left[-2] = float(h1_left[-2]) / 2
         h1_left_chars = within_bbox(self.chars, h1_left)
-        txt = h1_left_chars.groupby("top").apply(_collate_chars).iloc[-1]
+        txt = h1_left_chars.groupby("top").apply(collate_chars).iloc[-1]
         p_id = "|".join(re.split(r"\s{2,}", txt)[1:3])
         return p_id
     
     @property
     def ballots_cast(self):
         h2_chars = within_bbox(self.chars, self.bboxes["h2"])
-        txt = h2_chars.groupby("top").apply(_collate_chars).iloc[0]
+        txt = h2_chars.groupby("top").apply(collate_chars).iloc[0]
         return int(re.match(r"(\d+) BALLOTS CAST", txt).group(1))    
     
     @property
     def registered_voters(self):
         h2_chars = within_bbox(self.chars, self.bboxes["h2"])
-        txt = h2_chars.groupby("top").apply(_collate_chars).iloc[1]
+        txt = h2_chars.groupby("top").apply(collate_chars).iloc[1]
         return int(re.match(r"(\d+) REGISTERED VOTERS", txt).group(1))
     
     def parse_col(self, col_chars):

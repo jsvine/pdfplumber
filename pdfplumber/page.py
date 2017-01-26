@@ -8,21 +8,31 @@ lt_pat = re.compile(r"^LT")
 class Page(Container):
     cached_properties = Container.cached_properties + [ "_layout" ]
 
-    def __init__(self, pdf, page_obj, initial_doctop=0):
+    def __init__(self, pdf, page_obj, page_number=None, initial_doctop=0):
         self.pdf = pdf
         self.page_obj = page_obj
-        self.mediabox = page_obj.attrs["MediaBox"]
-        self.decimalize = lambda x: utils.decimalize(x, self.pdf.precision)
-        self.width = self.decimalize(self.mediabox[2] - self.mediabox[0])
-        self.height = self.decimalize(self.mediabox[3] - self.mediabox[1])
-        self.pageid = page_obj.pageid
+        self.page_number = page_number
+        self.page_obj.rotate = self.page_obj.attrs.get("Rotate", 0) % 360
+        self.layout = self.pdf.process_page(self.page_obj)
         self.initial_doctop = self.decimalize(initial_doctop)
 
+        cropbox = page_obj.attrs.get("CropBox", page_obj.attrs.get("MediaBox"))
+        self.cropbox = tuple(map(self.decimalize, cropbox))
+        self.bbox = self.layout.bbox
+        x0, bottom, x1, top = self.bbox
+        width = x1 - x0
+        height = top - bottom
+
+    def decimalize(self, x):
+        return utils.decimalize(x, self.pdf.precision)
+
     @property
-    def layout(self):
-        if hasattr(self, "_layout"): return self._layout
-        self._layout = self.pdf.process_page(self.page_obj)
-        return self._layout
+    def width(self):
+        return self.bbox[2] - self.bbox[0]
+
+    @property
+    def height(self):
+        return self.bbox[3] - self.bbox[1]
 
     @property
     def objects(self):
@@ -36,7 +46,7 @@ class Page(Container):
         d = self.decimalize
         h = self.height
         idc = self.initial_doctop
-        pid = self.pageid
+        pno = self.page_number
 
         def process_object(obj):
 
@@ -46,7 +56,7 @@ class Page(Container):
 
             kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
             attr["object_type"] = kind
-            attr["pageid"] = pid
+            attr["page_number"] = pno
 
             if hasattr(obj, "get_text"):
                 attr["text"] = obj.get_text()
@@ -110,8 +120,8 @@ class Page(Container):
         line_min_width=1,
         gutter_min_width=5,
         gutter_min_height=5,
-        x_tolerance=0,
-        y_tolerance=0):
+        x_tolerance=utils.DEFAULT_X_TOLERANCE,
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
         """
         For the purposes of this method, "lines" refers to all
         two-dimensional lines, including "rect_edge" objects.
@@ -169,12 +179,18 @@ class Page(Container):
 
         return table
 
-    def extract_text(self, x_tolerance=0, y_tolerance=0):
+    def extract_text(self,
+        x_tolerance=utils.DEFAULT_X_TOLERANCE,
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
+
         return utils.extract_text(self.chars,
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance)
 
-    def extract_words(self, x_tolerance=0, y_tolerance=0):
+    def extract_words(self,
+        x_tolerance=utils.DEFAULT_X_TOLERANCE,
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
+
         return utils.extract_words(self.chars,
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance)
@@ -188,15 +204,12 @@ class Page(Container):
 class CroppedPage(Page):
     def __init__(self, parent_page, bbox, strict=False):
         self.parent_page = parent_page
-        self.pageid = parent_page.pageid
+        self.page_number = parent_page.page_number
+        self.page_number = parent_page.page_number
         self.decimalize = parent_page.decimalize
 
         self.bbox = bbox
         self.strict = strict
-
-        x0, top, x1, bottom = map(self.decimalize, bbox)
-        self.height = bottom - top
-        self.width = x1 - x0
 
     @property
     def objects(self):
@@ -216,9 +229,8 @@ class FilteredPage(Page):
         self.parent_page = parent_page
         self.test_function = test_function
 
-        self.pageid = parent_page.pageid
-        self.width = parent_page.width
-        self.height = parent_page.height
+        self.page_number = parent_page.page_number
+        self.page_number = parent_page.page_number
         self.decimalize = parent_page.decimalize
 
     @property

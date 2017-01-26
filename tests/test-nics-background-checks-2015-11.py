@@ -49,8 +49,6 @@ class Test(unittest.TestCase):
         page = self.pdf.pages[0]
         cropped = page.crop((0, 80, self.PDF_WIDTH, 485))
         table = cropped.extract_table(h="gutters",
-            x_tolerance=5,
-            y_tolerance=5,
             gutter_min_height=5)
 
         def parse_value(k, x):
@@ -71,7 +69,7 @@ class Test(unittest.TestCase):
             assert(colsum == (total * 2))
 
         month_chars = within_bbox(page.chars, (0, 35, self.PDF_WIDTH, 65))
-        month_text = collate_chars(month_chars, x_tolerance=2)
+        month_text = collate_chars(month_chars)
         assert(month_text == "November - 2015")
 
     def test_pandas(self):
@@ -79,8 +77,6 @@ class Test(unittest.TestCase):
         cropped = page.crop((0, 80, self.PDF_WIDTH, 485))
 
         _table = cropped.extract_table(h="gutters",
-            x_tolerance=5,
-            y_tolerance=5,
             gutter_min_height=5)
         
         table = pd.DataFrame(_table)
@@ -99,7 +95,7 @@ class Test(unittest.TestCase):
             assert(colsum == (total * 2))
 
         month_chars = within_bbox(page.chars, (0, 35, self.PDF_WIDTH, 65))
-        month_text = collate_chars(month_chars, x_tolerance=2)
+        month_text = collate_chars(month_chars)
         assert(month_text == "November - 2015")
 
     def test_filter(self):
@@ -110,5 +106,5 @@ class Test(unittest.TestCase):
                     return False
             return True
         filtered = page.filter(test)
-        text = filtered.extract_text(x_tolerance=2)
+        text = filtered.extract_text()
         assert(text == "NICS Firearm Background Checks\nNovember - 2015")

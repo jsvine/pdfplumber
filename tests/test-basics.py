@@ -23,6 +23,9 @@ class Test(unittest.TestCase):
     def test_pagecount(self):
         assert(len(self.pdf.pages) == 1)
 
+    def test_page_number(self):
+        assert(self.pdf.pages[0].page_number == 1)
+
     def test_crop_and_filter(self):
         def test(obj):
             return obj["object_type"] == "char"

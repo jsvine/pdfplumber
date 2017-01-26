@@ -56,7 +56,7 @@ def to_csv(pdf, types, encoding):
             fields = fields.union(set(new_objs[0].keys()))
 
     first_columns = [
-        "object_type", "pageid",
+        "object_type", "page_number",
         "x0", "x1", "y0", "y1",
         "doctop", "top", "bottom",
         "width", "height"
