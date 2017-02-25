@@ -5,8 +5,8 @@ from operator import itemgetter
 import itertools
 import six
 
-DEFAULT_X_TOLERANCE = 5
-DEFAULT_Y_TOLERANCE = 5
+DEFAULT_X_TOLERANCE = 3
+DEFAULT_Y_TOLERANCE = 3
 
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
@@ -34,8 +34,28 @@ def make_cluster_dict(values, tolerance):
         for i, value_cluster in enumerate(clusters) ]
 
     cluster_dict = dict(itertools.chain(*nested_tuples))
-    return cluster_dict 
+    return cluster_dict
 
+def cluster_objects(objs, attr, tolerance):
+    if isinstance(attr, (str, int)):
+        attr_getter = itemgetter(attr)
+    else:
+        attr_getter = attr
+    objs = to_list(objs)
+    values = map(attr_getter, objs)
+    cluster_dict = make_cluster_dict(values, tolerance)
+
+    get_0, get_1 = itemgetter(0), itemgetter(1)
+
+    cluster_tuples = sorted(((obj, cluster_dict.get(attr_getter(obj)))
+        for obj in objs), key=get_1)
+
+    grouped = itertools.groupby(cluster_tuples, key=get_1)
+
+    clusters = [ list(map(get_0, v))
+        for k, v in grouped ]
+
+    return clusters
 
 def decode_text(s):
     """
@@ -68,7 +88,7 @@ def to_list(collection):
     if is_dataframe(collection):
         return collection.to_dict("records")
     else:
-        return collection
+        return list(collection)
 
 def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
     tolerance = decimalize(tolerance)
@@ -81,13 +101,32 @@ def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
         coll += char["text"]
     return coll
 
-def get_bbox(objs):
+def objects_to_rect(objects):
+    return {
+        "x0": min(map(itemgetter("x0"), objects)),
+        "x1": max(map(itemgetter("x1"), objects)),
+        "top": min(map(itemgetter("top"), objects)),
+        "bottom": max(map(itemgetter("bottom"), objects)),
+    }
+
+def objects_to_bbox(objects):
     return (
-        min(map(itemgetter("x0"), objs)),
-        min(map(itemgetter("top"), objs)),
-        max(map(itemgetter("x1"), objs)),
-        max(map(itemgetter("bottom"), objs)),
+        min(map(itemgetter("x0"), objects)),
+        min(map(itemgetter("top"), objects)),
+        max(map(itemgetter("x1"), objects)),
+        max(map(itemgetter("bottom"), objects)),
     )
+
+def rect_to_bbox(rect):
+    return (rect["x0"], rect["top"], rect["x1"], rect["bottom"])
+
+def bbox_to_rect(bbox):
+    return {
+        "x0": bbox[0],
+        "top": bbox[1],
+        "x1": bbox[2],
+        "bottom": bbox[3]
+    }
 
 def extract_words(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
@@ -97,7 +136,7 @@ def extract_words(chars,
     y_tolerance = decimalize(y_tolerance)
 
     def process_word_chars(chars):
-        x0, top, x1, bottom = get_bbox(chars)
+        x0, top, x1, bottom = objects_to_bbox(chars)
         return {
             "x0": x0,
             "x1": x1,
@@ -105,20 +144,20 @@ def extract_words(chars,
             "bottom": bottom,
             "text": "".join(map(itemgetter("text"), chars))
         }
-        
+
 
     def get_line_words(chars, tolerance=DEFAULT_X_TOLERANCE):
+        get_text = itemgetter("text")
         chars_sorted = sorted(chars, key=itemgetter("x0"))
         words = []
         current_word = []
 
         for char in chars_sorted:
-            if char["text"] == " ":
+            if get_text(char) == " ":
                 if len(current_word) > 0:
                     words.append(current_word)
                     current_word = []
                 else: pass
-                continue
             elif len(current_word) == 0:
                 current_word.append(char)
             else:
@@ -134,22 +173,10 @@ def extract_words(chars,
         return processed_words
 
     chars = to_list(chars)
+    doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
 
-    doctops = map(itemgetter("doctop"), chars)
-    doctop_clusters = make_cluster_dict(doctops, y_tolerance)
-
-    with_cluster = ((char, doctop_clusters.get(char["doctop"]))
-        for char in chars)
-
-    get_0 = itemgetter(0)
-    get_1 = itemgetter(1)
-
-    with_cluster_sorted = sorted(with_cluster, key=get_1)
-
-    grouped = itertools.groupby(with_cluster_sorted, key=get_1)
-
-    nested = [ get_line_words(map(get_0, line_chars), tolerance=x_tolerance)
-        for k, line_chars in grouped ]
+    nested = [ get_line_words(line_chars, tolerance=x_tolerance)
+        for line_chars in doctop_clusters ]
 
     words = list(itertools.chain(*nested))
     return words
@@ -161,64 +188,16 @@ def extract_text(chars,
     if len(chars) == 0:
         return None
 
-    get_0 = itemgetter(0)
-    get_1 = itemgetter(1)
-
     chars = to_list(chars)
+    doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
 
-    doctops = map(itemgetter("doctop"), chars)
-    doctop_clusters = make_cluster_dict(doctops, y_tolerance)
-
-    with_cluster = ((char, doctop_clusters.get(char["doctop"]))
-        for char in chars)
-
-    grouped = itertools.groupby(sorted(with_cluster, key=get_1), key=get_1)
-    lines = (collate_line(map(get_0, items), x_tolerance)
-        for k, items in grouped)
+    lines = (collate_line(line_chars, x_tolerance)
+        for line_chars in doctop_clusters)
 
     coll = "\n".join(lines)
     return coll
 
 collate_chars = extract_text
-
-def find_gutters(chars, orientation, min_size=5):
-    """
-    The size of a gutter is the distance between the beginning
-    of the current character and the beginning of the next character.
-    """
-    if orientation not in ("h", "v"):
-        raise ValueError('`orientation` must be "h" or "v".')
-
-    if len(chars) == 0:
-        raise ValueError("No chars.")
-
-    start_prop = "x0" if orientation == "v" else "top"
-    end_prop = "x1" if orientation == "v" else "bottom"
-
-    get_start = itemgetter(start_prop)
-    get_end = itemgetter(end_prop)
-
-    is_nonspace = lambda x: x["text"] != " "
-    nonspace_chars = list(filter(is_nonspace, chars))
-    starts = list(map(get_start, nonspace_chars))
-    ends = list(map(get_end, nonspace_chars))
-    mids = list(sorted(set((start + end) / 2
-        for start, end in zip(starts, ends))))
-    end_max = max(ends)
-
-    mid_gaps = ((p1, p2 - p1)
-        for p1, p2 in zip(mids, mids[1:]))
-
-    # g[0] = first mid; g[1] = gap width
-    gutters = [ g[0] + g[1]/2
-        for g in mid_gaps
-            if g[1] >= min_size ]
-
-    if starts[0] < gutters[0]:
-        gutters = [ starts[0] ] + gutters
-    if end_max > gutters[-1]:
-        gutters = gutters + [ end_max + Decimal('0.001') ]
-    return gutters
 
 def filter_objects(objs, fn):
     if isinstance(objs, dict):
@@ -246,7 +225,11 @@ def obj_inside_bbox_score(obj, bbox):
     score = sum(point_inside_bbox(c, bbox) for c in corners)
     return score
 
-def crop_obj(obj, bbox, score=None):
+def objects_overlap(a, b):
+    bbox = (b["x0"], b["top"], b["x1"], b["bottom"])
+    return obj_inside_bbox_score(a, bbox) > 0
+
+def clip_obj(obj, bbox, score=None):
     if score == None:
         score = obj_inside_bbox_score(obj, bbox)
     if score == 0: return None
@@ -281,64 +264,163 @@ def crop_obj(obj, bbox, score=None):
 
     return copy
 
-def within_bbox(objs, bbox, strict=True, crop=False):
+def n_points_intersecting_bbox(objs, bbox):
+    bbox = tuple(map(decimalize, bbox))
+    objs = to_list(objs)
+    scores = (obj_inside_bbox_score(obj, bbox) for obj in objs)
+    return list(scores)
+
+
+def intersects_bbox(objs, bbox):
     """
-    strict: Include only objects that are fully within the box?
-    crop: Crop lines and rectangles to the box?
+    Filters objs to only those intersecting the bbox
+    """
+    initial_type = type(objs)
+    objs = to_list(objs)
+    scores = n_points_intersecting_bbox(objs, bbox)
+    matching = [ obj for obj, score in zip(objs, scores)
+        if score > 0 ]
+    return initial_type(matching)
+
+def within_bbox(objs, bbox):
+    """
+    Filters objs to only those fully within the bbox
     """
     if isinstance(objs, dict):
-        return dict((k, within_bbox(v, bbox, strict=strict, crop=crop))
+        return dict((k, within_bbox(v, bbox))
             for k,v in objs.items())
 
     initial_type = type(objs)
     objs = to_list(objs)
-
-    scores = ((obj, obj_inside_bbox_score(obj, bbox)) for obj in objs)
-
-    if crop:
-        matching = [ (crop_obj(s[0], bbox, s[1]) if s[1] < 4 else s[0])
-            for s in scores if s[1] > 0 ]
-    elif strict:
-        matching = [ s[0] for s in scores if s[1] == 4 ]
-    else:
-        matching = [ s[0] for s in scores if s[1] > 0 ]
-    
+    scores = n_points_intersecting_bbox(objs, bbox)
+    matching = [ obj for obj, score in zip(objs, scores)
+        if score == 4 ]
     return initial_type(matching)
 
-def dividers_to_bounds(dividers):
-    return list(zip(dividers, dividers[1:]))
+def crop_to_bbox(objs, bbox):
+    """
+    Filters objs to only those intersecting the bbox,
+    and crops the extent of the objects to the bbox.
+    """
+    if isinstance(objs, dict):
+        return dict((k, crop_to_bbox(v, bbox))
+            for k,v in objs.items())
 
-def extract_table(chars, v, h,
-    x_tolerance=DEFAULT_X_TOLERANCE,
-    y_tolerance=DEFAULT_Y_TOLERANCE):
+    initial_type = type(objs)
+    objs = to_list(objs)
+    scores = n_points_intersecting_bbox(objs, bbox)
+    cropped = [ clip_obj(obj, bbox, score)
+        for obj, score in zip(objs, scores)
+            if score > 0 ]
+    return initial_type(cropped)
 
-    initial_type = type(chars)
-    chars = to_list(chars)
+def move_object(obj, axis, value):
+    assert(axis in ("h", "v"))
+    if axis == "h":
+        new_items = (
+            ("x0", obj["x0"] + value),
+            ("x1", obj["x1"] + value),
+        )
+    if axis == "v":
+        new_items = [
+            ("top", obj["top"] + value),
+            ("bottom", obj["bottom"] + value),
+        ]
+        if "doctop" in obj:
+            new_items += [ ("doctop", obj["doctop"] + value) ]
+        if "y0" in obj:
+            new_items += [
+                ("y0", obj["y0"] - value),
+                ("y1", obj["y1"] - value),
+            ]
+    return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
-    v_bounds = dividers_to_bounds(v)
-    h_bounds = dividers_to_bounds(h)
+def resize_object(obj, key, value):
+    assert(key in ("x0", "x1", "top", "bottom"))
+    old_value = obj[key]
+    diff = value - old_value
+    if key in ("x0", "x1"):
+        if key == "x0":
+            assert(value <= obj["x1"])
+        else:
+            assert(value >= obj["x0"])
+        new_items = (
+            (key, value),
+            ("width", obj["width"] + diff),
+        )
+    if key == "top":
+        assert(value <= obj["bottom"])
+        new_items = [
+            (key, value),
+            ("doctop", obj["doctop"] + diff),
+            ("height", obj["height"] - diff),
+        ]
+        if "y1" in obj:
+            new_items += [
+                ("y1", obj["y1"] - diff),
+            ]
+    if key == "bottom":
+        assert(value >= obj["top"])
+        new_items = [
+            (key, value),
+            ("height", obj["height"] + diff),
+        ]
+        if "y0" in obj:
+            new_items += [
+                ("y0", obj["y0"] - diff),
+            ]
+    return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
-    table_arr = []
-    for hb in h_bounds:
-        def h_test(c):
-            mid = (c["top"] + c["bottom"]) / 2
-            return (mid >= hb[0]) and (mid < hb[1])
+def rect_to_edges(rect):
+    top, bottom, left, right = [ dict(rect) for x in range(4) ]
+    top.update({
+        "object_type": "rect_edge",
+        "height": decimalize(0),
+        "y0": rect["y1"],
+        "bottom": rect["top"],
+        "orientation": "h"
+    })
+    bottom.update({
+        "object_type": "rect_edge",
+        "height": decimalize(0),
+        "y1": rect["y0"],
+        "top": rect["top"] + rect["height"],
+        "doctop": rect["doctop"] + rect["height"],
+        "orientation": "h"
+    })
+    left.update({
+        "object_type": "rect_edge",
+        "width": decimalize(0),
+        "x1": rect["x0"],
+        "orientation": "v"
+    })
+    right.update({
+        "object_type": "rect_edge",
+        "width": decimalize(0),
+        "x0": rect["x1"],
+        "orientation": "v"
+    })
+    return [ top, bottom, left, right ]
 
-        row = list(filter(h_test, chars))
-        row_arr = []
-        for vb in v_bounds:
-            def v_test(c):
-                mid = (c["x0"] + c["x1"]) / 2
-                return (mid >= vb[0]) and (mid < vb[1])
+def line_to_edge(line):
+    edge = dict(line)
+    edge["orientation"] = "h" if (line["top"] == line["bottom"]) else "v"
+    return edge
 
-            cell = list(filter(v_test, row))
-            if len(cell):
-                cell_value = extract_text(cell,
-                    x_tolerance=x_tolerance,
-                    y_tolerance=y_tolerance).strip()
-            else:
-                cell_value = None
-            row_arr.append(cell_value)
-        table_arr.append(row_arr)
+def filter_edges(edges, orientation=None,
+    edge_type=None,
+    min_length=1):
 
-    return initial_type(table_arr)
+    if orientation not in ("v", "h", None):
+        raise ValueError("Orientation must be 'v' or 'h'")
+
+    def test(e):
+        dim = "height" if e["orientation"] == "v" else "width"
+        et = (e["object_type"] == edge_type if edge_type != None else True)
+        return et & (
+            (True if orientation == None else (e["orientation"] == orientation)) & 
+            (e[dim] >= min_length)
+        )
+
+    edges = filter(test, edges)
+    return list(edges)
