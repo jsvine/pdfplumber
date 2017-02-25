@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
-        self.pdf = pdfplumber.open(path)
+        self.pdf = pdfplumber.from_path(path)
 
     def test_metadata(self):
         metadata = self.pdf.metadata
@@ -32,5 +32,21 @@ class Test(unittest.TestCase):
         bbox = (0, 0, 200, 200)
         original = self.pdf.pages[0]
         step_1 = original.crop(bbox)
+        assert(step_1.width == 200)
+        assert(len(step_1.chars) < len(original.chars))
         step_2 = step_1.filter(test)
-        step_3 = step_2.crop(bbox)
+        assert(len(step_1.rects) > 0)
+        assert(len(step_2.rects) == 0)
+
+    def test_rotation(self):
+        rotated = pdfplumber.from_path(
+            os.path.join(HERE, "pdfs/nics-background-checks-2015-11-rotated.pdf")
+        )
+        assert(self.pdf.pages[0].width == 1008)
+        assert(self.pdf.pages[0].height == 612)
+
+        assert(rotated.pages[0].width == 612)
+        assert(rotated.pages[0].height == 1008)
+
+        assert(rotated.pages[0].cropbox == self.pdf.pages[0].cropbox)
+        assert(rotated.pages[0].bbox != self.pdf.pages[0].bbox)
