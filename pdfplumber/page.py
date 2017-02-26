@@ -127,7 +127,8 @@ class Page(Container):
 
     def extract_words(self,
         x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE,
+        keep_blank_chars=False):
 
         return utils.extract_words(self.chars,
             x_tolerance=x_tolerance,

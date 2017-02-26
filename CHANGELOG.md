@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.1] — 2017-02-26
+### Added
+- Quick-draw `PageImage` methods: `.draw_vline`, `.draw_vlines`, `.draw_hline`, and `.draw_hlines`.
+- Boolean parameter `keep_blank_chars` for `.extract_words(...)` and `TableFinder` settings.
+
+### Changed
+- Increased default `text_tolerance` and `intersection_tolerance` TableFinder values from 1 to 3.
+
+### Fixed
+- Properly handle conversion of PDFs with transparency to `pillow` images.
+- Properly handle `pandas` DataFrames as inputs to multi-draw commands (e.g., `PageImage.draw_rects(...)`).
+
 ## [0.5.0] - 2017-02-25
 ### Added
 - Visual debugging features, via `Page.to_image(...)` and `PageImage`. (Introduces `wand` and `pillow` as package requirements.)

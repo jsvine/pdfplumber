@@ -87,9 +87,7 @@ def merge_edges(edges, snap_tolerance, join_tolerance):
     return edges
 
 def words_to_edges_h(words,
-    word_threshold=3,
-    join_tolerance=DEFAULT_JOIN_TOLERANCE,
-    snap_tolerance=DEFAULT_SNAP_TOLERANCE):
+    word_threshold=3):
     """
     Find (imaginary) horizontal lines that connect the tops of at least `word_threshold` words.
     """
@@ -116,14 +114,10 @@ def words_to_edges_h(words,
         "orientation": "h"
     } for r in rects ]
 
-    return merge_edges(edges,
-        join_tolerance=join_tolerance,
-        snap_tolerance=snap_tolerance)
+    return edges
 
 def words_to_edges_v(words,
-    word_threshold=3,
-    join_tolerance=DEFAULT_JOIN_TOLERANCE,
-    snap_tolerance=DEFAULT_SNAP_TOLERANCE):
+    word_threshold=3):
     """
     Find (imaginary) vertical lines that connect the left, right, or center of at least `word_threshold` words.
     """
@@ -185,9 +179,7 @@ def words_to_edges_v(words,
         "orientation": "v"
     } ]
     
-    return merge_edges(edges,
-        join_tolerance=join_tolerance,
-        snap_tolerance=snap_tolerance)
+    return edges
 
 def edges_to_intersections(edges, x_tolerance=1, y_tolerance=1):
     """
@@ -404,10 +396,11 @@ DEFAULT_TABLE_SETTINGS = {
     "join_tolerance": DEFAULT_JOIN_TOLERANCE,
     "edge_min_length": 3,
     "text_word_threshold": 3,
-    "text_tolerance": 1,
+    "keep_blank_chars": False,
+    "text_tolerance": 3,
     "text_x_tolerance": None,
     "text_y_tolerance": None,
-    "intersection_tolerance": 1,
+    "intersection_tolerance": 3,
     "intersection_x_tolerance": None,
     "intersection_y_tolerance": None,
 }
@@ -479,7 +472,8 @@ class TableFinder(object):
                 yt = settings["text_tolerance"]
             words = self.page.extract_words(
                 x_tolerance=xt,
-                y_tolerance=yt
+                y_tolerance=yt,
+                keep_blank_chars=settings["keep_blank_chars"]
             )
 
         def v_edge_desc_to_edge(desc):

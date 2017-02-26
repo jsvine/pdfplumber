@@ -24,8 +24,12 @@ def get_page_image(pdf_path, page_no, resolution):
     page_path = "{0}[{1}]".format(pdf_path, page_no)
     with wand.image.Image(filename=page_path, resolution=resolution) as img:
         with img.convert("png") as png:
-            im = PIL.Image.open(BytesIO(png.make_blob())).convert("RGB")
-            return im
+            im = PIL.Image.open(BytesIO(png.make_blob()))
+            if "transparency" in im.info:
+                converted = im.convert("RGBA").convert("RGB")
+            else:
+                converted = im.convert("RGB")
+            return converted
 
 class PageImage(object):
     def __init__(self, page, original=None, resolution=DEFAULT_RESOLUTION):
@@ -100,8 +104,40 @@ class PageImage(object):
         return self
 
     def draw_lines(self, list_of_lines, **kwargs):
-        for x in list_of_lines:
+        for x in utils.to_list(list_of_lines):
             self.draw_line(x, **kwargs)
+        return self
+        
+    def draw_vline(self, location,
+        stroke=DEFAULT_STROKE,
+        stroke_width=DEFAULT_STROKE_WIDTH):
+        points = (location, self.page.bbox[1], location, self.page.bbox[3])
+        self.draw.line(
+            self._reproject_bbox(points),
+            fill=stroke,
+            width=stroke_width
+        )
+        return self
+
+    def draw_vlines(self, locations, **kwargs):
+        for x in utils.to_list(locations):
+            self.draw_vline(x, **kwargs)
+        return self
+        
+    def draw_hline(self, location,
+        stroke=DEFAULT_STROKE,
+        stroke_width=DEFAULT_STROKE_WIDTH):
+        points = (self.page.bbox[0], location, self.page.bbox[2], location)
+        self.draw.line(
+            self._reproject_bbox(points),
+            fill=stroke,
+            width=stroke_width
+        )
+        return self
+
+    def draw_hlines(self, locations, **kwargs):
+        for x in utils.to_list(locations):
+            self.draw_hline(x, **kwargs)
         return self
         
     def draw_rect(self, bbox_or_obj,
@@ -142,7 +178,7 @@ class PageImage(object):
         return self
 
     def draw_rects(self, list_of_rects, **kwargs):
-        for x in list_of_rects:
+        for x in utils.to_list(list_of_rects):
             self.draw_rect(x, **kwargs)
         return self
 
@@ -168,7 +204,7 @@ class PageImage(object):
         return self
 
     def draw_circles(self, list_of_circles, **kwargs):
-        for x in list_of_circles:
+        for x in utils.to_list(list_of_circles):
             self.draw_circle(x, **kwargs)
         return self
 

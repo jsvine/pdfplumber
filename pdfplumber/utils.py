@@ -130,7 +130,9 @@ def bbox_to_rect(bbox):
 
 def extract_words(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
-    y_tolerance=DEFAULT_Y_TOLERANCE):
+    y_tolerance=DEFAULT_Y_TOLERANCE,
+    keep_blank_chars=False
+    ):
 
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
@@ -153,7 +155,7 @@ def extract_words(chars,
         current_word = []
 
         for char in chars_sorted:
-            if get_text(char) == " ":
+            if not keep_blank_chars and get_text(char) == " ":
                 if len(current_word) > 0:
                     words.append(current_word)
                     current_word = []
