@@ -1,4 +1,4 @@
-# PDFPlumber `v0.5.0`
+# PDFPlumber `v0.5.1`
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
@@ -189,11 +189,13 @@ im = my_pdf.page[0].to_image(resolution=150)
 
 You can pass explicit coordinates or any `pdfplumber` PDF object (e.g., char, line, rect) to these methods.
 
-| Single-object method | Bulk method |
-|----------------------|-------------|
-|`im.draw_line(line, stroke={color}, stroke_width=1)`| `im.draw_lines(list_of_lines, **kwargs)`|
-|`im.draw_rect(bbox_or_obj, fill={color}, stroke={color}, stroke_width=1)`| `im.draw_rects(list_of_rects, **kwargs)`|
-|`im.draw_circle(center_or_obj, radius=5, fill={color}, stroke={color})`| `im.draw_circles(list_of_circles, **kwargs)`|
+| Single-object method | Bulk method | Description |
+|----------------------|-------------|-------------|
+|`im.draw_line(line, stroke={color}, stroke_width=1)`| `im.draw_lines(list_of_lines, **kwargs)`| Draws a line from a `line`-like object, or a 4-tuple bounding box.|
+|`im.draw_vline(location, stroke={color}, stroke_width=1)`| `im.draw_vlines(list_of_locations, **kwargs)`| Draws a vertical line at the x-coordinate indicated by `location`.|
+|`im.draw_hline(location, stroke={color}, stroke_width=1)`| `im.draw_hlines(list_of_locations, **kwargs)`| Draws a horizontal line at the y-coordinate indicated by `location`.|
+|`im.draw_rect(bbox_or_obj, fill={color}, stroke={color}, stroke_width=1)`| `im.draw_rects(list_of_rects, **kwargs)`| Draws a rectangle from a `rect`, `char`, etc., or 4-tuple bounding box.|
+|`im.draw_circle(center_or_obj, radius=5, fill={color}, stroke={color})`| `im.draw_circles(list_of_circles, **kwargs)`| Draws a circle at `(x, y)` coordinate or at the center of a `char`, `rect`, etc.|
 
 Note: The methods above are built on Pillow's [`ImageDraw` methods](http://pillow.readthedocs.io/en/latest/reference/ImageDraw.html), but the parameters have been tweaked for consistency with SVG's `fill`/`stroke`/`stroke_width` nomenclature.
 
@@ -242,10 +244,11 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
     "join_tolerance": 3,
     "edge_min_length": 3,
     "text_word_threshold": 3,
-    "text_tolerance": 1,
+    "keep_blank_chars": False,
+    "text_tolerance": 3,
     "text_x_tolerance": None,
     "text_y_tolerance": None,
-    "intersection_tolerance": 1,
+    "intersection_tolerance": 3,
     "intersection_x_tolerance": None,
     "intersection_y_tolerance": None,
 }
@@ -261,6 +264,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 |`"join_tolerance"`| Line segments on the same infinite line, and whose ends are within `join_tolerance` of one another, will be "joined" into a single line segment.|
 |`"edge_min_length"`| Edges shorter than `edge_min_length` will be discarded before attempting to reconstruct the table.|
 |`"text_word_threshold"`| When using the `text` strategy, at least `text_word_threshold` words must share the same alignment.|
+|`"keep_blank_chars"`| When using the `text` strategy, consider `" "` chars to be *parts* of words and not word-separators.|
 |`"text_tolerance"`, `"text_x_tolerance"`, `"text_y_tolerance"`| When the `text` strategy searches for words, it will expect the individual letters in each word to be no more than `text_tolerance` pixels apart.|
 |`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges most be within `intersection_tolerance` pixels to be considered intersecting.|
 
