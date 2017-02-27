@@ -4,6 +4,8 @@ import itertools
 
 DEFAULT_SNAP_TOLERANCE = 3
 DEFAULT_JOIN_TOLERANCE = 3
+DEFAULT_MIN_WORDS_VERTICAL = 3
+DEFAULT_MIN_WORDS_HORIZONTAL = 1
 
 def move_to_avg(objs, orientation):
     """
@@ -87,7 +89,7 @@ def merge_edges(edges, snap_tolerance, join_tolerance):
     return edges
 
 def words_to_edges_h(words,
-    word_threshold=3):
+    word_threshold=DEFAULT_MIN_WORDS_HORIZONTAL):
     """
     Find (imaginary) horizontal lines that connect the tops of at least `word_threshold` words.
     """
@@ -117,7 +119,7 @@ def words_to_edges_h(words,
     return edges
 
 def words_to_edges_v(words,
-    word_threshold=3):
+    word_threshold=DEFAULT_MIN_WORDS_VERTICAL):
     """
     Find (imaginary) vertical lines that connect the left, right, or center of at least `word_threshold` words.
     """
@@ -213,7 +215,7 @@ def intersections_to_cells(intersections):
 
     def edge_connects(p1, p2):
         def edges_to_set(edges):
-            return set(map(tuple, [ x.items() for x in edges ]))
+            return set(map(utils.obj_to_bbox, edges))
 
         if p1[0] == p2[0]:
             common = edges_to_set(intersections[p1]["v"])\
@@ -395,7 +397,8 @@ DEFAULT_TABLE_SETTINGS = {
     "snap_tolerance": DEFAULT_SNAP_TOLERANCE,
     "join_tolerance": DEFAULT_JOIN_TOLERANCE,
     "edge_min_length": 3,
-    "text_word_threshold": 3,
+    "min_words_vertical": DEFAULT_MIN_WORDS_VERTICAL,
+    "min_words_horizontal": DEFAULT_MIN_WORDS_HORIZONTAL,
     "keep_blank_chars": False,
     "text_tolerance": 3,
     "text_x_tolerance": None,
@@ -505,7 +508,7 @@ class TableFinder(object):
                 edge_type="lines")
         elif v_strat == "text":
             v_base = words_to_edges_v(words,
-                word_threshold=settings["text_word_threshold"])
+                word_threshold=settings["min_words_vertical"])
         elif v_strat == "explicit":
             v_base = []
 
@@ -539,7 +542,7 @@ class TableFinder(object):
                 edge_type="lines")
         elif h_strat == "text":
             h_base = words_to_edges_h(words,
-                word_threshold=settings["text_word_threshold"])
+                word_threshold=settings["min_words_horizontal"])
         elif h_strat == "explicit":
             h_base = []
 
@@ -553,5 +556,3 @@ class TableFinder(object):
             )
         return utils.filter_edges(edges,
             min_length=settings["edge_min_length"])
-
-

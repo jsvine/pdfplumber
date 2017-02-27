@@ -21,22 +21,22 @@ class Page(Container):
         self.initial_doctop = self.decimalize(initial_doctop)
 
         cropbox = page_obj.attrs.get("CropBox", page_obj.attrs.get("MediaBox"))
-        self.cropbox = tuple(map(self.decimalize, cropbox))
+        self.cropbox = self.decimalize(cropbox)
 
         if self.rotation in [ 90, 270 ]:
-            self.bbox = tuple(map(self.decimalize, (
+            self.bbox = self.decimalize((
                 min(cropbox[1], cropbox[3]),
                 min(cropbox[0], cropbox[2]),
                 max(cropbox[1], cropbox[3]),
                 max(cropbox[0], cropbox[2]),
-            )))
+            ))
         else:
-            self.bbox = tuple(map(self.decimalize, (
+            self.bbox = self.decimalize((
                 min(cropbox[0], cropbox[2]),
                 min(cropbox[1], cropbox[3]),
                 max(cropbox[0], cropbox[2]),
                 max(cropbox[1], cropbox[3]),
-            )))
+            ))
 
     def decimalize(self, x):
         return utils.decimalize(x, self.pdf.precision)
@@ -69,11 +69,33 @@ class Page(Container):
         idc = self.initial_doctop
         pno = self.page_number
 
-        def process_object(obj):
+        def point2coord(pt):
+            x, y = pt
+            return (
+                d(x),
+                h - d(y)
+            )
 
-            attr = dict((k, d(v)) for k, v in obj.__dict__.items()
-                if isinstance(v, (float, int, string_types))
-                    and k[0] != "_")
+        IGNORE = [
+            "bbox",
+            "matrix",
+            "_text",
+            "_objs",
+            "groups",
+            "stream",
+            "colorspace",
+            "imagemask",
+            "pts",
+        ]
+
+        NON_DECIMALIZE = [
+            "fontname", "name", "upright",
+        ]
+
+        def process_object(obj):
+            attr = dict((k, (v if k in NON_DECIMALIZE else d(v)))
+                for k, v in obj.__dict__.items()
+                    if k not in IGNORE)
 
             kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
             attr["object_type"] = kind
@@ -81,6 +103,9 @@ class Page(Container):
 
             if hasattr(obj, "get_text"):
                 attr["text"] = obj.get_text()
+
+            if kind == "curve":
+                attr["points"] = list(map(point2coord, obj.pts))
 
             if attr.get("y0") != None:
                 attr["top"] = h - attr["y1"]
@@ -145,7 +170,7 @@ class Page(Container):
                 return self._objects
 
         cropped = CroppedPage(self)
-        cropped.bbox = tuple(map(self.decimalize, bbox))
+        cropped.bbox = self.decimalize(bbox)
         return cropped
 
     def within_bbox(self, bbox):
@@ -162,7 +187,7 @@ class Page(Container):
                 return self._objects
 
         cropped = CroppedPage(self)
-        cropped.bbox = tuple(map(self.decimalize, bbox))
+        cropped.bbox = self.decimalize(bbox)
         return cropped
 
     def filter(self, test_function):

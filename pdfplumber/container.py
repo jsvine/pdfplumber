@@ -40,7 +40,7 @@ class Container(object):
 
     @property
     def rect_edges(self):
-        if hasattr(self, "_rect_edges"): return self._edges
+        if hasattr(self, "_rect_edges"): return self._rect_edges
         rect_edges_gen = (utils.rect_to_edges(r) for r in self.rects)
         self._rect_edges = list(chain(*rect_edges_gen))
         return self._rect_edges

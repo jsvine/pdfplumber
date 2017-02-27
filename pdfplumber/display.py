@@ -88,16 +88,18 @@ class PageImage(object):
     def copy(self):
         return self.__class__(self.page, self.original)
 
-    def draw_line(self, points_or_line,
+    def draw_line(self, points_or_obj,
         stroke=DEFAULT_STROKE,
         stroke_width=DEFAULT_STROKE_WIDTH):
-        if isinstance(points_or_line, (tuple, list)):
-            points = points_or_line
+        if isinstance(points_or_obj, (tuple, list)):
+            points = points_or_obj
+        elif type(points_or_obj) == dict and "points" in points_or_obj:
+            points = points_or_obj["points"]
         else:
-            obj = points_or_line
-            points = (obj["x0"], obj["top"], obj["x1"], obj["bottom"])
+            obj = points_or_obj
+            points = ((obj["x0"], obj["top"]), (obj["x1"], obj["bottom"]))
         self.draw.line(
-            self._reproject_bbox(points),
+            list(map(self._reproject, points)),
             fill=stroke,
             width=stroke_width
         )
@@ -165,10 +167,10 @@ class PageImage(object):
 
         if stroke_width > 0:
             segments = [
-                (x0, top, x1, top), # top
-                (x0, bottom, x1, bottom), # bottom
-                (x0, top, x0, bottom), # left
-                (x1, top, x1, bottom), # right
+                ((x0, top), (x1, top)), # top
+                ((x0, bottom), (x1, bottom)), # bottom
+                ((x0, top), (x0, bottom)), # left
+                ((x1, top), (x1, bottom)), # right
             ]
             self.draw_lines(
                 segments,
@@ -195,7 +197,12 @@ class PageImage(object):
                 (obj["top"] + obj["bottom"]) / 2
             )
         cx, cy = center
-        bbox = (cx - radius, cy - radius, cx + radius, cy + radius)
+        bbox = self.decimalize((
+            cx - radius,
+            cy - radius,
+            cx + radius,
+            cy + radius
+        ))
         self.draw.ellipse(
             self._reproject_bbox(bbox),
             fill,
