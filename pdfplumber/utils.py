@@ -69,15 +69,24 @@ def decode_text(s):
         return ''.join(PDFDocEncoding[o] for o in ords)
 
 def decimalize(v, q=None):
-    if isinstance(v, numbers.Integral):
+    # If already a decimal, just return itself
+    if isinstance(v, Decimal):
+        return v
+    # If tuple/list passed, bulk-convert
+    elif isinstance(v, (tuple, list)):
+        return type(v)(decimalize(x, q) for x in v)
+    # Convert int-like
+    elif isinstance(v, numbers.Integral):
         return Decimal(int(v))
-    if isinstance(v, numbers.Real):
+    # Convert float-like
+    elif isinstance(v, numbers.Real):
         if q != None:
             return Decimal(repr(v)).quantize(Decimal(repr(q)),
                 rounding=ROUND_HALF_UP)
         else:
             return Decimal(repr(v))
-    return v
+    else:
+        raise ValueError("Cannot convert {0} to Decimal.".format(v))
 
 def is_dataframe(collection):
     cls = collection.__class__
@@ -117,8 +126,7 @@ def objects_to_bbox(objects):
         max(map(itemgetter("bottom"), objects)),
     )
 
-def rect_to_bbox(rect):
-    return (rect["x0"], rect["top"], rect["x1"], rect["bottom"])
+obj_to_bbox = itemgetter("x0", "top", "x1", "bottom")
 
 def bbox_to_rect(bbox):
     return {
@@ -267,7 +275,7 @@ def clip_obj(obj, bbox, score=None):
     return copy
 
 def n_points_intersecting_bbox(objs, bbox):
-    bbox = tuple(map(decimalize, bbox))
+    bbox = decimalize(bbox)
     objs = to_list(objs)
     scores = (obj_inside_bbox_score(obj, bbox) for obj in objs)
     return list(scores)

@@ -30,3 +30,11 @@ class Test(unittest.TestCase):
         }
         self.im.debug_tablefinder(settings)
 
+    def test_curves(self):
+        path = os.path.join(
+            HERE,
+            "../examples/pdfs/ag-energy-round-up-2017-02-24.pdf"
+        )
+        page = pdfplumber.open(path).pages[0]
+        im = page.to_image()
+        im.draw_lines(page.curves)

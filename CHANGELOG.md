@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.2] — 2017-02-27
+### Added
+- Access to `curve` points. (E.g., `page.curves[0]["points"]`.)
+- Ability for `.draw_line` to draw `curve` points.
+
+### Changed
+- Disaggregated "min_words_vertical" (default: 3) and "min_words_horizontal" (default: 1), removing "text_word_threshold".
+- Internally, made `utils.decimalize` a bit more robust; now throws errors on non-decimalizable items.
+- Now explicitly ignoring some (obscure) `pdfminer` object attributes.
+- Raw input for `.draw_line` from a bounding box to `((x, y), (x, y))`, for consistency with `curve["points"]` and with `Pillow`'s underlying method.
+
+### Fixed
+- Fixed typo bug when `.rect_edges` is called before `.edges`
+
 ## [0.5.1] — 2017-02-26
 ### Added
 - Quick-draw `PageImage` methods: `.draw_vline`, `.draw_vlines`, `.draw_hline`, and `.draw_hlines`.

@@ -1,4 +1,4 @@
-# PDFPlumber `v0.5.1`
+# PDFPlumber `v0.5.2`
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
@@ -102,6 +102,7 @@ Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to four 
 - `.annos`, each representing a single annotation-text character.
 - `.lines`, each representing a single 1-dimensional line.
 - `.rects`, each representing a single 2-dimensional rectangle.
+- `.curves`, each representing a series of connected points.
 
 Each object is represented as a simple Python `dict`, with the following properties:
 
@@ -130,7 +131,7 @@ Each object is represented as a simple Python `dict`, with the following propert
 
 | Property | Description |
 |----------|-------------|
-|`page_number`| Page number on which this character was found.|
+|`page_number`| Page number on which this line was found.|
 |`height`| Height of line.|
 |`width`| Width of line.|
 |`x0`| Distance of left-side extremity from left side of page.|
@@ -147,7 +148,7 @@ Each object is represented as a simple Python `dict`, with the following propert
 
 | Property | Description |
 |----------|-------------|
-|`page_number`| Page number on which this character was found.|
+|`page_number`| Page number on which this rectangle was found.|
 |`height`| Height of rectangle.|
 |`width`| Width of rectangle.|
 |`x0`| Distance of left side of rectangle from left side of page.|
@@ -159,6 +160,24 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`doctop`| Distance of top of rectangle from top of document.|
 |`linewidth`| Thickness of line.|
 |`object_type`| "rect"|
+
+#### `curve` properties
+
+| Property | Description |
+|----------|-------------|
+|`page_number`| Page number on which this curve was found.|
+|`points`| Points — as a list of `(x, top)` tuples — describing the curve.|
+|`height`| Height of curve's bounding box.|
+|`width`| Width of curve's bounding box.|
+|`x0`| Distance of curve's left-most point from left side of page.|
+|`x1`| Distance of curve's right-most point from left side of the page.|
+|`y0`| Distance of curve's lowest point from bottom of page.|
+|`y1`| Distance of curve's highest point from bottom of page.|
+|`top`| Distance of curve's highest point from top of page.|
+|`bottom`| Distance of curve's lowest point from top of page.|
+|`doctop`| Distance of curve's highest point from top of document.|
+|`linewidth`| Thickness of line.|
+|`object_type`| "curve"|
 
 Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to two derived lists of objects: `.rect_edges` (which decomposes each rectangle into its four lines) and `.edges` (which combines `.rect_edges` with `.lines`). 
 
@@ -191,7 +210,7 @@ You can pass explicit coordinates or any `pdfplumber` PDF object (e.g., char, li
 
 | Single-object method | Bulk method | Description |
 |----------------------|-------------|-------------|
-|`im.draw_line(line, stroke={color}, stroke_width=1)`| `im.draw_lines(list_of_lines, **kwargs)`| Draws a line from a `line`-like object, or a 4-tuple bounding box.|
+|`im.draw_line(line, stroke={color}, stroke_width=1)`| `im.draw_lines(list_of_lines, **kwargs)`| Draws a line from a `line`, `curve`, or a 2-tuple of 2-tuples (e.g., `((x, y), (x, y))`).|
 |`im.draw_vline(location, stroke={color}, stroke_width=1)`| `im.draw_vlines(list_of_locations, **kwargs)`| Draws a vertical line at the x-coordinate indicated by `location`.|
 |`im.draw_hline(location, stroke={color}, stroke_width=1)`| `im.draw_hlines(list_of_locations, **kwargs)`| Draws a horizontal line at the y-coordinate indicated by `location`.|
 |`im.draw_rect(bbox_or_obj, fill={color}, stroke={color}, stroke_width=1)`| `im.draw_rects(list_of_rects, **kwargs)`| Draws a rectangle from a `rect`, `char`, etc., or 4-tuple bounding box.|
@@ -243,7 +262,8 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
     "snap_tolerance": 3,
     "join_tolerance": 3,
     "edge_min_length": 3,
-    "text_word_threshold": 3,
+    "min_words_vertical": 3,
+    "min_words_horizontal": 1,
     "keep_blank_chars": False,
     "text_tolerance": 3,
     "text_x_tolerance": None,
@@ -263,7 +283,8 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 |`"snap_tolerance"`| Parallel lines within `snap_tolerance` pixels will be "snapped" to the same horizontal or vertical position.|
 |`"join_tolerance"`| Line segments on the same infinite line, and whose ends are within `join_tolerance` of one another, will be "joined" into a single line segment.|
 |`"edge_min_length"`| Edges shorter than `edge_min_length` will be discarded before attempting to reconstruct the table.|
-|`"text_word_threshold"`| When using the `text` strategy, at least `text_word_threshold` words must share the same alignment.|
+|`"min_words_vertical"`| When using `"vertical_strategy": "text"`, at least `min_words_vertical` words must share the same alignment.|
+|`"min_words_horizontal"`| When using `"horizontal_strategy": "text"`, at least `min_words_horizontal` words must share the same alignment.|
 |`"keep_blank_chars"`| When using the `text` strategy, consider `" "` chars to be *parts* of words and not word-separators.|
 |`"text_tolerance"`, `"text_x_tolerance"`, `"text_y_tolerance"`| When the `text` strategy searches for words, it will expect the individual letters in each word to be no more than `text_tolerance` pixels apart.|
 |`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges most be within `intersection_tolerance` pixels to be considered intersecting.|
@@ -290,6 +311,7 @@ Both `vertical_strategy` and `horizontal_strategy` accept the following options:
 
 - [Using `extract_table` on a California Worker Adjustment and Retraining Notification (WARN) report](examples/notebooks/extract-table-ca-warn-report.ipynb). Demonstrates basic visual debugging and table extraction.
 - [Using `extract_table` on the FBI's National Instant Criminal Background Check System PDFs](examples/notebooks/extract-table-nics.ipynb). Demonstrates how to use visual debugging to find optimal table extraction settings. Also demonstrates `Page.crop(...)` and `Page.extract_text(...)`
+- [Inspecting and visualizing `curve` objects](examples/notebooks/ag-energy-roundup-curves.ipynb).
 
 ## Acknowledgments / Contributors
 
