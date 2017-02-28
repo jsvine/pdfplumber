@@ -1,4 +1,4 @@
-# PDFPlumber `v0.5.2`
+# PDFPlumber `v0.5.3`
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
@@ -21,6 +21,8 @@ Currently [tested](tests/) on [Python 2.7, 3.1, 3.4, 3.5, and 3.6](tox.ini).
 ```sh
 pip install pdfplumber
 ```
+
+To use `pdfplumber`'s visual-debugging tools, you'll also need to have [`ImageMagick`](https://www.imagemagick.org/) installed on your computer. [Installation instructions here](http://docs.wand-py.org/en/latest/guide/install.html#install-imagemagick-debian).
 
 ## Command line interface
 

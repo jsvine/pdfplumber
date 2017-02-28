@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.3] — 2017-02-27
+### Fixed
+- Allow `pdfplumber` import even if ImageMagick not installed.
+
 ## [0.5.2] — 2017-02-27
 ### Added
 - Access to `curve` points. (E.g., `page.curves[0]["points"]`.)
