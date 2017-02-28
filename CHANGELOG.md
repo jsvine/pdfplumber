@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [0.5.3] — 2017-02-27
 ### Fixed
-- Allow `pdfplumber` import even if ImageMagick not installed.
+- Allow `import pdfplumber` even if ImageMagick not installed.
 
 ## [0.5.2] — 2017-02-27
 ### Added
