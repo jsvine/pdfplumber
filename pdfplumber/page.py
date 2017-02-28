@@ -1,7 +1,6 @@
 from . import utils
 from .table import TableFinder
 from .container import Container
-from .display import PageImage, DEFAULT_RESOLUTION
 from copy import copy
 
 from six import string_types
@@ -204,11 +203,13 @@ class Page(Container):
         filtered.bbox = self.bbox
         return filtered
 
-    def to_image(self, resolution=DEFAULT_RESOLUTION):
+    def to_image(self, resolution=None):
         """
         For conversion_kwargs, see http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image
         """
-        return PageImage(self, resolution=resolution)
+        from .display import PageImage, DEFAULT_RESOLUTION
+        res = resolution or DEFAULT_RESOLUTION
+        return PageImage(self, resolution=res)
 
 class DerivedPage(Page):
     is_original = False
