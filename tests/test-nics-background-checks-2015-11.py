@@ -2,6 +2,7 @@
 import unittest
 import pandas as pd
 import pdfplumber
+from operator import itemgetter
 from pdfplumber.utils import within_bbox, collate_chars
 import sys, os
 
@@ -48,12 +49,17 @@ class Test(unittest.TestCase):
     def test_plain(self):
         page = self.pdf.pages[0]
         cropped = page.crop((0, 80, self.PDF_WIDTH, 485))
-        table = cropped.extract_table(h="gutters",
-            gutter_min_height=5)
+        table = cropped.extract_table({
+            "horizontal_strategy": "text",
+            "explicit_vertical_lines": [
+                min(map(itemgetter("x0"), cropped.chars))
+            ],
+            "intersection_tolerance": 5
+        })
 
         def parse_value(k, x):
             if k == 0: return x
-            if x == None: return None
+            if x in (None, ""): return None
             return int(x.replace(",", ""))
 
         def parse_row(row):
@@ -75,14 +81,18 @@ class Test(unittest.TestCase):
     def test_pandas(self):
         page = self.pdf.pages[0]
         cropped = page.crop((0, 80, self.PDF_WIDTH, 485))
+        table = cropped.extract_table({
+            "horizontal_strategy": "text",
+            "explicit_vertical_lines": [
+                min(map(itemgetter("x0"), cropped.chars))
+            ],
+            "intersection_tolerance": 5
+        })
 
-        _table = cropped.extract_table(h="gutters",
-            gutter_min_height=5)
-        
-        table = pd.DataFrame(_table)
+        table = pd.DataFrame(table)
 
         def parse_value(x):
-            if pd.isnull(x): return None
+            if pd.isnull(x) or x == "": return None
             return int(x.replace(",", ""))
 
         table.columns = COLUMNS

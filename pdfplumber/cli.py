@@ -34,9 +34,10 @@ def parse_args():
     parser.add_argument("--encoding",
         default="utf-8")
 
+    TYPE_DEFAULTS = [ "char", "anno", "line", "curve", "rect" ]
     parser.add_argument("--types", nargs="+",
-        choices=[ "char", "anno", "line", "rect", "rect_edge" ],
-        default=[ "char", "anno", "line", "rect" ])
+        choices=TYPE_DEFAULTS + [ "rect_edge" ],
+        default=TYPE_DEFAULTS)
 
     parser.add_argument("--pages", nargs="+",
         type=parse_page_spec)

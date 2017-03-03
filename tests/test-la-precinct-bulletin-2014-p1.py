@@ -2,7 +2,7 @@
 import unittest
 import pandas as pd
 import pdfplumber
-from pdfplumber.utils import within_bbox, collate_chars
+from pdfplumber.utils import intersects_bbox, within_bbox, collate_chars
 import sys, os
 import re
 
@@ -45,7 +45,7 @@ class PrecinctPage(object):
     def precinct(self):
         h1_left = list(self.bboxes["h1"])
         h1_left[-2] = float(h1_left[-2]) / 2
-        h1_left_chars = within_bbox(self.chars, h1_left)
+        h1_left_chars = intersects_bbox(self.chars, h1_left)
         txt = h1_left_chars.groupby("top").apply(collate_chars).iloc[-1]
         p_id = "|".join(re.split(r"\s{2,}", txt)[1:3])
         return p_id
