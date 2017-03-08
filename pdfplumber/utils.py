@@ -233,7 +233,6 @@ def extract_words(chars,
                 else: pass
             elif len(current_word) == 0:
                 current_word.append(char)
-                print("current word appending %s \n" % char)
             else:
                 last_char = current_word[-1]
                 if char["x0"] > (last_char["x1"] + tolerance):
