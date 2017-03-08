@@ -1,12 +1,21 @@
 from pdfminer.utils import PDFDocEncoding
 from decimal import Decimal, ROUND_HALF_UP
 import numbers
+from collections import Counter
 from operator import itemgetter
 import itertools
 import six
 
+
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
+DEFAULT_STRICT_FONT_WORDS = True
+DEFAULT_STRICT_FONT_HEIGHTS = False
+
+
+## Raise an error if the individual characters font sizes vary by more
+## than this (if we are in strict font height mode )
+DEFAULT_FONT_HEIGHT_TOLERANCE = 0.2 
 
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
@@ -126,6 +135,55 @@ def objects_to_bbox(objects):
         max(map(itemgetter("bottom"), objects)),
     )
 
+
+#### jf add
+
+# Python doesn't have a working mode function ?!?
+# 3.4 introduced statistics.mode but it doesn't work. 
+# If there's not a unique mode it throws an error: statistics.StatisticsError: no unique mode; found 2 equally common values
+def mode(value_list):
+    """ If there's not a unique mode we'll just get one of 'em.' """ 
+    return max(set(value_list), key=value_list)
+
+def get_font_from_chars(chars, strict_font_words):
+    fontset = set()
+    for char in chars:
+        fontset.add(char['fontname'])
+    number_of_fonts_found = len(fontset)
+    if number_of_fonts_found > 1:
+        ## This should be the right kind of error, not sure what that is on plane.
+        if strict_font_words:
+            raise ValueError("Multiple fonts '%s' found in word %s \nPerhaps word tolerance is set too low?" % (fontset, objects))
+        return( ", ".join([str(font) for font in fontset]) )
+    if number_of_fonts_found == 0:
+        return ""
+    return fontset.pop()
+
+def get_font_height_from_chars(chars, strict_font_height, font_height_tolerance):
+    charlist = map(itemgetter("height"), chars)
+
+    max_font_height = max(charlist)
+    min_font_height = min(map(itemgetter("height"), chars))
+    font_height_range = max_font_height - min_font_height 
+    if strict_font_height and font_height_range > font_height_tolerance:
+        # Should probably 
+        raise RuntimeError("Font size variation of '%s' exceeds tolerance of %s in word %s \nPerhaps word tolerance is set too low?" % (font_height_range, font_height_tolerance, objects))
+    
+    ### Todo: Is mode the best function to use for this? What if the string is "I," 
+    return ( ( max_font_height + min_font_height) / 2 )
+
+def objects_to_bbox_with_font(objects, strict_font_words, strict_font_height, font_height_tolerance):
+    return (
+        min(map(itemgetter("x0"), objects)),
+        min(map(itemgetter("top"), objects)),
+        max(map(itemgetter("x1"), objects)),
+        max(map(itemgetter("bottom"), objects)),
+        get_font_from_chars(objects, strict_font_words),
+        get_font_height_from_chars(objects, strict_font_height, font_height_tolerance)
+    )
+
+####
+
 obj_to_bbox = itemgetter("x0", "top", "x1", "bottom")
 
 def bbox_to_rect(bbox):
@@ -139,20 +197,25 @@ def bbox_to_rect(bbox):
 def extract_words(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
-    keep_blank_chars=False
+    keep_blank_chars=False,
+    strict_font_words=DEFAULT_STRICT_FONT_WORDS,
+    strict_font_height_words=DEFAULT_STRICT_FONT_HEIGHTS,
+    font_height_tolerance=DEFAULT_FONT_HEIGHT_TOLERANCE
     ):
-
+    
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
 
     def process_word_chars(chars):
-        x0, top, x1, bottom = objects_to_bbox(chars)
+        x0, top, x1, bottom, fontname, height= objects_to_bbox_with_font(chars, strict_font_words, strict_font_height_words, font_height_tolerance)
         return {
             "x0": x0,
             "x1": x1,
             "top": top,
             "bottom": bottom,
-            "text": "".join(map(itemgetter("text"), chars))
+            "text": "".join(map(itemgetter("text"), chars)),
+            "fontname": fontname,
+            "height":height
         }
 
 
@@ -170,6 +233,7 @@ def extract_words(chars,
                 else: pass
             elif len(current_word) == 0:
                 current_word.append(char)
+                print("current word appending %s \n" % char)
             else:
                 last_char = current_word[-1]
                 if char["x0"] > (last_char["x1"] + tolerance):
