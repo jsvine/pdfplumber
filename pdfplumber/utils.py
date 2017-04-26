@@ -10,7 +10,7 @@ import six
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
 DEFAULT_STRICT_FONT_WORDS = True
-DEFAULT_STRICT_FONT_HEIGHTS = False
+DEFAULT_STRICT_FONT_HEIGHTS = True
 
 
 ## Raise an error if the individual characters font sizes vary by more
@@ -162,12 +162,13 @@ def get_font_from_chars(chars, strict_font_words):
 def get_font_height_from_chars(chars, strict_font_height, font_height_tolerance):
     charlist = map(itemgetter("height"), chars)
 
+    charlisttext = map(itemgetter("text"), chars)
     max_font_height = max(charlist)
     min_font_height = min(map(itemgetter("height"), chars))
     font_height_range = max_font_height - min_font_height 
     if strict_font_height and font_height_range > font_height_tolerance:
         # Should probably 
-        raise RuntimeError("Font size variation of '%s' exceeds tolerance of %s in word %s \nPerhaps word tolerance is set too low?" % (font_height_range, font_height_tolerance, objects))
+        raise RuntimeError("Font size variation of '%s' exceeds tolerance of %s in word %s with heights %s\nPerhaps word tolerance is set too low?" % (font_height_range, font_height_tolerance, charlisttext, charlist))
     
     ### Todo: Is mode the best function to use for this? What if the string is "I," 
     return ( ( max_font_height + min_font_height) / 2 )
