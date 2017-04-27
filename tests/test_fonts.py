@@ -14,6 +14,12 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         path = os.path.join(HERE, "pdfs/Acorn_127_201604.pdf")
+        """ 
+        This file has inconsistently named fonts and font sizes.
+        Some words begin with characters roughly 3 (units?) bigger in size.
+        Courtesy of Ryan Ross (Prince Edward Island Guardian)
+        http://www.gov.pe.ca/publicdisclosure/pdSummary.php
+        """
         test_pdf = pdfplumber.from_path(path)
         self.pdf_chars = test_pdf.pages[0].chars
 
@@ -27,3 +33,8 @@ class Test(unittest.TestCase):
         extract_words(self.pdf_chars, font_height_tolerance=3.5, match_fontname=False)
         with self.assertRaises(WordFontError): 
             extract_words(self.pdf_chars, font_height_tolerance=2, match_fontname=False)
+
+    def test_fontsize(self):
+        extract_words(self.pdf_chars, match_fontsize=False, match_fontname=False)
+        with self.assertRaises(WordFontError):
+            extract_words(self.pdf_chars, match_fontname=False)
