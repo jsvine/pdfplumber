@@ -144,7 +144,6 @@ def get_font_from_chars(chars, match_fontname):
         fontset.add(char['fontname'])
     number_of_fonts_found = len(fontset)
     if number_of_fonts_found > 1:
-        ## This should be the right kind of error, not sure what that is on plane.
         if match_fontname:
             charfonttext = map(itemgetter("fontname"), chars)
             charlisttext = map(itemgetter("text"), chars)
@@ -159,6 +158,7 @@ def get_font_height_from_chars(chars, match_fontsize, font_height_tolerance):
     max_font_height = max(charlist)
     min_font_height = min(charlist)
     font_height_range = max_font_height - min_font_height 
+    
     if match_fontsize and font_height_range > font_height_tolerance:
         charlist = map(itemgetter("height"), chars)
         charlisttext = map(itemgetter("text"), chars)
@@ -167,13 +167,20 @@ def get_font_height_from_chars(chars, match_fontsize, font_height_tolerance):
     return ( ( max_font_height + min_font_height) / 2 )
 
 def objects_to_bbox_with_font(objects, match_fontname, match_fontsize, font_height_tolerance):
+    fontname = None
+    fontsize = None
+    if match_fontname:
+        fontname = get_font_from_chars(objects, match_fontname)
+    if match_fontsize:
+        fontsize = get_font_height_from_chars(objects, match_fontsize, font_height_tolerance)
+
     return (
         min(map(itemgetter("x0"), objects)),
         min(map(itemgetter("top"), objects)),
         max(map(itemgetter("x1"), objects)),
         max(map(itemgetter("bottom"), objects)),
-        get_font_from_chars(objects, match_fontname),
-        get_font_height_from_chars(objects, match_fontsize, font_height_tolerance)
+        fontname,
+        fontsize
     )
 
 obj_to_bbox = itemgetter("x0", "top", "x1", "bottom")
