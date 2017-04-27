@@ -12,7 +12,7 @@ base_reqs = [
     "chardet",
     "pycrypto",
     "unicodecsv>=0.14.1",
-    "pdfminer.six>=20151013",
+    "pdfminer.six==20151013",
     "pillow>=3.0.0",
     "wand"
 ]
