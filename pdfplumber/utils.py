@@ -138,9 +138,6 @@ def objects_to_bbox(objects):
         max(map(itemgetter("bottom"), objects)),
     )
 
-
-#### jf add
-
 def get_font_from_chars(chars, match_fontname):
     fontset = set()
     for char in chars:
@@ -167,7 +164,6 @@ def get_font_height_from_chars(chars, match_fontsize, font_height_tolerance):
         charlisttext = map(itemgetter("text"), chars)
         raise WordFontError("Font size variation of '%s' exceeds tolerance of %s in word %s with heights %s\nPerhaps word tolerance is set too low?" % (font_height_range, font_height_tolerance, charlisttext, charlist))
     
-    ### Todo: Is mode the best function to use for this? What if the string is "I," 
     return ( ( max_font_height + min_font_height) / 2 )
 
 def objects_to_bbox_with_font(objects, match_fontname, match_fontsize, font_height_tolerance):
@@ -179,8 +175,6 @@ def objects_to_bbox_with_font(objects, match_fontname, match_fontsize, font_heig
         get_font_from_chars(objects, match_fontname),
         get_font_height_from_chars(objects, match_fontsize, font_height_tolerance)
     )
-
-####
 
 obj_to_bbox = itemgetter("x0", "top", "x1", "bottom")
 
