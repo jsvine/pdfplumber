@@ -23,18 +23,47 @@ class Test(unittest.TestCase):
         test_pdf = pdfplumber.from_path(path)
         self.pdf_chars = test_pdf.pages[0].chars
 
+        """ As of this writing, the default x_tolerance is 3, y_tolerance is 3 and default_font_height_tolerance is 1 """
+
+        self.default_x_tolerance = 3
+        self.default_y_tolerance = 3
+        self.default_font_height_tolerance = 1
+
 
     def test_fontname(self):
-        extract_words(self.pdf_chars, match_fontsize=False, match_fontname=False)
+        extract_words(self.pdf_chars, 
+                y_tolerance=self.default_y_tolerance, 
+                x_tolerance=self.default_x_tolerance, 
+                font_height_tolerance=self.default_font_height_tolerance, 
+                match_fontsize=False, 
+                match_fontname=False)
+
         with self.assertRaises(WordFontError):
-            extract_words(self.pdf_chars, match_fontsize=False)
+            extract_words(self.pdf_chars, 
+                y_tolerance=self.default_y_tolerance, 
+                x_tolerance=self.default_x_tolerance, 
+                font_height_tolerance=self.default_font_height_tolerance, 
+                match_fontsize=False)
 
     def test_font_height_tolerance(self):
-        extract_words(self.pdf_chars, font_height_tolerance=3.5, match_fontname=False)
+        extract_words(self.pdf_chars, 
+                y_tolerance=self.default_y_tolerance, 
+                x_tolerance=self.default_x_tolerance, 
+                font_height_tolerance=3.5, 
+                match_fontname=False)
+
         with self.assertRaises(WordFontError): 
-            extract_words(self.pdf_chars, font_height_tolerance=2, match_fontname=False)
+            extract_words(self.pdf_chars, 
+                y_tolerance=self.default_y_tolerance, 
+                x_tolerance=self.default_x_tolerance, 
+                font_height_tolerance=2, 
+                match_fontname=False)
 
     def test_fontsize(self):
-        extract_words(self.pdf_chars, match_fontsize=False, match_fontname=False)
+
         with self.assertRaises(WordFontError):
-            extract_words(self.pdf_chars, match_fontname=False)
+            extract_words(self.pdf_chars, 
+                y_tolerance=self.default_y_tolerance, 
+                x_tolerance=self.default_x_tolerance, 
+                font_height_tolerance=self.default_font_height_tolerance, 
+                match_fontname=False)
