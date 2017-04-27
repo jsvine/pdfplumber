@@ -32,32 +32,35 @@ class Test(unittest.TestCase):
 
     def test_fontname(self):
         extract_words(self.pdf_chars, 
-                y_tolerance=self.default_y_tolerance, 
-                x_tolerance=self.default_x_tolerance, 
-                font_height_tolerance=self.default_font_height_tolerance, 
-                match_fontsize=False, 
-                match_fontname=False)
+            y_tolerance=self.default_y_tolerance, 
+            x_tolerance=self.default_x_tolerance, 
+            font_height_tolerance=self.default_font_height_tolerance, 
+            match_fontsize=False, 
+            match_fontname=False)
 
         with self.assertRaises(WordFontError):
             extract_words(self.pdf_chars, 
                 y_tolerance=self.default_y_tolerance, 
                 x_tolerance=self.default_x_tolerance, 
                 font_height_tolerance=self.default_font_height_tolerance, 
-                match_fontsize=False)
+                match_fontsize=False,
+                match_fontname=True)
 
     def test_font_height_tolerance(self):
         extract_words(self.pdf_chars, 
-                y_tolerance=self.default_y_tolerance, 
-                x_tolerance=self.default_x_tolerance, 
-                font_height_tolerance=3.5, 
-                match_fontname=False)
+            y_tolerance=self.default_y_tolerance, 
+            x_tolerance=self.default_x_tolerance, 
+            font_height_tolerance=3.5, 
+            match_fontname=False,
+            match_fontsize=True)
 
         with self.assertRaises(WordFontError): 
             extract_words(self.pdf_chars, 
                 y_tolerance=self.default_y_tolerance, 
                 x_tolerance=self.default_x_tolerance, 
                 font_height_tolerance=2, 
-                match_fontname=False)
+                match_fontname=False,
+                match_fontsize=True)
 
     def test_fontsize(self):
 
@@ -66,4 +69,5 @@ class Test(unittest.TestCase):
                 y_tolerance=self.default_y_tolerance, 
                 x_tolerance=self.default_x_tolerance, 
                 font_height_tolerance=self.default_font_height_tolerance, 
-                match_fontname=False)
+                match_fontname=False,
+                match_fontsize=True)
