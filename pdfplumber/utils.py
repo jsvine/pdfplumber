@@ -9,13 +9,16 @@ import six
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
-DEFAULT_STRICT_FONT_WORDS = True
-DEFAULT_STRICT_FONT_HEIGHTS = True
 
 
 ## Raise an error if the individual characters font sizes vary by more
 ## than this (if we are in strict font height mode )
-DEFAULT_FONT_HEIGHT_TOLERANCE = 0.2 
+DEFAULT_FONT_HEIGHT_TOLERANCE = 1 
+
+
+class WordFontError(RuntimeError):
+    def __init__(self,*args,**kwargs):
+        RuntimeError.__init__(self,*args,**kwargs)
 
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
@@ -138,49 +141,43 @@ def objects_to_bbox(objects):
 
 #### jf add
 
-# Python doesn't have a working mode function ?!?
-# 3.4 introduced statistics.mode but it doesn't work. 
-# If there's not a unique mode it throws an error: statistics.StatisticsError: no unique mode; found 2 equally common values
-def mode(value_list):
-    """ If there's not a unique mode we'll just get one of 'em.' """ 
-    return max(set(value_list), key=value_list)
-
-def get_font_from_chars(chars, strict_font_words):
+def get_font_from_chars(chars, match_fontname):
     fontset = set()
     for char in chars:
         fontset.add(char['fontname'])
     number_of_fonts_found = len(fontset)
     if number_of_fonts_found > 1:
         ## This should be the right kind of error, not sure what that is on plane.
-        if strict_font_words:
-            raise ValueError("Multiple fonts '%s' found in word %s \nPerhaps word tolerance is set too low?" % (fontset, objects))
+        if match_fontname:
+            charfonttext = map(itemgetter("fontname"), chars)
+            charlisttext = map(itemgetter("text"), chars)
+            raise WordFontError("Multiple fonts '%s' found in word %s \nPerhaps word tolerance is set too low?" % (charfonttext, charlisttext))
         return( ", ".join([str(font) for font in fontset]) )
     if number_of_fonts_found == 0:
         return ""
     return fontset.pop()
 
-def get_font_height_from_chars(chars, strict_font_height, font_height_tolerance):
+def get_font_height_from_chars(chars, match_fontsize, font_height_tolerance):
     charlist = map(itemgetter("height"), chars)
-
-    charlisttext = map(itemgetter("text"), chars)
     max_font_height = max(charlist)
-    min_font_height = min(map(itemgetter("height"), chars))
+    min_font_height = min(charlist)
     font_height_range = max_font_height - min_font_height 
-    if strict_font_height and font_height_range > font_height_tolerance:
-        # Should probably 
-        raise RuntimeError("Font size variation of '%s' exceeds tolerance of %s in word %s with heights %s\nPerhaps word tolerance is set too low?" % (font_height_range, font_height_tolerance, charlisttext, charlist))
+    if match_fontsize and font_height_range > font_height_tolerance:
+        charlist = map(itemgetter("height"), chars)
+        charlisttext = map(itemgetter("text"), chars)
+        raise WordFontError("Font size variation of '%s' exceeds tolerance of %s in word %s with heights %s\nPerhaps word tolerance is set too low?" % (font_height_range, font_height_tolerance, charlisttext, charlist))
     
     ### Todo: Is mode the best function to use for this? What if the string is "I," 
     return ( ( max_font_height + min_font_height) / 2 )
 
-def objects_to_bbox_with_font(objects, strict_font_words, strict_font_height, font_height_tolerance):
+def objects_to_bbox_with_font(objects, match_fontname, match_fontsize, font_height_tolerance):
     return (
         min(map(itemgetter("x0"), objects)),
         min(map(itemgetter("top"), objects)),
         max(map(itemgetter("x1"), objects)),
         max(map(itemgetter("bottom"), objects)),
-        get_font_from_chars(objects, strict_font_words),
-        get_font_height_from_chars(objects, strict_font_height, font_height_tolerance)
+        get_font_from_chars(objects, match_fontname),
+        get_font_height_from_chars(objects, match_fontsize, font_height_tolerance)
     )
 
 ####
@@ -199,25 +196,29 @@ def extract_words(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
     keep_blank_chars=False,
-    strict_font_words=DEFAULT_STRICT_FONT_WORDS,
-    strict_font_height_words=DEFAULT_STRICT_FONT_HEIGHTS,
-    font_height_tolerance=DEFAULT_FONT_HEIGHT_TOLERANCE
+    match_fontname=True,
+    match_fontsize=True
     ):
     
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
+    font_height_tolerance=DEFAULT_FONT_HEIGHT_TOLERANCE
 
     def process_word_chars(chars):
-        x0, top, x1, bottom, fontname, height= objects_to_bbox_with_font(chars, strict_font_words, strict_font_height_words, font_height_tolerance)
-        return {
+        x0, top, x1, bottom, fontname, fontsize= objects_to_bbox_with_font(chars, match_fontname, match_fontsize, font_height_tolerance)
+        result =  {
             "x0": x0,
             "x1": x1,
             "top": top,
             "bottom": bottom,
             "text": "".join(map(itemgetter("text"), chars)),
-            "fontname": fontname,
-            "height":height
         }
+        if match_fontname:
+            result["fontname"]=fontname
+        if match_fontsize:
+            result["fontsize"]=fontsize
+
+        return result
 
 
     def get_line_words(chars, tolerance=DEFAULT_X_TOLERANCE):
