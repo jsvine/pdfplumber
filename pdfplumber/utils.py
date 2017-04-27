@@ -11,7 +11,7 @@ DEFAULT_Y_TOLERANCE = 3
 
 ## Raise an error if the individual characters' font sizes vary by more
 ## than this (if we are in strict font height mode )
-DEFAULT_FONT_HEIGHT_TOLERANCE = 1 
+DEFAULT_FONT_HEIGHT_TOLERANCE = 0.5
 
 class WordFontError(RuntimeError):
     def __init__(self,*args,**kwargs):
@@ -195,12 +195,12 @@ def extract_words(chars,
     y_tolerance=DEFAULT_Y_TOLERANCE,
     keep_blank_chars=False,
     match_fontname=True,
-    match_fontsize=True
+    match_fontsize=True,
+    font_height_tolerance=DEFAULT_FONT_HEIGHT_TOLERANCE
     ):
     
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
-    font_height_tolerance=DEFAULT_FONT_HEIGHT_TOLERANCE
 
     def process_word_chars(chars):
         x0, top, x1, bottom, fontname, fontsize= objects_to_bbox_with_font(chars, match_fontname, match_fontsize, font_height_tolerance)
