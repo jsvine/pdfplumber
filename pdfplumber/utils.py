@@ -6,15 +6,12 @@ from operator import itemgetter
 import itertools
 import six
 
-
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
 
-
-## Raise an error if the individual characters font sizes vary by more
+## Raise an error if the individual characters' font sizes vary by more
 ## than this (if we are in strict font height mode )
 DEFAULT_FONT_HEIGHT_TOLERANCE = 1 
-
 
 class WordFontError(RuntimeError):
     def __init__(self,*args,**kwargs):
@@ -158,7 +155,7 @@ def get_font_height_from_chars(chars, match_fontsize, font_height_tolerance):
     max_font_height = max(charlist)
     min_font_height = min(charlist)
     font_height_range = max_font_height - min_font_height 
-    
+
     if match_fontsize and font_height_range > font_height_tolerance:
         charlist = map(itemgetter("height"), chars)
         charlisttext = map(itemgetter("text"), chars)
