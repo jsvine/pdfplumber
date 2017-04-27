@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.4] — 2017-04-27
+### Fixed
+- Pin `pdfminer.six` to version `20151013` (for now), fixing incompatibility
+
 ## [0.5.3] — 2017-02-27
 ### Fixed
 - Allow `import pdfplumber` even if ImageMagick not installed.
