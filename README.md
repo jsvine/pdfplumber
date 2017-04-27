@@ -1,4 +1,4 @@
-# PDFPlumber `v0.5.3`
+# PDFPlumber `v0.5.4`
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
