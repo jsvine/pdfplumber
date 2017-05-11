@@ -2,6 +2,8 @@ from pdfplumber.pdf import PDF
 import pdfplumber.utils
 import pdfminer
 import pdfminer.pdftypes
+from ._version import __version__
+
 pdfminer.pdftypes.STRICT = False
 pdfminer.pdfinterp.STRICT = False
 
