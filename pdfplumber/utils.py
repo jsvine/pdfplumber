@@ -71,7 +71,7 @@ def decode_text(s):
     Decodes a PDFDocEncoding string to Unicode.
     Adds py3 compatability to pdfminer's version.
     """
-    if s.startswith(b'\xfe\xff'):
+    if type(s) == bytes and s.startswith(b'\xfe\xff'):
         return six.text_type(s[2:], 'utf-16be', 'ignore')
     else:
         ords = (ord(c) if type(c) == str else c for c in s)
