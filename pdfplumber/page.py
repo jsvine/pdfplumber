@@ -107,8 +107,8 @@ class Page(Container):
                 attr["points"] = list(map(point2coord, obj.pts))
 
             if attr.get("y0") != None:
-                attr["top"] = h - attr["y1"]
-                attr["bottom"] = h - attr["y0"]
+                attr["top"] = d(h) - attr["y1"]
+                attr["bottom"] = d(h) - attr["y0"]
                 attr["doctop"] = idc + attr["top"]
 
             if objects.get(kind) == None:

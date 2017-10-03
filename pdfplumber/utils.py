@@ -1,12 +1,21 @@
 from pdfminer.utils import PDFDocEncoding
 from decimal import Decimal, ROUND_HALF_UP
 import numbers
+from collections import Counter
 from operator import itemgetter
 import itertools
 import six
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
+
+## Raise an error if the individual characters' font sizes vary by more
+## than this (if we are in strict font height mode )
+DEFAULT_FONT_HEIGHT_TOLERANCE = 0.5
+
+class WordFontError(RuntimeError):
+    def __init__(self,*args,**kwargs):
+        RuntimeError.__init__(self,*args,**kwargs)
 
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
@@ -126,6 +135,51 @@ def objects_to_bbox(objects):
         max(map(itemgetter("bottom"), objects)),
     )
 
+def get_font_from_chars(chars, match_fontname):
+    fontset = set()
+    for char in chars:
+        fontset.add(char['fontname'])
+    number_of_fonts_found = len(fontset)
+    if number_of_fonts_found > 1:
+        if match_fontname:
+            charfonttext = map(itemgetter("fontname"), chars)
+            charlisttext = map(itemgetter("text"), chars)
+            raise WordFontError("Multiple fonts '%s' found in word %s \nPerhaps word tolerance is set too low?" % (charfonttext, charlisttext))
+        return( ", ".join([str(font) for font in fontset]) )
+    if number_of_fonts_found == 0:
+        return ""
+    return fontset.pop()
+
+def get_font_height_from_chars(chars, match_fontsize, font_height_tolerance):
+    charlist = map(itemgetter("height"), chars)
+    max_font_height = max(charlist)
+    min_font_height = min(charlist)
+    font_height_range = max_font_height - min_font_height 
+
+    if match_fontsize and font_height_range > font_height_tolerance:
+        charlist = map(itemgetter("height"), chars)
+        charlisttext = map(itemgetter("text"), chars)
+        raise WordFontError("Font size variation of '%s' exceeds tolerance of %s in word %s with heights %s\nPerhaps word tolerance is set too low?" % (font_height_range, font_height_tolerance, charlisttext, charlist))
+    
+    return ( ( max_font_height + min_font_height) / 2 )
+
+def objects_to_bbox_with_font(objects, match_fontname, match_fontsize, font_height_tolerance):
+    fontname = None
+    fontsize = None
+    if match_fontname:
+        fontname = get_font_from_chars(objects, match_fontname)
+    if match_fontsize:
+        fontsize = get_font_height_from_chars(objects, match_fontsize, font_height_tolerance)
+
+    return (
+        min(map(itemgetter("x0"), objects)),
+        min(map(itemgetter("top"), objects)),
+        max(map(itemgetter("x1"), objects)),
+        max(map(itemgetter("bottom"), objects)),
+        fontname,
+        fontsize
+    )
+
 obj_to_bbox = itemgetter("x0", "top", "x1", "bottom")
 
 def bbox_to_rect(bbox):
@@ -139,21 +193,30 @@ def bbox_to_rect(bbox):
 def extract_words(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
-    keep_blank_chars=False
+    keep_blank_chars=False,
+    match_fontname=True,
+    match_fontsize=True,
+    font_height_tolerance=DEFAULT_FONT_HEIGHT_TOLERANCE
     ):
-
+    
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
 
     def process_word_chars(chars):
-        x0, top, x1, bottom = objects_to_bbox(chars)
-        return {
+        x0, top, x1, bottom, fontname, fontsize= objects_to_bbox_with_font(chars, match_fontname, match_fontsize, font_height_tolerance)
+        result =  {
             "x0": x0,
             "x1": x1,
             "top": top,
             "bottom": bottom,
-            "text": "".join(map(itemgetter("text"), chars))
+            "text": "".join(map(itemgetter("text"), chars)),
         }
+        if match_fontname:
+            result["fontname"]=fontname
+        if match_fontsize:
+            result["fontsize"]=fontsize
+
+        return result
 
 
     def get_line_words(chars, tolerance=DEFAULT_X_TOLERANCE):
