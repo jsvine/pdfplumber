@@ -222,7 +222,8 @@ def filter_objects(objs, fn):
 
 def point_inside_bbox(point, bbox):
     px, py = point
-    bx0, by0, bx1, by1 = map(decimalize, bbox)
+    bx0, by0 = map(decimalize, bbox[0])
+    bx1, by1 = map(decimalize, bbox[1])
     return (px >= bx0) and (px <= bx1) and (py >= by0) and (py <= by1)
 
 def obj_inside_bbox_score(obj, bbox):
@@ -244,7 +245,8 @@ def clip_obj(obj, bbox, score=None):
         score = obj_inside_bbox_score(obj, bbox)
     if score == 0: return None
     if score == 4: return obj
-    x0, top, x1, bottom = map(decimalize, bbox)
+    x0, top = map(decimalize, bbox[0])
+    x1, bottom = map(decimalize, bbox[1])
 
     copy = dict(obj)
     x_changed = False
