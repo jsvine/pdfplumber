@@ -3,6 +3,7 @@ from .table import TableFinder
 from .container import Container
 from copy import copy
 
+from pdfminer.pdftypes import resolve_all
 from six import string_types
 import re
 lt_pat = re.compile(r"^LT")
@@ -19,22 +20,26 @@ class Page(Container):
         self.page_obj.rotate = self.rotation
         self.initial_doctop = self.decimalize(initial_doctop)
 
-        cropbox = page_obj.attrs.get("CropBox", page_obj.attrs.get("MediaBox"))
-        self.cropbox = self.decimalize(cropbox)
+        cropbox = page_obj.attrs.get("CropBox")
+        mediabox = page_obj.attrs.get("MediaBox")
+
+        self.cropbox = self.decimalize(resolve_all(cropbox)) if cropbox is not None else None
+        self.mediabox = self.decimalize(resolve_all(mediabox) or self.cropbox)
+        m = self.mediabox
 
         if self.rotation in [ 90, 270 ]:
             self.bbox = self.decimalize((
-                min(cropbox[1], cropbox[3]),
-                min(cropbox[0], cropbox[2]),
-                max(cropbox[1], cropbox[3]),
-                max(cropbox[0], cropbox[2]),
+                min(m[1], m[3]),
+                min(m[0], m[2]),
+                max(m[1], m[3]),
+                max(m[0], m[2]),
             ))
         else:
             self.bbox = self.decimalize((
-                min(cropbox[0], cropbox[2]),
-                min(cropbox[1], cropbox[3]),
-                max(cropbox[0], cropbox[2]),
-                max(cropbox[1], cropbox[3]),
+                min(m[0], m[2]),
+                min(m[1], m[3]),
+                max(m[0], m[2]),
+                max(m[1], m[3]),
             ))
 
     def decimalize(self, x):
@@ -92,7 +97,7 @@ class Page(Container):
         ]
 
         def process_object(obj):
-            attr = dict((k, (v if k in NON_DECIMALIZE else d(v)))
+            attr = dict((k, (v if (k in NON_DECIMALIZE or v == None) else d(v)))
                 for k, v in obj.__dict__.items()
                     if k not in IGNORE)
 
