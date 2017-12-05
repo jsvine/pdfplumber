@@ -289,7 +289,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 |`"min_words_horizontal"`| When using `"horizontal_strategy": "text"`, at least `min_words_horizontal` words must share the same alignment.|
 |`"keep_blank_chars"`| When using the `text` strategy, consider `" "` chars to be *parts* of words and not word-separators.|
 |`"text_tolerance"`, `"text_x_tolerance"`, `"text_y_tolerance"`| When the `text` strategy searches for words, it will expect the individual letters in each word to be no more than `text_tolerance` pixels apart.|
-|`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges most be within `intersection_tolerance` pixels to be considered intersecting.|
+|`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges must be within `intersection_tolerance` pixels to be considered intersecting.|
 
 ### Table-extraction strategies
 
