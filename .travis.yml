@@ -10,3 +10,9 @@ install:
     - pip install nose
     - pip install pandas
 script: nosetests
+addons:
+apt:
+    packages:
+        - ghostscript
+        - imagemagick
+        - python-enchant
