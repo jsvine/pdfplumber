@@ -15,4 +15,5 @@ apt:
     packages:
         - ghostscript
         - imagemagick
+        - libmagickwand-dev
         - python-enchant
