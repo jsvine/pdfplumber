@@ -57,7 +57,7 @@ class Test(unittest.TestCase):
 
                     if ( max(checkbox['x0'], curve['x0']) <= min(checkbox['x1'], curve['x1']) ):
                         xmatch = True
-                    if ( max(checkbox['y0'], curve['y0']) <= min(checkbox['y1'], curve['y1']) ):
+                    if ( max(checkbox['top'], curve['top']) <= min(checkbox['bottom'], curve['bottom']) ):
                         ymatch = True
                     if xmatch and ymatch:
                         return True
@@ -65,8 +65,8 @@ class Test(unittest.TestCase):
             return False
 
         p0 = pdf.pages[0]
-        curves = p0.objects["curve"]
-        rects = filter_rects(p0.objects["rect"])
+        curves = p0.curves
+        rects = filter_rects(p0.rects)
 
         n_checked = sum([ determine_if_checked(rect, curves)
             for rect in rects ])

@@ -1,4 +1,4 @@
-# PDFPlumber `v0.5.7`
+# PDFPlumber `v0.6.0-alpha`
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
@@ -41,7 +41,7 @@ The output will be a CSV containing info about every character, line, and rectan
 |----------|-------------|
 |`--format [format]`| `csv` or `json`. The `json` format returns slightly more information; it includes PDF-level metadata and height/width information about each page.|
 |`--pages [list of pages]`| A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.|
-|`--types [list of object types to extract]`| Choices are `char`, `anno`, `line`, `curve`, `rect`, `rect_edge`. Defaults to `char`, `anno`, `line`, `curve`, `rect`.|
+|`--types [list of object types to extract]`| Choices are `char`, `line`, `curve`, `rect`, `rect_edge`. Defaults to `char`, `line`, `curve`, `rect`.|
 
 ## Python library
 
@@ -88,12 +88,14 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 
 | Method | Description |
 |--------|-------------|
-|`.crop(bounding_box)`| Returns a version of the page cropped to the bounding box, which should be expressed as 4-tuple with the values `(x0, top, x1, bottom)`. Cropped pages retain objects that fall at least partly within the bounding box. If an object falls only partly within the box, its dimensions are sliced to fit the bounding box.|
+|`.crop(bounding_box, char_threshold=0.5)`| Returns a version of the page cropped to the bounding box, which should be expressed as 4-tuple with the values `(x0, top, x1, bottom)`. Cropped pages retain objects that fall at least partly within the bounding box. If an object falls only partly within the box, its dimensions are sliced to fit the bounding box. If a character object's area is reduced by more than a ratio of `char_threshold`, it is removed.|
 |`.within_bbox(bounding_box)`| Similar to `.crop`, but only retains objects that fall *entirely* within the bounding box.|
 |`.filter(test_function)`| Returns a version of the page with only the `.objects` for which `test_function(obj)` returns `True`.|
-|`.extract_text(x_tolerance=0, y_tolerance=0)`| Collates all of the page's character objects into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.|
-|`.extract_words(x_tolerance=0, y_tolerance=0)`| Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`.|
+|`.extract_text(x_tolerance = 3, y_tolerance = 3)`| Collates all of the page's character objects into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.|
+|`.extract_words(x_tolerance = 3, y_tolerance = 3, fontsize_tolerance = 0.25, keep_blank_chars = False, match_fontsize = True, match_fontname = True)`| Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`. By default, characters are grouped into the same word only if they share the same font and their font sizes are within `fontsize_tolerance` of each other. Those defaults can be changed by setting `match_fontname` and/or `match_fontsize` to `False`.|
+|`.find_text_edges(orientation, min_words = 3, extend = False, word_kwargs = {})`| Returns a list edges that align with the borders of least `min_words`. The `orientation` parameter must be either `h` or `v` — i.e., horizontal or vertical. By default, the edges extend only to the outermost matching words; setting `extend = True` extends all edges to the extremity of the page. The `word_kwargs` dict is passed to `page.extract_words(...)`|
 |`.extract_tables(table_settings)`| Extracts tabular data from the page. For more details see "[Extracting tables](#extracting-tables)" below.|
+|`.extract_table(table_settings)`| Extracts data from the largest detected table on the page, as measured by the number of cells. For more details see "[Extracting tables](#extracting-tables)" below.|
 |`.to_image(**conversion_kwargs)`| Returns an instance of the `PageImage` class. For more details, see "[Visual debugging](#visual-debugging)" below. For conversion_kwargs, see [here](http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image).|
 
 ### Objects
@@ -101,14 +103,17 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to four types of PDF objects. The following properties each return a Python list of the matching objects:
 
 - `.chars`, each representing a single text character.
-- `.annos`, each representing a single annotation-text character.
 - `.lines`, each representing a single 1-dimensional line.
 - `.rects`, each representing a single 2-dimensional rectangle.
+- `.rect_edges`, each representing one side of each rectangle.
+- `.edges`, equivalent to `.lines` + `.rect_edges`, with the addition of an "orientation" property for all objects.
+- `.horizontal_edges` (same as above, but only for those running horizontally)
+- `.vertical_edges` (same as above, but only for those running horizontally)
 - `.curves`, each representing a series of connected points.
 
 Each object is represented as a simple Python `dict`, with the following properties:
 
-#### `char` / `anno` properties
+#### `char` properties
 
 | Property | Description |
 |----------|-------------|
@@ -127,7 +132,7 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`top`| Distance of top of character from top of page.|
 |`bottom`| Distance of bottom of the character from top of page.|
 |`doctop`| Distance of top of character from top of document.|
-|`object_type`| "char" / "anno"|
+|`object_type`| "char" |
 
 #### `line` properties
 
@@ -257,56 +262,33 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 
 ```python
 {
-    "vertical_strategy": "lines", 
-    "horizontal_strategy": "lines",
-    "explicit_vertical_lines": [],
-    "explicit_horizontal_lines": [],
-    "snap_tolerance": 3,
-    "join_tolerance": 3,
-    "edge_min_length": 3,
-    "min_words_vertical": 3,
-    "min_words_horizontal": 1,
-    "keep_blank_chars": False,
-    "text_tolerance": 3,
-    "text_x_tolerance": None,
-    "text_y_tolerance": None,
+    "vertical_edges": None,
+    "horizontal_edges": None,
+    "snap_tolerance": DEFAULT_SNAP_TOLERANCE,
+    "join_tolerance": DEFAULT_JOIN_TOLERANCE,
     "intersection_tolerance": 3,
     "intersection_x_tolerance": None,
     "intersection_y_tolerance": None,
+    "text_kwargs": {}
 }
 ```
 
 | Setting | Description |
 |---------|-------------|
-|`"vertical_strategy"`| Either `"lines"`, `"lines_strict"`, `"text"`, or `"explicit"`. See explanation below.|
-|`"horizontal_strategy"`| Either `"lines"`, `"lines_strict"`, `"text"`, or `"explicit"`. See explanation below.|
-|`"explicit_vertical_lines"`| A list of vertical lines that explicitly demarcate cells in the table. Can be used in combination with any of the strategies above. Items in the list should be either numbers — indicating the `x` coordinate of a line the full height of the page — or a dictionary describing the line, with at least the following keys: `x`, `top`, `bottom`. |
-|`"explicit_horizontal_lines"`| A list of vertical lines that explicitly demarcate cells in the table. Can be used in combination with any of the strategies above. Items in the list should be either numbers — indicating the `y` coordinate of a line the full height of the page — or a dictionary describing the line, with at least the following keys: `top`, `x0`, `x1`.|
+|`"vertical_edges"`| A list of vertical edges/lines that explicitly demarcate cells in the table. Items in the list should be ewther numbers — indicating the `x` coordinate of a line the full height of the page — or a dictionary describing the line, with at least the following keys: `x`, `top`, `bottom`. |
+|`"horizontal_edges"`| A list of horizontal edges/lines that explicitly demarcate cells in the table. Can be used in combination with any of the strategies above. Items in the list should be either numbers — indicating the `y` coordinate of a line the full height of the page — or a dictionary describing the line, with at least the following keys: `top`, `x0`, `x1`.|
 |`"snap_tolerance"`| Parallel lines within `snap_tolerance` pixels will be "snapped" to the same horizontal or vertical position.|
 |`"join_tolerance"`| Line segments on the same infinite line, and whose ends are within `join_tolerance` of one another, will be "joined" into a single line segment.|
-|`"edge_min_length"`| Edges shorter than `edge_min_length` will be discarded before attempting to reconstruct the table.|
-|`"min_words_vertical"`| When using `"vertical_strategy": "text"`, at least `min_words_vertical` words must share the same alignment.|
-|`"min_words_horizontal"`| When using `"horizontal_strategy": "text"`, at least `min_words_horizontal` words must share the same alignment.|
-|`"keep_blank_chars"`| When using the `text` strategy, consider `" "` chars to be *parts* of words and not word-separators.|
-|`"text_tolerance"`, `"text_x_tolerance"`, `"text_y_tolerance"`| When the `text` strategy searches for words, it will expect the individual letters in each word to be no more than `text_tolerance` pixels apart.|
 |`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges must be within `intersection_tolerance` pixels to be considered intersecting.|
-
-### Table-extraction strategies
-
-Both `vertical_strategy` and `horizontal_strategy` accept the following options:
-
-| Strategy | Description | 
-|----------|-------------|
-| `"lines"` | Use the page's graphical lines — including the sides of rectangle objects — as the borders of potential table-cells. |
-| `"lines_strict"` | Use the page's graphical lines — but *not* the sides of rectangle objects — as the borders of potential table-cells. |
-| `"text"` | For `vertical_strategy`: Deduce the (imaginary) lines that connect the left, right, or center of words on the page, and use those lines as the borders of potential table-cells. For `horizontal_strategy`, the same but using the tops of words. |
-| `"explicit"` | Only use the lines explicitly defined in `explicit_vertical_lines` / `explicit_horizontal_lines`. |
+|`"text_kwargs"`| Arguments to be passed to `utils.extract_text` inside each table cell.|
 
 ### Notes
 
-- Often it's helpful to crop a page — `Page.crop(bounding_box)` — before trying to extract the table.
+- Often it's helpful to crop a page — `Page.crop(bounding_box)` — before trying to extract the table.
 
-- Table extraction for `pdfplumber` was radically redesigned for `v0.5.0`, and introduced breaking changes.
+- Using `Page.find_text_edges(...)` often works well for extracting tables where the text is well-aligned but missing explicit boundary lines.
+
+- Table extraction for `pdfplumber` was radically redesigned for `v0.6.0`, and introduced breaking changes.
 
 
 ## Demonstrations
@@ -323,7 +305,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Jacob Fenton](https://github.com/jsfenfen)
 - [Dan Nguyen](https://github.com/dannguyen)
 - [Jeff Barrera](https://github.com/jeffbarrera)
-- [Bob Lannon](https://github.com/boblannon-picwell)
+- [Bob Lannon](https://github.com/boblannon)
 
 ## Feedback
 

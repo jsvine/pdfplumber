@@ -1,4 +1,5 @@
 from pdfminer.utils import PDFDocEncoding
+from pdfminer.psparser import PSLiteral
 from decimal import Decimal, ROUND_HALF_UP
 import numbers
 from operator import itemgetter
@@ -7,6 +8,7 @@ import six
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
+DEFAULT_FONTSIZE_TOLERANCE = 0.25 
 
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
@@ -68,6 +70,10 @@ def decode_text(s):
         ords = (ord(c) if type(c) == str else c for c in s)
         return ''.join(PDFDocEncoding[o] for o in ords)
 
+def decode_psl_list(_list):
+    return [ decode_text(value.name) if isinstance(value, PSLiteral) else value
+        for value in _list ]
+
 def decimalize(v, q=None):
     # If already a decimal, just return itself
     if isinstance(v, Decimal):
@@ -110,13 +116,7 @@ def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
         coll += char["text"]
     return coll
 
-def objects_to_rect(objects):
-    return {
-        "x0": min(map(itemgetter("x0"), objects)),
-        "x1": max(map(itemgetter("x1"), objects)),
-        "top": min(map(itemgetter("top"), objects)),
-        "bottom": max(map(itemgetter("bottom"), objects)),
-    }
+object_to_bbox = itemgetter("x0", "top", "x1", "bottom")
 
 def objects_to_bbox(objects):
     return (
@@ -126,34 +126,60 @@ def objects_to_bbox(objects):
         max(map(itemgetter("bottom"), objects)),
     )
 
-obj_to_bbox = itemgetter("x0", "top", "x1", "bottom")
-
-def bbox_to_rect(bbox):
+def bbox_to_object(bbox):
     return {
         "x0": bbox[0],
         "top": bbox[1],
         "x1": bbox[2],
-        "bottom": bbox[3]
+        "bottom": bbox[3],
+        "width": bbox[2] - bbox[0],
+        "height": bbox[3] - bbox[1],
     }
 
-def extract_words(chars,
-    x_tolerance=DEFAULT_X_TOLERANCE,
-    y_tolerance=DEFAULT_Y_TOLERANCE,
-    keep_blank_chars=False
+def get_unique_props(objects, prop):
+    if len(objects) == 0:
+        return None
+
+    props = list(set(map(itemgetter(prop), objects)))
+
+    if len(props) > 1:
+        return props
+    else:
+        return props[0]
+        
+def extract_words(
+        chars,
+        x_tolerance = DEFAULT_X_TOLERANCE,
+        y_tolerance = DEFAULT_Y_TOLERANCE,
+        fontsize_tolerance = DEFAULT_FONTSIZE_TOLERANCE,
+        keep_blank_chars = False,
+        match_fontsize = True,
+        match_fontname = True
     ):
 
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
+    fontsize_tolerance = decimalize(fontsize_tolerance)
 
     def process_word_chars(chars):
         x0, top, x1, bottom = objects_to_bbox(chars)
-        return {
+
+        word = {
             "x0": x0,
             "x1": x1,
+            "doctop": min(map(itemgetter("doctop"), chars)),
             "top": top,
             "bottom": bottom,
             "text": "".join(map(itemgetter("text"), chars))
         }
+
+        if match_fontname:
+            word["fontname"] = get_unique_props(chars, "fontname")
+
+        if match_fontsize:
+            word["fontsize"] = get_unique_props(chars, "size")
+
+        return word
 
 
     def get_line_words(chars, tolerance=DEFAULT_X_TOLERANCE):
@@ -185,10 +211,20 @@ def extract_words(chars,
     chars = to_list(chars)
     doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
 
+    if match_fontsize:
+        doctop_clusters = list(itertools.chain.from_iterable(
+            cluster_objects(chars, "size", fontsize_tolerance)
+              for chars in doctop_clusters))
+
+    if match_fontname:
+        doctop_clusters = list(itertools.chain.from_iterable(
+            cluster_objects(chars, "fontname", 0)
+              for chars in doctop_clusters))
+
     nested = [ get_line_words(line_chars, tolerance=x_tolerance)
         for line_chars in doctop_clusters ]
 
-    words = list(itertools.chain(*nested))
+    words = sorted(itertools.chain(*nested), key = itemgetter("doctop", "x0"))
     return words
 
 def extract_text(chars,
@@ -220,30 +256,51 @@ def filter_objects(objs, fn):
 
     return initial_type(filtered)
 
-def point_inside_bbox(point, bbox):
-    px, py = point
-    bx0, by0, bx1, by1 = map(decimalize, bbox)
-    return (px >= bx0) and (px <= bx1) and (py >= by0) and (py <= by1)
+IS_OUTSIDE = 0
+IS_WITHIN = 1
+IS_OVERLAPPING = 2
 
-def obj_inside_bbox_score(obj, bbox):
-    corners = (
-        (obj["x0"], obj["top"]),
-        (obj["x0"], obj["bottom"]),
-        (obj["x1"], obj["top"]),
-        (obj["x1"], obj["bottom"]),
-    )
-    score = sum(point_inside_bbox(c, bbox) for c in corners)
-    return score
+def bboxes_overlap_score(a, b):
+    ax1, ay1, ax2, ay2 = a
+    bx1, by1, bx2, by2 = b
+    outside = \
+        (ax1 >= bx2) or \
+        (ax2 <= bx1) or \
+        (ay1 >= by2) or \
+        (ay2 <= by1)
+    if outside:
+        return IS_OUTSIDE
+    else:
+        within = \
+            (bx1 >= ax1) and \
+            (bx2 <= ax2) and \
+            (by1 >= ay1) and \
+            (by2 <= ay2) 
+        if within:
+            return IS_WITHIN
+        else:
+            return IS_OVERLAPPING
+
+def bboxes_overlap(a, b):
+    return bboxes_overlap_score(a, b) > 0
+
+def objects_overlap_score(a, b):
+    bboxes = tuple(map(object_to_bbox, (a, b)))
+    return bboxes_overlap_score(*bboxes)
 
 def objects_overlap(a, b):
-    bbox = (b["x0"], b["top"], b["x1"], b["bottom"])
-    return obj_inside_bbox_score(a, bbox) > 0
+    return objects_overlap_score(a, b) > 0
 
-def clip_obj(obj, bbox, score=None):
-    if score == None:
-        score = obj_inside_bbox_score(obj, bbox)
-    if score == 0: return None
-    if score == 4: return obj
+def clip_object(obj, bbox):
+    a, b = bbox, object_to_bbox(obj)
+    score = bboxes_overlap_score(a, b)
+    if score == IS_OUTSIDE:
+        # If object is entirely outside the clipping box, reject it
+        return None
+    elif score == IS_WITHIN:
+        # If object is entirely within the bbox, no need to clip it
+        return obj
+
     x0, top, x1, bottom = map(decimalize, bbox)
 
     copy = dict(obj)
@@ -258,13 +315,12 @@ def clip_obj(obj, bbox, score=None):
     if copy["top"] < top:
         diff = top - copy["top"]
         copy["top"] = top
-        copy["doctop"] = copy["doctop"] + diff
-        copy["y1"] = copy["y1"] - diff
+        if "doctop" in copy:
+            copy["doctop"] = copy["doctop"] + diff
         y_changed = True
     if copy["bottom"] > bottom:
         diff = bottom - copy["bottom"]
         copy["bottom"] = bottom
-        copy["y0"] = copy["y0"] + diff
         y_changed = True
 
     if x_changed:
@@ -274,22 +330,14 @@ def clip_obj(obj, bbox, score=None):
 
     return copy
 
-def n_points_intersecting_bbox(objs, bbox):
-    bbox = decimalize(bbox)
-    objs = to_list(objs)
-    scores = (obj_inside_bbox_score(obj, bbox) for obj in objs)
-    return list(scores)
-
-
 def intersects_bbox(objs, bbox):
     """
     Filters objs to only those intersecting the bbox
     """
     initial_type = type(objs)
     objs = to_list(objs)
-    scores = n_points_intersecting_bbox(objs, bbox)
-    matching = [ obj for obj, score in zip(objs, scores)
-        if score > 0 ]
+    matching = [ obj for obj in objs
+        if bboxes_overlap_score(bbox, object_to_bbox(obj)) > 0 ]
     return initial_type(matching)
 
 def within_bbox(objs, bbox):
@@ -302,26 +350,36 @@ def within_bbox(objs, bbox):
 
     initial_type = type(objs)
     objs = to_list(objs)
-    scores = n_points_intersecting_bbox(objs, bbox)
-    matching = [ obj for obj, score in zip(objs, scores)
-        if score == 4 ]
+    matching = [ obj for obj in objs
+        if bboxes_overlap_score(bbox, object_to_bbox(obj)) == IS_WITHIN ]
     return initial_type(matching)
 
-def crop_to_bbox(objs, bbox):
+def crop_to_bbox(objs, bbox, char_threshold=0.5):
     """
     Filters objs to only those intersecting the bbox,
     and crops the extent of the objects to the bbox.
     """
     if isinstance(objs, dict):
-        return dict((k, crop_to_bbox(v, bbox))
+        return dict((k, crop_to_bbox(v, bbox, char_threshold))
             for k,v in objs.items())
 
     initial_type = type(objs)
     objs = to_list(objs)
-    scores = n_points_intersecting_bbox(objs, bbox)
-    cropped = [ clip_obj(obj, bbox, score)
-        for obj, score in zip(objs, scores)
-            if score > 0 ]
+    cropped_gen = ((obj, clip_object(obj, bbox)) for obj in objs)
+
+    def test_threshold(orig, cropped):
+        if cropped is None: return False
+        if char_threshold == 0: return True
+        if orig.get("object_type", "") != "char": return True
+
+        orig_area = (orig["height"] * orig["width"])
+        cropped_area = (cropped["height"] * cropped["width"])
+        ratio = cropped_area / orig_area
+        return ratio >= char_threshold
+
+    cropped = [ cropped for orig, cropped in cropped_gen
+        if test_threshold(orig, cropped) ]
+
     return initial_type(cropped)
 
 def move_object(obj, axis, value):
@@ -338,47 +396,6 @@ def move_object(obj, axis, value):
         ]
         if "doctop" in obj:
             new_items += [ ("doctop", obj["doctop"] + value) ]
-        if "y0" in obj:
-            new_items += [
-                ("y0", obj["y0"] - value),
-                ("y1", obj["y1"] - value),
-            ]
-    return obj.__class__(tuple(obj.items()) + tuple(new_items))
-
-def resize_object(obj, key, value):
-    assert(key in ("x0", "x1", "top", "bottom"))
-    old_value = obj[key]
-    diff = value - old_value
-    if key in ("x0", "x1"):
-        if key == "x0":
-            assert(value <= obj["x1"])
-        else:
-            assert(value >= obj["x0"])
-        new_items = (
-            (key, value),
-            ("width", obj["width"] + diff),
-        )
-    if key == "top":
-        assert(value <= obj["bottom"])
-        new_items = [
-            (key, value),
-            ("doctop", obj["doctop"] + diff),
-            ("height", obj["height"] - diff),
-        ]
-        if "y1" in obj:
-            new_items += [
-                ("y1", obj["y1"] - diff),
-            ]
-    if key == "bottom":
-        assert(value >= obj["top"])
-        new_items = [
-            (key, value),
-            ("height", obj["height"] + diff),
-        ]
-        if "y0" in obj:
-            new_items += [
-                ("y0", obj["y0"] - diff),
-            ]
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
 def rect_to_edges(rect):
@@ -386,14 +403,12 @@ def rect_to_edges(rect):
     top.update({
         "object_type": "rect_edge",
         "height": decimalize(0),
-        "y0": rect["y1"],
         "bottom": rect["top"],
         "orientation": "h"
     })
     bottom.update({
         "object_type": "rect_edge",
         "height": decimalize(0),
-        "y1": rect["y0"],
         "top": rect["top"] + rect["height"],
         "doctop": rect["doctop"] + rect["height"],
         "orientation": "h"

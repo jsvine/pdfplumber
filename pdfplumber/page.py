@@ -1,4 +1,5 @@
 from . import utils
+from . import edge_finders
 from .table import TableFinder
 from .container import Container
 from copy import copy
@@ -65,8 +66,12 @@ class Page(Container):
         self._objects = self.parse_objects()
         return self._objects
 
+    def process(self):
+        self._objects = self.parse_objects()
+        return self
+
     def parse_objects(self):
-        objects = {}
+        objects = []
 
         d = self.decimalize
         h = self.height
@@ -86,46 +91,50 @@ class Page(Container):
             "_text",
             "_objs",
             "groups",
-            "stream",
             "colorspace",
+            "fontsize",
             "imagemask",
-            "pts",
         ]
 
         NON_DECIMALIZE = [
-            "fontname", "name", "upright",
+            "imagemask", "colorspace", "bits",
+            "text", "font", "fontname", "name", "upright",
+            "object_type", "path", "stroke", "fill", "evenodd",
+            "stroking_color", "non_stroking_color", "stream",
         ]
 
         def process_object(obj):
-            attr = dict((k, (v if (k in NON_DECIMALIZE or v == None) else d(v)))
-                for k, v in obj.__dict__.items()
-                    if k not in IGNORE)
-
-            kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
-            attr["object_type"] = kind
-            attr["page_number"] = pno
-
-            if hasattr(obj, "get_text"):
-                attr["text"] = obj.get_text()
-
-            if kind == "curve":
-                attr["points"] = list(map(point2coord, obj.pts))
-
-            if attr.get("y0") != None:
-                attr["top"] = h - attr["y1"]
-                attr["bottom"] = h - attr["y0"]
-                attr["doctop"] = idc + attr["top"]
-
-            if objects.get(kind) == None:
-                objects[kind] = []
-            objects[kind].append(attr)
-
             if hasattr(obj, "_objs"):
                 for child in obj._objs:
                     process_object(child)
-        
-        for obj in self.layout._objs:
-            process_object(obj)
+            else:
+                attr = dict((k, (v if (k in NON_DECIMALIZE or v == None) else d(v)))
+                    for k, v in obj.__dict__.items()
+                        if k not in IGNORE)
+
+                kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
+
+                attr["object_type"] = kind
+
+                attr["page_number"] = pno
+
+                if hasattr(obj, "get_text"):
+                    attr["text"] = obj.get_text()
+
+                if kind in [ "curve" ]:
+                    attr["pts"] = list(map(point2coord, attr["pts"]))
+                elif "pts" in attr:
+                    del attr["pts"]
+
+                attr["top"] = h - attr["y1"]
+                attr["bottom"] = h - attr["y0"]
+                attr["doctop"] = idc + attr["top"]
+                del attr["y0"]
+                del attr["y1"]
+
+                objects.append(attr)
+
+        process_object(self.layout)
 
         return objects
 
@@ -141,39 +150,39 @@ class Page(Container):
 
     def extract_table(self, table_settings={}):
         tables = self.find_tables(table_settings)
+        if len(tables) == 0:
+            return None
         # Return the largest table, as measured by number of cells.
         sorter = lambda x: (len(x.cells), x.bbox[1], x.bbox[0])
         largest = list(sorted(tables, key=sorter))[0]
         return largest.extract()
 
-    def extract_text(self,
-        x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
+    def extract_text(self, **kwargs):
 
-        return utils.extract_text(self.chars,
-            x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance)
+        return utils.extract_text(self.chars, **kwargs)
 
-    def extract_words(self,
-        x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE,
-        keep_blank_chars=False):
+    def extract_words(self, **kwargs):
 
-        return utils.extract_words(self.chars,
-            x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance)
+        return utils.extract_words(self.chars, **kwargs)
 
-    def crop(self, bbox):
+    def find_text_edges(self, *args, **kwargs):
+        return edge_finders.find_text_edges(self, *args, **kwargs)
+
+    def crop(self, bbox, char_threshold=0.5):
         class CroppedPage(DerivedPage):
             @property
             def objects(self):
                 if hasattr(self, "_objects"): return self._objects
                 self._objects = utils.crop_to_bbox(
                     self.parent_page.objects,
-                    self.bbox)
+                    self.bbox,
+                    char_threshold=char_threshold
+                )
                 return self._objects
 
         cropped = CroppedPage(self)
+        if type(bbox) is dict:
+            bbox = utils.object_to_bbox(bbox)
         cropped.bbox = self.decimalize(bbox)
         return cropped
 
@@ -191,6 +200,8 @@ class Page(Container):
                 return self._objects
 
         cropped = CroppedPage(self)
+        if type(bbox) is dict:
+            bbox = utils.object_to_bbox(bbox)
         cropped.bbox = self.decimalize(bbox)
         return cropped
 
@@ -223,7 +234,6 @@ class DerivedPage(Page):
         self.pdf = parent_page.pdf
         self.page_obj = parent_page.page_obj
         self.page_number = parent_page.page_number
-        self.flush_cache(Container.cached_properties)
 
         if type(parent_page) == Page:
             self.root_page = parent_page

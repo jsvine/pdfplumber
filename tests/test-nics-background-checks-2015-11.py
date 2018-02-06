@@ -50,8 +50,8 @@ class Test(unittest.TestCase):
         page = self.pdf.pages[0]
         cropped = page.crop((0, 80, self.PDF_WIDTH, 485))
         table = cropped.extract_table({
-            "horizontal_strategy": "text",
-            "explicit_vertical_lines": [
+            "horizontal_edges": cropped.find_text_edges("h"),
+            "vertical_edges": cropped.vertical_edges + [
                 min(map(itemgetter("x0"), cropped.chars))
             ],
             "intersection_tolerance": 5
@@ -81,9 +81,10 @@ class Test(unittest.TestCase):
     def test_pandas(self):
         page = self.pdf.pages[0]
         cropped = page.crop((0, 80, self.PDF_WIDTH, 485))
+
         table = cropped.extract_table({
-            "horizontal_strategy": "text",
-            "explicit_vertical_lines": [
+            "horizontal_edges": cropped.find_text_edges("h"),
+            "vertical_edges": cropped.vertical_edges + [
                 min(map(itemgetter("x0"), cropped.chars))
             ],
             "intersection_tolerance": 5

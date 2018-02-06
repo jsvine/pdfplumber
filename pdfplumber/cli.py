@@ -34,7 +34,7 @@ def parse_args():
     parser.add_argument("--encoding",
         default="utf-8")
 
-    TYPE_DEFAULTS = [ "char", "anno", "line", "curve", "rect" ]
+    TYPE_DEFAULTS = [ "char", "line", "rect", "curve" ]
     parser.add_argument("--types", nargs="+",
         choices=TYPE_DEFAULTS + [ "rect_edge" ],
         default=TYPE_DEFAULTS)
