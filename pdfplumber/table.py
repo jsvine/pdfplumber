@@ -23,7 +23,7 @@ def move_to_avg(objs, orientation):
         for obj in objs ]
     return new_objs
 
-def snap_edges(edges, tolerance=DEFAULT_SNAP_TOLERANCE):
+def snap_edges(edges, x_tolerance=DEFAULT_SNAP_TOLERANCE, y_tolerance=DEFAULT_SNAP_TOLERANCE):
     """
     Given a list of edges, snap any within `tolerance` pixels of one another to their positional average.
     """
@@ -31,10 +31,10 @@ def snap_edges(edges, tolerance=DEFAULT_SNAP_TOLERANCE):
         for o in ("v", "h") ]
 
     v = [ move_to_avg(cluster, "v")
-        for cluster in utils.cluster_objects(v, "x0", tolerance) ]
+        for cluster in utils.cluster_objects(v, "x0", y_tolerance) ]
 
     h = [ move_to_avg(cluster, "h")
-        for cluster in utils.cluster_objects(h, "top", tolerance) ]
+        for cluster in utils.cluster_objects(h, "top", x_tolerance) ]
 
     snapped = list(itertools.chain(*(v + h)))
     return snapped
@@ -67,7 +67,7 @@ def join_edge_group(edges, orientation, tolerance=DEFAULT_JOIN_TOLERANCE):
 
     return joined
 
-def merge_edges(edges, snap_tolerance, join_tolerance):
+def merge_edges(edges, snap_x_tolerance, snap_y_tolerance, join_tolerance):
     """
     Using the `snap_edges` and `join_edge_group` methods above, merge a list of edges into a more "seamless" list.
     """
@@ -77,8 +77,8 @@ def merge_edges(edges, snap_tolerance, join_tolerance):
         else:
             return ("v", edge["x0"])
 
-    if snap_tolerance > 0:
-        edges = snap_edges(edges, snap_tolerance)
+    if snap_x_tolerance > 0 or snap_y_tolerance > 0:
+        edges = snap_edges(edges, snap_x_tolerance, snap_y_tolerance)
 
     if join_tolerance > 0:
         _sorted = sorted(edges, key=get_group)
@@ -395,6 +395,8 @@ DEFAULT_TABLE_SETTINGS = {
     "explicit_vertical_lines": [],
     "explicit_horizontal_lines": [],
     "snap_tolerance": DEFAULT_SNAP_TOLERANCE,
+    "snap_x_tolerance": None,
+    "snap_y_tolerance": None,
     "join_tolerance": DEFAULT_JOIN_TOLERANCE,
     "edge_min_length": 3,
     "min_words_vertical": DEFAULT_MIN_WORDS_VERTICAL,
@@ -426,6 +428,8 @@ class TableFinder(object):
         self.settings = dict(DEFAULT_TABLE_SETTINGS)
         self.settings.update(settings)
         for var, fallback in [
+            ("snap_x_tolerance", "snap_tolerance"),
+            ("snap_y_tolerance", "snap_tolerance"),
             ("text_x_tolerance", "text_tolerance"),
             ("text_y_tolerance", "text_tolerance"),
             ("intersection_x_tolerance", "intersection_tolerance"),
@@ -549,10 +553,11 @@ class TableFinder(object):
         h = h_base + h_explicit
 
         edges = list(v) + list(h)
-        if settings["snap_tolerance"] > 0 or settings["join_tolerance"] > 0:
+        if settings["snap_x_tolerance"] > 0 or settings["snap_y_tolerance"] > 0 or settings["join_x_tolerance"] > 0:
             edges = merge_edges(edges,
-                snap_tolerance=settings["snap_tolerance"],
-                join_tolerance=settings["join_tolerance"],
+                snap_x_tolerance=settings["snap_x_tolerance"],
+                snap_y_tolerance=settings["snap_y_tolerance"],
+                join_tolerance=settings["join_tolerance"]
             )
         return utils.filter_edges(edges,
             min_length=settings["edge_min_length"])
