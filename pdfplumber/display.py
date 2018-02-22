@@ -1,10 +1,10 @@
 import PIL.Image
 import PIL.ImageDraw
 import wand.image
-import sys, os
 from io import BytesIO
 from pdfplumber import utils
 from pdfplumber.table import TableFinder
+import sys, os
 
 class COLORS(object):
     RED = (255, 0, 0)
@@ -25,11 +25,10 @@ def get_page_image(pdf_path, page_no, resolution):
     with wand.image.Image(filename=page_path, resolution=resolution) as img:
         with img.convert("png") as png:
             im = PIL.Image.open(BytesIO(png.make_blob()))
-            if "transparency" in im.info:
-                converted = im.convert("RGBA").convert("RGB")
-            else:
-                converted = im.convert("RGB")
-            return converted
+            im = im.convert("RGBA")
+            canvas = PIL.Image.new("RGBA", im.size, (255, 255, 255))
+            canvas.paste(im, im)
+            return canvas
 
 class PageImage(object):
     def __init__(self, page, original=None, resolution=DEFAULT_RESOLUTION):
@@ -73,16 +72,24 @@ class PageImage(object):
         return an (x0, top) tuple in the *image* coordinate system.
         """
         x0, top = coord
-        px0, ptop = self.page.bbox[:2]
-        rx0, rtop = self.root.bbox[:2]
-        _x0 = (x0 + rx0 - px0) * self.scale
-        _top = (top + rtop - ptop) * self.scale
+        x0_prop = (x0 - self.page.bbox[0]) / self.page.width
+        top_prop = (top - self.page.bbox[1]) / self.page.height
+        _x0 = x0_prop * (self.scale * self.page.width)
+        _top = top_prop * (self.scale * self.page.height)
         return (_x0, _top)
 
+    @property
+    def annotated(self):
+        im = PIL.Image.new("RGBA", self.original.size, (255, 255, 255))
+        im.paste(self.original, (0, 0), self.original)
+        im.paste(self.annotations, (0, 0), self.annotations)
+        return im
+
     def reset(self):
-        self.annotated = PIL.Image.new(self.original.mode, self.original.size)
-        self.annotated.paste(self.original)
-        self.draw = PIL.ImageDraw.Draw(self.annotated, "RGBA")
+        mask = PIL.Image.new("L", self.original.size, color=0)
+        self.annotations = PIL.Image.new("RGBA", self.original.size)
+        self.annotations.putalpha(mask)
+        self.draw = PIL.ImageDraw.Draw(self.annotations, "RGBA")
         return self
 
     def copy(self):
@@ -153,16 +160,11 @@ class PageImage(object):
             bbox = (obj["x0"], obj["top"], obj["x1"], obj["bottom"])
 
         x0, top, x1, bottom = bbox
-        half = self.decimalize(stroke_width / 2)
-        x0 += half
-        top += half
-        x1 -= half
-        bottom -= half
 
         self.draw.rectangle(
             self._reproject_bbox((x0, top, x1, bottom)),
             fill,
-            COLORS.TRANSPARENT
+            None
         )
 
         if stroke_width > 0:
@@ -213,6 +215,52 @@ class PageImage(object):
     def draw_circles(self, list_of_circles, **kwargs):
         for x in utils.to_list(list_of_circles):
             self.draw_circle(x, **kwargs)
+        return self
+
+    def draw_object(self, obj):
+        fill = obj.get("fill")
+        stroke = obj.get("stroke")
+
+        t = obj["object_type"]
+        if t == "rect":
+            self.draw_rect(
+                obj,
+                fill=fill,
+                stroke=stroke,
+                stroke_width=obj["linewidth"]
+            )
+        elif t == "line":
+            self.draw_line(
+                obj,
+                stroke=stroke,
+                stroke_width=obj["linewidth"]
+            )
+        elif t == "curve":
+            self.draw_line(
+                obj,
+                stroke=stroke,
+                stroke_width=obj["linewidth"],
+            )
+        elif t == "char":
+            self.draw.text(
+                (obj["x0"], obj["bottom"] - 10),
+                obj["text"],
+                fill=fill,
+            )
+        elif t == "image":
+            self.draw_rect(obj)
+        else:
+            raise ValueError("Cannot recognize {0}".format(t))
+        return self
+
+    def draw_objects(self, objs, **kwargs):
+        for obj in objs:
+            self.draw_object(obj, **kwargs)
+        return self
+
+    def paint(self, color=(255, 255, 255)):
+        blank_im = PIL.Image.new("RGBA", self.original.size, color)
+        self.annotations.paste(blank_im, (0, 0), blank_im)
         return self
 
     def save(self, *args, **kwargs):

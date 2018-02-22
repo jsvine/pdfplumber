@@ -4,6 +4,48 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.6.0-alpha] — 2018-02-05
+### Added
+- Color information for many objects, thanks to `pdfminer.six` updates
+- Font size and name to results of `Page/utils.extract_words`; `match_fontsize`, `match_fontname`, and `fontsize_tolerance` keyword arguments to that method.
+- Ability for `Page.crop`/etc. to accept rects and other `pdfplumber` objects
+- `PageImage.draw_object`, which tries to replicate a given object's attributes
+- `Page.find_text_edges`, which returns a list of lines that appear to define implicit borders/edges/alignment
+- `char_threshold` argument for `Page.crop`, which lets you decide how much of a `char` needs to be within a cropping box to be retained
+- `MANIFEST.in`
+- `requirements.txt`
+  
+### Changed
+- Big revamp/simplification of table extraction
+- Upgrade to `pdfminer.six==20170419`
+
+### Fixed
+- Fix `utils.objects_overlap`, which was failing when the second object was entirely encompassing first object
+
+### Deprecated
+- Access to `Page.annos`, which wasn't actually working in the first place. Hoping to re-add proper support.
+- Access to `y0` and `y1` properties, which were redundant and a bit confusing
+- utils.resize_object, which contained flawed assumptions and wasn't necessary
+
+## [0.5.7] — 2018-01-20
+### Added
+- `.travis.yml`, but failing on `.to_image()`
+
+### Changed
+- Move from defunct `pycrypto` to `pycryptodome`
+- Update `pdfminer.six` to `20170720`
+
+## [0.5.6] — 2017-11-21
+### Fixed
+- Fix issue #41, in which PDF-object-referenced cropboxes/mediaboxes weren't being fully resolved.
+
+## [0.5.5] — 2017-05-10
+### Added
+- Access to `__version__` from main namespace
+
+### Fixed
+- Fix issue #33, by checking `decode_text`'s argument type
+
 ## [0.5.4] — 2017-04-27
 ### Fixed
 - Pin `pdfminer.six` to version `20151013` (for now), fixing incompatibility

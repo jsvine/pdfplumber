@@ -13,14 +13,23 @@ from pdfminer.psparser import PSLiteral
 class PDF(Container):
     cached_properties = Container.cached_properties + [ "_pages" ]
 
-    def __init__(self, stream, pages=None, laparams=None, precision=0.001):
+    def __init__(self,
+        stream,
+        pages=None,
+        laparams=None,
+        precision=0.001,
+        parse_styles=False
+    ):
+
         self.laparams = None if laparams == None else LAParams(**laparams)
         self.stream = stream
         self.pages_to_parse = pages
         self.precision = precision
-        rsrcmgr = PDFResourceManager()
+        self.parse_styles = parse_styles
+
         self.doc = PDFDocument(PDFParser(stream))
         self.metadata = {}
+
         for info in self.doc.info:
             self.metadata.update(info)
         for k, v in self.metadata.items():
@@ -32,6 +41,8 @@ class PDF(Container):
                 self.metadata[k] = decode_text(v.name)
             else:
                 self.metadata[k] = decode_text(v)
+
+        rsrcmgr = PDFResourceManager()
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 
@@ -71,9 +82,14 @@ class PDF(Container):
     @property
     def objects(self):
         if hasattr(self, "_objects"): return self._objects
-        all_objects = {}
+        all_objects = []
         for p in self.pages:
-            for kind in p.objects.keys():
-                all_objects[kind] = all_objects.get(kind, []) + p.objects[kind]
+            all_objects += p.objects
         self._objects = all_objects
         return self._objects
+
+    @property
+    def fonts(self):
+        self.objects
+        return dict((v.fontname, v)
+            for v in self.interpreter.fontmap.values())

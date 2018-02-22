@@ -25,7 +25,6 @@ class Test(unittest.TestCase):
     def test_debug_tablefinder(self):
         self.im.reset()
         settings = {
-            "horizontal_strategy": "text",
             "intersection_tolerance": 5
         }
         self.im.debug_tablefinder(settings)
@@ -38,3 +37,15 @@ class Test(unittest.TestCase):
         page = pdfplumber.open(path).pages[0]
         im = page.to_image()
         im.draw_lines(page.curves)
+
+    def test_draw_objects(self):
+        path = os.path.join(
+            HERE,
+            "../examples/pdfs/ag-energy-round-up-2017-02-24.pdf",
+        )
+        page = pdfplumber.open(
+            path,
+            parse_styles = True
+        ).pages[0]
+        im = page.to_image()
+        im.draw_objects(page.objects)

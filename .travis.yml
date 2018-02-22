@@ -6,7 +6,9 @@ python:
     - "3.5"
     - "3.6"
 install:
-    - pip install .
-    - pip install nose
+    - pip install -e .
     - pip install pandas
-script: nosetests
+    - pip install nose
+    - pip install coveralls
+script: nosetests --with-coverage --cover-erase --cover-package pdfplumber
+after_success: coveralls

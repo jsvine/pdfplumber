@@ -2,8 +2,11 @@
 import unittest
 import pandas as pd
 import pdfplumber
-from pdfplumber import utils
-from pdfplumber import table
+from pdfplumber import (
+    utils,
+    table,
+    edge_finders
+)
 import sys, os
 
 import logging
@@ -18,20 +21,20 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         path = os.path.join(HERE, "pdfs/WARN-Report-for-7-1-2015-to-03-25-2016.pdf")
-        self.pdf = pdfplumber.from_path(path)
+        self.pdf = pdfplumber.from_path(path, pages=[1])
         self.PDF_WIDTH = self.pdf.pages[0].width
 
     def test_pandas(self):
 
         rect_x0_clusters = utils.cluster_list([ r["x0"]
-            for r in self.pdf.pages[1].rects ], tolerance=3)
+            for r in self.pdf.pages[0].rects ], tolerance=3)
 
         v_lines = [ x[0] for x in rect_x0_clusters ]
 
         def parse_page(page):
             data = page.extract_table({
-                "vertical_strategy": "explicit",
-                "explicit_vertical_lines": v_lines
+                "vertical_edges": v_lines,
+                "horizontal_edges": page.horizontal_edges
             })
             without_spaces = [ fix_row_spaces(row) for row in data ]
             return without_spaces
@@ -78,3 +81,27 @@ class Test(unittest.TestCase):
         )
         ixs = table.edges_to_intersections(edges)
         assert(len(ixs.keys()) == 304) # 38x8
+
+    def test_image(self):
+        assert(len(self.pdf.pages[0].images) == 1)
+
+    def test_edges(self):
+        v = self.pdf.pages[0].vertical_edges
+        h = self.pdf.pages[0].horizontal_edges
+        assert(len(v) > 0)
+        assert(len(h) > 0)
+        assert(len(v) + len(h) == len(self.pdf.pages[0].edges))
+
+    def test_extract_tables(self):
+        tables = self.pdf.pages[0].extract_tables()
+        table = tables[0]
+        assert(table[0] == [
+            "Notice Date",
+            "Effective",
+            "Received",
+            "Company",
+            "City",
+            "No. Of",
+            "Layoff/Closure",
+        ])
+
