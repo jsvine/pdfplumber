@@ -265,6 +265,8 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
     "vertical_edges": None,
     "horizontal_edges": None,
     "snap_tolerance": DEFAULT_SNAP_TOLERANCE,
+    "snap_x_tolerance": None,
+    "snap_y_tolerance": None,
     "join_tolerance": DEFAULT_JOIN_TOLERANCE,
     "intersection_tolerance": 3,
     "intersection_x_tolerance": None,
@@ -277,7 +279,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 |---------|-------------|
 |`"vertical_edges"`| A list of vertical edges/lines that explicitly demarcate cells in the table. Items in the list should be ewther numbers — indicating the `x` coordinate of a line the full height of the page — or a dictionary describing the line, with at least the following keys: `x`, `top`, `bottom`. |
 |`"horizontal_edges"`| A list of horizontal edges/lines that explicitly demarcate cells in the table. Can be used in combination with any of the strategies above. Items in the list should be either numbers — indicating the `y` coordinate of a line the full height of the page — or a dictionary describing the line, with at least the following keys: `top`, `x0`, `x1`.|
-|`"snap_tolerance"`| Parallel lines within `snap_tolerance` pixels will be "snapped" to the same horizontal or vertical position.|
+|`"snap_tolerance"`, `"snap_x_tolerance"`, `"snap_y_tolerance"`| Parallel lines within `snap_tolerance` pixels will be "snapped" to the same horizontal or vertical position.|
 |`"join_tolerance"`| Line segments on the same infinite line, and whose ends are within `join_tolerance` of one another, will be "joined" into a single line segment.|
 |`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges must be within `intersection_tolerance` pixels to be considered intersecting.|
 |`"text_kwargs"`| Arguments to be passed to `utils.extract_text` inside each table cell.|
