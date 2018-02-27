@@ -66,7 +66,8 @@ class Test(unittest.TestCase):
         assert(len(p0.edges) == 364) 
         assert(len(table.merge_edges(
             p0.edges,
-            snap_tolerance=3,
+            snap_x_tolerance=3,
+            snap_y_tolerance=3,
             join_tolerance=3
         )) == 46)
 
@@ -74,7 +75,8 @@ class Test(unittest.TestCase):
         p0 = self.pdf.pages[0]
         edges = table.merge_edges(
             p0.edges,
-            snap_tolerance=3,
+            snap_x_tolerance=3,
+            snap_y_tolerance=3,
             join_tolerance=3
         )
         ixs = table.edges_to_intersections(edges)

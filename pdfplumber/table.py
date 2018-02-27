@@ -19,8 +19,10 @@ def move_to_avg(objs, orientation):
         for obj in objs ]
     return new_objs
 
+  
 DEFAULT_SNAP_TOLERANCE = 3
-def snap_edges(edges, tolerance=DEFAULT_SNAP_TOLERANCE):
+def snap_edges(edges, x_tolerance=DEFAULT_SNAP_TOLERANCE, y_tolerance=DEFAULT_SNAP_TOLERANCEE):
+
     """
     Given a list of edges, snap any within `tolerance` pixels of one another to their positional average.
     """
@@ -28,10 +30,10 @@ def snap_edges(edges, tolerance=DEFAULT_SNAP_TOLERANCE):
         for o in ("v", "h") ]
 
     v = [ move_to_avg(cluster, "v")
-        for cluster in utils.cluster_objects(v, "x0", tolerance) ]
+        for cluster in utils.cluster_objects(v, "x0", y_tolerance) ]
 
     h = [ move_to_avg(cluster, "h")
-        for cluster in utils.cluster_objects(h, "top", tolerance) ]
+        for cluster in utils.cluster_objects(h, "top", x_tolerance) ]
 
     snapped = list(itertools.chain(*(v + h)))
     return snapped
@@ -69,7 +71,7 @@ def join_edge_group(edges, orientation, tolerance=DEFAULT_JOIN_TOLERANCE):
 
     return joined
 
-def merge_edges(edges, snap_tolerance, join_tolerance):
+def merge_edges(edges, snap_x_tolerance, snap_y_tolerance, join_tolerance):
     """
     Using the `snap_edges` and `join_edge_group` methods above, merge a list of edges into a more "seamless" list.
     """
@@ -79,8 +81,8 @@ def merge_edges(edges, snap_tolerance, join_tolerance):
         else:
             return ("v", edge["x0"])
 
-    if snap_tolerance > 0:
-        edges = snap_edges(edges, snap_tolerance)
+    if snap_x_tolerance > 0 or snap_y_tolerance > 0:
+        edges = snap_edges(edges, snap_x_tolerance, snap_y_tolerance)
 
     if join_tolerance > 0:
         _sorted = sorted(edges, key=get_group)
@@ -339,6 +341,8 @@ DEFAULT_TABLE_SETTINGS = {
     "vertical_edges": None,
     "horizontal_edges": None,
     "snap_tolerance": DEFAULT_SNAP_TOLERANCE,
+    "snap_x_tolerance": None,
+    "snap_y_tolerance": None,
     "join_tolerance": DEFAULT_JOIN_TOLERANCE,
     "intersection_tolerance": 3,
     "intersection_x_tolerance": None,
@@ -366,6 +370,8 @@ class TableFinder(object):
         s = self.settings
 
         for var, fallback in [
+            ("snap_x_tolerance", "snap_tolerance"),
+            ("snap_y_tolerance", "snap_tolerance"),
             ("intersection_x_tolerance", "intersection_tolerance"),
             ("intersection_y_tolerance", "intersection_tolerance"),
         ]:
@@ -399,10 +405,10 @@ class TableFinder(object):
 
     def combine_edges(self, edges):
         s = self.settings
-
-        if s["snap_tolerance"] > 0 or s["join_tolerance"] > 0:
+        if s["snap_x_tolerance"] > 0 or s["snap_y_tolerance"] > 0 or s["join_tolerance"] > 0:
             edges = merge_edges(edges,
-                snap_tolerance=s["snap_tolerance"],
+                snap_tolerance=s["snap_x_tolerance"]
+                snap_tolerance=s["snap_y_tolerance"],
                 join_tolerance=s["join_tolerance"],
             )
 
