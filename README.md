@@ -309,6 +309,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Dan Nguyen](https://github.com/dannguyen)
 - [Jeff Barrera](https://github.com/jeffbarrera)
 - [Bob Lannon](https://github.com/boblannon)
+- [Dustin Tindall](https://github.com/dustindall)
 
 ## Contributing
 
