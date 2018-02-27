@@ -21,7 +21,7 @@ def move_to_avg(objs, orientation):
 
   
 DEFAULT_SNAP_TOLERANCE = 3
-def snap_edges(edges, x_tolerance=DEFAULT_SNAP_TOLERANCE, y_tolerance=DEFAULT_SNAP_TOLERANCEE):
+def snap_edges(edges, x_tolerance=DEFAULT_SNAP_TOLERANCE, y_tolerance=DEFAULT_SNAP_TOLERANCE):
 
     """
     Given a list of edges, snap any within `tolerance` pixels of one another to their positional average.
@@ -407,9 +407,9 @@ class TableFinder(object):
         s = self.settings
         if s["snap_x_tolerance"] > 0 or s["snap_y_tolerance"] > 0 or s["join_tolerance"] > 0:
             edges = merge_edges(edges,
-                snap_tolerance=s["snap_x_tolerance"]
-                snap_tolerance=s["snap_y_tolerance"],
-                join_tolerance=s["join_tolerance"],
+                snap_x_tolerance = s["snap_x_tolerance"],
+                snap_y_tolerance = s["snap_y_tolerance"],
+                join_tolerance = s["join_tolerance"],
             )
 
         return edges
