@@ -15,6 +15,7 @@ Currently [tested](tests/) on [Python 2.7, 3.1, 3.4, 3.5, and 3.6](tox.ini).
 - [Extracting tables](#extracting-tables)
 - [Demonstrations](#demonstrations)
 - [Acknowledgments / Contributors](#acknowledgments--contributors)
+- [Contributing](#contributing)
 
 ## Installation
 
@@ -307,6 +308,6 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Jeff Barrera](https://github.com/jeffbarrera)
 - [Bob Lannon](https://github.com/boblannon)
 
-## Feedback
+## Contributing
 
-Issues and pull requests welcome.
+Pull requests are welcome, but please submit an issue (or email jsvine@gmail.com) before submitting one, as the library is in active development. The current development branch is `v0.6.0`.
