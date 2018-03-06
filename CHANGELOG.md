@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.8] — 2018-03-06
+### Fixed
+- Fix issue #53, in which non-decimalize-able (non_)stroking_color properties were raising errors.
+
+## [0.5.7] — 2018-01-20
+### Added
+- `.travis.yml`, but failing on `.to_image()`
+
+### Changed
+- Move from defunct `pycrypto` to `pycryptodome`
+- Update `pdfminer.six` to `20170720`
+
+## [0.5.6] — 2017-11-21
+### Fixed
+- Fix issue #41, in which PDF-object-referenced cropboxes/mediaboxes weren't being fully resolved.
+
+## [0.5.5] — 2017-05-10
+### Added
+- Access to `__version__` from main namespace
+
+### Fixed
+- Fix issue #33, by checking `decode_text`'s argument type
+
 ## [0.5.4] — 2017-04-27
 ### Fixed
 - Pin `pdfminer.six` to version `20151013` (for now), fixing incompatibility
