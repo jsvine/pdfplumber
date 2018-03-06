@@ -94,6 +94,7 @@ class Page(Container):
 
         NON_DECIMALIZE = [
             "fontname", "name", "upright",
+            "stroking_color", "non_stroking_color",
         ]
 
         def process_object(obj):
