@@ -368,14 +368,20 @@ def crop_to_bbox(objs, bbox, char_threshold=0.5):
     cropped_gen = ((obj, clip_object(obj, bbox)) for obj in objs)
 
     def test_threshold(orig, cropped):
-        if cropped is None: return False
-        if char_threshold == 0: return True
-        if orig.get("object_type", "") != "char": return True
-
-        orig_area = (orig["height"] * orig["width"])
-        cropped_area = (cropped["height"] * cropped["width"])
-        ratio = cropped_area / orig_area
-        return ratio >= char_threshold
+        if cropped is None:
+            ret = False
+        elif char_threshold == 0:
+            ret = True
+        elif orig.get("object_type", "") != "char":
+            ret = True
+        elif orig['height']*orig['width'] == 0:
+            ret = False
+        else:
+            orig_area = (orig["height"] * orig["width"])
+            cropped_area = (cropped["height"] * cropped["width"])
+            ratio = cropped_area / orig_area
+            ret = ratio >= char_threshold
+        return ret
 
     cropped = [ cropped for orig, cropped in cropped_gen
         if test_threshold(orig, cropped) ]
