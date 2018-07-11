@@ -97,3 +97,9 @@ class Test(unittest.TestCase):
         )
         assert len(pdf.objects)
 
+    def test_issue_67(self):
+        pdf = pdfplumber.from_path(
+            os.path.join(HERE, "pdfs/issue-67-example.pdf")
+        )
+        assert len(pdf.metadata.keys())
+        
