@@ -30,6 +30,8 @@ class PDF(Container):
                 self.metadata[k] = list(map(decode_text, v))
             elif isinstance(v, PSLiteral):
                 self.metadata[k] = decode_text(v.name)
+            elif isinstance(v, bool):
+                self.metadata[k] = v
             else:
                 self.metadata[k] = decode_text(v)
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
