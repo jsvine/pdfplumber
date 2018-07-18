@@ -23,6 +23,9 @@ def get_page_image(pdf_path, page_no, resolution):
     """
     page_path = "{0}[{1}]".format(pdf_path, page_no)
     with wand.image.Image(filename=page_path, resolution=resolution) as img:
+        if img.alpha_channel:
+            img.background_color = wand.image.Color('white')
+            img.alpha_channel = 'background'
         with img.convert("png") as png:
             im = PIL.Image.open(BytesIO(png.make_blob()))
             if "transparency" in im.info:
