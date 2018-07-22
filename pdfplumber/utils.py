@@ -4,6 +4,7 @@ import numbers
 from operator import itemgetter
 import itertools
 import six
+from collections import Counter
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
@@ -147,12 +148,16 @@ def extract_words(chars,
 
     def process_word_chars(chars):
         x0, top, x1, bottom = objects_to_bbox(chars)
+        fonts = [i['fontname'] for i in chars]
+        font_counts = Counter(fonts)
+        font = font_counts.most_common(n=1)[0][0]
         return {
             "x0": x0,
             "x1": x1,
             "top": top,
             "bottom": bottom,
-            "text": "".join(map(itemgetter("text"), chars))
+            "text": "".join(map(itemgetter("text"), chars)),
+            "font": font
         }
 
 
