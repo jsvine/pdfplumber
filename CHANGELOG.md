@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.10] — 2018-08-03
+### Fixed
+- Fix bug in which, when calling get_page_image(...), the alpha channel could make the whole page black out.
+
+## [0.5.9] — 2018-07-10
+### Fixed
+- Fix issue #67, in which bool-type metadata were handled incorrectly
+
 ## [0.5.8] — 2018-03-06
 ### Fixed
 - Fix issue #53, in which non-decimalize-able (non_)stroking_color properties were raising errors.
