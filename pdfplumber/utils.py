@@ -163,7 +163,7 @@ def extract_words(chars,
         current_word = []
 
         for char in chars_sorted:
-            if not keep_blank_chars and get_text(char) == " ":
+            if not keep_blank_chars and get_text(char).isspace():
                 if len(current_word) > 0:
                     words.append(current_word)
                     current_word = []
