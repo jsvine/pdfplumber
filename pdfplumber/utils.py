@@ -1,4 +1,5 @@
 from pdfminer.utils import PDFDocEncoding
+from pdfminer.pdftypes import PDFObjRef
 from decimal import Decimal, ROUND_HALF_UP
 import numbers
 from operator import itemgetter
@@ -69,15 +70,22 @@ def decode_text(s):
         return ''.join(PDFDocEncoding[o] for o in ords)
 
 def decimalize(v, q=None):
+    # If PDFObjRef, first resolve
+    if isinstance(v, PDFObjRef):
+        return decimalize(v.resolve(), q)
+
     # If already a decimal, just return itself
     if isinstance(v, Decimal):
         return v
+
     # If tuple/list passed, bulk-convert
     elif isinstance(v, (tuple, list)):
         return type(v)(decimalize(x, q) for x in v)
+
     # Convert int-like
     elif isinstance(v, numbers.Integral):
         return Decimal(int(v))
+
     # Convert float-like
     elif isinstance(v, numbers.Real):
         if q != None:
