@@ -88,6 +88,8 @@ class Page(Container):
             "groups",
             "stream",
             "colorspace",
+            "ncs",
+            "graphicstate",
             "imagemask",
             "pts",
         ]
