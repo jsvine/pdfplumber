@@ -209,13 +209,15 @@ class Page(Container):
         filtered.bbox = self.bbox
         return filtered
 
-    def to_image(self, resolution=None):
+    def to_image(self, **conversion_kwargs):
         """
         For conversion_kwargs, see http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image
         """
         from .display import PageImage, DEFAULT_RESOLUTION
-        res = resolution or DEFAULT_RESOLUTION
-        return PageImage(self, resolution=res)
+        kwargs = dict(conversion_kwargs)
+        if "resolution" not in conversion_kwargs:
+            kwargs["resolution"] = DEFAULT_RESOLUTION
+        return PageImage(self, **kwargs)
 
 class DerivedPage(Page):
     is_original = False
