@@ -103,3 +103,11 @@ class Test(unittest.TestCase):
         )
         assert len(pdf.metadata.keys())
         
+    def test_pr_88(self):
+        # via https://github.com/jsvine/pdfplumber/pull/88
+        path = os.path.join(HERE, "pdfs/pr-88-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            first_page = pdf.pages[0]
+            words = first_page.extract_words()
+            assert len(words) == 25
+        
