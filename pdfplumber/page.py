@@ -95,13 +95,48 @@ class Page(Container):
             "pts",
         ]
 
-        NON_DECIMALIZE = [
-            "fontname", "name", "upright",
-            "stroking_color", "non_stroking_color",
-        ]
+        noop = lambda x: x
+        str_conv = lambda x: str(x or "")
+
+        CONVERSIONS = {
+            # Decimals
+            "adv": d,
+            "height": d,
+            "linewidth": d,
+            "pts": d,
+            "size": d,
+            "srcsize": d,
+            "width": d,
+            "x0": d,
+            "x1": d,
+            "y0": d,
+            "y1": d,
+
+            # Integer
+            "bits": int,
+            "upright": int,
+
+            # Strings
+            "font": str_conv,
+            "fontname": str_conv,
+            "imagemask": noop,
+            "name": str_conv,
+            "object_type": str_conv,
+            "text": str_conv,
+
+            # No conversion
+            "colorspace": noop,
+            "evenodd": noop,
+            "fill": noop,
+            "non_stroking_color": noop,
+            "path": noop,
+            "stream": noop,
+            "stroke": noop,
+            "stroking_color": noop,
+        }
 
         def process_object(obj):
-            attr = dict((k, (v if (k in NON_DECIMALIZE or v == None) else d(v)))
+            attr = dict((k, CONVERSIONS[k](resolve_all(v)))
                 for k, v in obj.__dict__.items()
                     if k not in IGNORE)
 
