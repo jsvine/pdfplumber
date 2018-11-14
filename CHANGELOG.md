@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.11] — 2018-11-13
+### Added
+- Caching for `.decimalize()` method
+
+## Changed
+- Upgrade to `pdfminer.six==20181108`
+- Make whitespace checking more robust (PR #88)
+
+### Fixed
+- Fix issue #75 (`.to_image()` custom arguments)
+- Fix issue raised in PR #77 (PDFObjRef resolution), and general class of problems
+- Fix issue #90, and general class of problems, by explicitly typecasting each kind of PDF Object
+
 ## [0.5.10] — 2018-08-03
 ### Fixed
 - Fix bug in which, when calling get_page_image(...), the alpha channel could make the whole page black out.
