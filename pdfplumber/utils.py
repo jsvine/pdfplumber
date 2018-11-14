@@ -4,8 +4,16 @@ from decimal import Decimal, ROUND_HALF_UP
 import numbers
 from operator import itemgetter
 import itertools
-from functools import lru_cache as cache
 import six
+
+if six.PY3:
+    from functools import lru_cache as cache
+else:
+    # Python 2 has no lru_cache, so defining as a no-op
+    def cache(**kwargs):
+        def decorator(fn):
+            return fn
+        return decorator
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
