@@ -191,7 +191,7 @@ Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to two 
 To turn any page (including cropped pages) into an `PageImage` object, call `my_page.to_image()`. You can optionally pass a `resolution={integer}` keyword argument, which defaults to 72. E.g.:
 
 ```python
-im = my_pdf.page[0].to_image(resolution=150)
+im = my_pdf.pages[0].to_image(resolution=150)
 ```
 
 `PageImage` objects play nicely with IPython/Jupyter notebooks; they automatically render as cell outputs. For example:
