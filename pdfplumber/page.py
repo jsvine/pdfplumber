@@ -82,8 +82,6 @@ class Page(Container):
             )
 
         IGNORE = [
-            "bbox",
-            "matrix",
             "_text",
             "_objs",
             "groups",
@@ -133,6 +131,8 @@ class Page(Container):
             "stream": noop,
             "stroke": noop,
             "stroking_color": noop,
+            "bbox": noop,
+            "matrix": noop,
         }
 
         def process_object(obj):
