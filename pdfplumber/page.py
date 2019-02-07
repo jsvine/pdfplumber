@@ -27,6 +27,8 @@ class Page(Container):
         self.cropbox = self.decimalize(resolve_all(cropbox)) if cropbox is not None else None
         self.mediabox = self.decimalize(resolve_all(mediabox) or self.cropbox)
         m = self.mediabox
+        self.return_matrix = False
+        self.return_bbox = False
 
         if self.rotation in [ 90, 270 ]:
             self.bbox = self.decimalize((
@@ -92,6 +94,14 @@ class Page(Container):
             "imagemask",
             "pts",
         ]
+
+        # Optionally return or ignore bbox
+        if not self.return_bbox:
+            IGNORE.append("bbox")
+
+        # Optionally return or ignore matrix
+        if not self.return_matrix:
+            IGNORE.append("matrix")
 
         noop = lambda x: x
         str_conv = lambda x: str(x or "")
