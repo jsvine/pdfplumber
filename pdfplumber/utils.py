@@ -1,5 +1,6 @@
 from pdfminer.utils import PDFDocEncoding
 from pdfminer.psparser import PSLiteral
+from pdfminer.pdftypes import PDFObjRef, resolve1 
 from decimal import Decimal, ROUND_HALF_UP
 import numbers
 from operator import itemgetter
@@ -95,6 +96,10 @@ def _decimalize(v, q = None):
     # Convert int-like
     elif isinstance(v, numbers.Integral):
         return Decimal(int(v))
+
+    # Resolve PDFOBjRef objects
+    elif isinstance(v, PDFObjRef):
+        return decimalize(resolve1(v))
 
     # Convert float-like
     elif isinstance(v, numbers.Real):
