@@ -99,7 +99,10 @@ def _decimalize(v, q = None):
 
     # Resolve PDFOBjRef objects
     elif isinstance(v, PDFObjRef):
-        return decimalize(resolve1(v))
+        if resolve1(v):
+            return decimalize(resolve1(v))
+        else:
+            return decimalize(0)
 
     # Convert float-like
     elif isinstance(v, numbers.Real):
