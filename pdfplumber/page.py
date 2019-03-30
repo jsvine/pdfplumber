@@ -176,7 +176,8 @@ class Page(Container):
 
     def extract_tables(self, table_settings={}):
         tables = self.find_tables(table_settings)
-        return [ table.extract() for table in tables ]
+        tables = sorted(tables, key=lambda x: x.bbox[1])
+        return [ table.extract() for table in tables]
 
     def extract_table(self, table_settings={}):
         tables = self.find_tables(table_settings)
