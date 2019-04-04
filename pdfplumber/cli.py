@@ -2,7 +2,10 @@
 import pdfplumber
 import argparse
 from itertools import chain
-from decimal import Decimal, ROUND_HALF_UP
+try:
+    from cdecimal import Decimal, ROUND_HALF_UP
+except ImportError:
+    from decimal import Decimal, ROUND_HALF_UP
 import unicodecsv
 import codecs
 import json

@@ -1,6 +1,9 @@
 from pdfminer.utils import PDFDocEncoding
 from pdfminer.psparser import PSLiteral
-from decimal import Decimal, ROUND_HALF_UP
+try:
+    from cdecimal import Decimal, ROUND_HALF_UP
+except ImportError:
+    from decimal import Decimal, ROUND_HALF_UP
 import numbers
 from operator import itemgetter
 import itertools
