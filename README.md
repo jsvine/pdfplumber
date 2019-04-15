@@ -223,6 +223,22 @@ You can pass explicit coordinates or any `pdfplumber` PDF object (e.g., char, li
 
 Note: The methods above are built on Pillow's [`ImageDraw` methods](http://pillow.readthedocs.io/en/latest/reference/ImageDraw.html), but the parameters have been tweaked for consistency with SVG's `fill`/`stroke`/`stroke_width` nomenclature.
 
+### Troubleshooting ImageMagick on Debian-based systems
+
+If you're using `pdfplumber` on a Debian-based system and encounter a `PolicyError`, you may be able to fix it by changing the following line in `/etc/ImageMagick-6/policy.xml` from this:
+
+```xml
+<policy domain="coder" rights="none" pattern="PDF" />
+```
+
+... to this:
+
+```xml
+<policy domain="coder" rights="read|write" pattern="PDF" />
+```
+
+(More details about `policy.xml` [available here](https://imagemagick.org/script/security-policy.php).)
+
 ## Extracting tables
 
 `pdfplumber`'s approach to table detection borrows heavily from [Anssi Nurminen's master's thesis](http://dspace.cc.tut.fi/dpub/bitstream/handle/123456789/21520/Nurminen.pdf?sequence=3), and is inspired by [Tabula](https://github.com/tabulapdf/tabula-extractor/issues/16). It works like this:
