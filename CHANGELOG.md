@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.12] — 2019-04-14
+## Added
+- `cdecimal` support for Python 2
+- Support for password-protected PDFs
+
 ## [0.5.11] — 2018-11-13
 ### Added
 - Caching for `.decimalize()` method
