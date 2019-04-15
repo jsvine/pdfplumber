@@ -50,3 +50,9 @@ class Test(unittest.TestCase):
 
         assert(rotated.pages[0].cropbox == self.pdf.pages[0].cropbox)
         assert(rotated.pages[0].bbox != self.pdf.pages[0].bbox)
+
+    def test_password(self):
+        path = os.path.join(HERE, "pdfs/password-example.pdf")
+        pdf = pdfplumber.open(path, password = "test")
+        assert(len(pdf.chars) > 0)
+        pdf.close()

@@ -65,6 +65,8 @@ with pdfplumber.open("path/to/file.pdf") as pdf:
 
 Both methods return an instance of the `pdfplumber.PDF` class.
 
+To load a password-protected PDF, pass the `password` keyword argument, e.g., `pdfplumber.open("file.pdf", password = "test")`.
+
 ### The `pdfplumber.PDF` class
 
 The top-level `pdfplumber.PDF` class represents a single PDF and has two main properties:

@@ -13,13 +13,19 @@ from pdfminer.psparser import PSLiteral
 class PDF(Container):
     cached_properties = Container.cached_properties + [ "_pages" ]
 
-    def __init__(self, stream, pages=None, laparams=None, precision=0.001):
+    def __init__(self,
+        stream,
+        pages = None,
+        laparams = None,
+        precision = 0.001,
+        password = b""
+    ):
         self.laparams = None if laparams == None else LAParams(**laparams)
         self.stream = stream
         self.pages_to_parse = pages
         self.precision = precision
         rsrcmgr = PDFResourceManager()
-        self.doc = PDFDocument(PDFParser(stream))
+        self.doc = PDFDocument(PDFParser(stream), password = password)
         self.metadata = {}
         for info in self.doc.info:
             self.metadata.update(info)
