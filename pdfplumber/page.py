@@ -200,7 +200,8 @@ class Page(Container):
 
         return utils.extract_words(self.chars,
             x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance)
+            y_tolerance=y_tolerance,
+            keep_blank_chars=keep_blank_chars)
 
     def crop(self, bbox):
         class CroppedPage(DerivedPage):
