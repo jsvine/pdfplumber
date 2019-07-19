@@ -20,6 +20,7 @@ else:
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
+DEFAULT_DELIMITER = " "
 
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
@@ -127,13 +128,13 @@ def to_list(collection):
     else:
         return list(collection)
 
-def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
+def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE, delimiter = " "):
     tolerance = decimalize(tolerance)
     coll = ""
     last_x1 = None
     for char in sorted(line_chars, key=itemgetter("x0")):
         if (last_x1 != None) and (char["x0"] > (last_x1 + tolerance)):
-            coll += " "
+            coll += delimiter
         last_x1 = char["x1"]
         coll += char["text"]
     return coll
@@ -163,6 +164,23 @@ def bbox_to_rect(bbox):
         "x1": bbox[2],
         "bottom": bbox[3]
     }
+
+def extract_text(chars,
+    x_tolerance=DEFAULT_X_TOLERANCE,
+    y_tolerance=DEFAULT_Y_TOLERANCE,
+    delimiter=DEFAULT_DELIMITER):
+
+    if len(chars) == 0:
+        return None
+
+    chars = to_list(chars)
+    doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
+
+    lines = (collate_line(line_chars, x_tolerance, delimiter)
+        for line_chars in doctop_clusters)
+
+    coll = "\n".join(lines)
+    return coll
 
 def extract_words(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
@@ -218,22 +236,6 @@ def extract_words(chars,
 
     words = list(itertools.chain(*nested))
     return words
-
-def extract_text(chars,
-    x_tolerance=DEFAULT_X_TOLERANCE,
-    y_tolerance=DEFAULT_Y_TOLERANCE):
-
-    if len(chars) == 0:
-        return None
-
-    chars = to_list(chars)
-    doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
-
-    lines = (collate_line(line_chars, x_tolerance)
-        for line_chars in doctop_clusters)
-
-    coll = "\n".join(lines)
-    return coll
 
 collate_chars = extract_text
 

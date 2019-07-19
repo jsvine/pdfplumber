@@ -187,11 +187,13 @@ class Page(Container):
 
     def extract_text(self,
         x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE,
+        delimiter=utils.DEFAULT_DELIMITER):
 
         return utils.extract_text(self.chars,
             x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance)
+            y_tolerance=y_tolerance,
+            delimiter=delimiter)
 
     def extract_words(self,
         x_tolerance=utils.DEFAULT_X_TOLERANCE,
