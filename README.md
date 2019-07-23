@@ -13,6 +13,7 @@ Currently [tested](tests/) on [Python 2.7, 3.1, 3.4, 3.5, and 3.6](tox.ini).
 - [Python library](#python-library)
 - [Visual debugging](#visual-debugging)
 - [Extracting tables](#extracting-tables)
+- [Extracting form values](#extracting-form-values)
 - [Demonstrations](#demonstrations)
 - [Acknowledgments / Contributors](#acknowledgments--contributors)
 - [Contributing](#contributing)
@@ -326,6 +327,27 @@ Both `vertical_strategy` and `horizontal_strategy` accept the following options:
 - Often it's helpful to crop a page — `Page.crop(bounding_box)` — before trying to extract the table.
 
 - Table extraction for `pdfplumber` was radically redesigned for `v0.5.0`, and introduced breaking changes.
+
+
+## Extracting form values
+
+Sometimes PDF files can contain forms that include inputs that people can fill out and save. While values in form fields appear like other text in a PDF file, form data is handled differently. If you want the gory details, see page 671 of this [specification](https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdf_reference_archive/pdf_reference_1-7.pdf).
+
+`pdfplumber` doesn't have an interface for working with form data, but you can access it using `pdfplumber`'s wrappers around `pdfminer`.
+
+```python
+pdf = pdfplumber.open("document_with_form.pdf")
+
+fields = pdf.doc.catalog["AcroForm"].resolve()["Fields"]
+
+form_data = {}
+
+for field in fields:
+    field_name = field.resolve()["T"]
+    field_value = field.resolve()["V"]
+    form_data[field_name] = field_value
+
+```
 
 
 ## Demonstrations
