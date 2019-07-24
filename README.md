@@ -335,6 +335,8 @@ Sometimes PDF files can contain forms that include inputs that people can fill o
 
 `pdfplumber` doesn't have an interface for working with form data, but you can access it using `pdfplumber`'s wrappers around `pdfminer`.
 
+For example, this snippet will retrieve form field names and values and store them in a dictionary. You may have to modify this script to handle cases like nested fields (see page 676 of the specification).
+
 ```python
 pdf = pdfplumber.open("document_with_form.pdf")
 
@@ -346,7 +348,6 @@ for field in fields:
     field_name = field.resolve()["T"]
     field_value = field.resolve()["V"]
     form_data[field_name] = field_value
-
 ```
 
 
