@@ -16,7 +16,7 @@ class Page(Container):
         self.pdf = pdf
         self.page_obj = page_obj
         self.page_number = page_number
-        _rotation = self.decimalize(self.page_obj.attrs.get("Rotate", 0))
+        _rotation = self.decimalize(resolve_all(self.page_obj.attrs.get("Rotate", 0)))
         self.rotation =  _rotation % 360
         self.page_obj.rotate = self.rotation
         self.initial_doctop = self.decimalize(initial_doctop)
