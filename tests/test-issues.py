@@ -124,3 +124,9 @@ class Test(unittest.TestCase):
             page = pdf.pages[0]
             words = page.extract_words()
 
+    def test_pr_136(self):
+        path = os.path.join(HERE, "pdfs/pr-136-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            words = page.extract_words()
+
