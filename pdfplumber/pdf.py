@@ -18,7 +18,7 @@ class PDF(Container):
         pages = None,
         laparams = None,
         precision = 0.001,
-        password = b""
+        password = ""
     ):
         self.laparams = None if laparams == None else LAParams(**laparams)
         self.stream = stream
