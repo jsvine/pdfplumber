@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.14] — 2019-10-06
+### Fixed
+- Fix sorting bug in `page.extract_table()`
+- Fix support for password-protected PDFs (PR #138)
+
+## [0.5.13] — 2019-08-29
+## Fixed
+- Fixed PDF object resolution for rotation (PR #136)
+
 ## [0.5.12] — 2019-04-14
 ## Added
 - `cdecimal` support for Python 2
