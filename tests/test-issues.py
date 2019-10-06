@@ -130,6 +130,12 @@ class Test(unittest.TestCase):
             page = pdf.pages[0]
             words = page.extract_words()
 
+    def test_pr_138(self):
+        path = os.path.join(HERE, "pdfs/pr-138-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            assert len(page.chars) == 5140
+
     def test_issue_140(self):
         path = os.path.join(HERE, "pdfs/issue-140-example.pdf")
         with pdfplumber.open(path) as pdf:

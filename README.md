@@ -370,6 +370,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [@yevgnen](https://github.com/Yevgnen)
 - [@meldonization](https://github.com/meldonization)
 - [Oisín Moran](https://github.com/OisinMoran)
+- [Samkit Jain](https://github.com/samkit-jain)
 
 ## Contributing
 
