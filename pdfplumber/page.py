@@ -181,7 +181,7 @@ class Page(Container):
     def extract_table(self, table_settings={}):
         tables = self.find_tables(table_settings)
         # Return the largest table, as measured by number of cells.
-        sorter = lambda x: (len(x.cells), x.bbox[1], x.bbox[0])
+        sorter = lambda x: (-len(x.cells), x.bbox[1], x.bbox[0])
         largest = list(sorted(tables, key=sorter))[0]
         return largest.extract()
 
