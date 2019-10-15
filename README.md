@@ -23,9 +23,6 @@ Currently [tested](tests/) on [Python 2.7, 3.1, 3.4, 3.5, and 3.6](tox.ini).
 ```sh
 pip install pdfplumber
 ```
-
-To use `pdfplumber`'s visual-debugging tools, you'll also need to have [`ImageMagick`](https://www.imagemagick.org/) installed on your computer. [Installation instructions here](http://docs.wand-py.org/en/latest/guide/install.html#install-imagemagick-debian).
-
 ## Command line interface
 
 ### Basic example
@@ -188,6 +185,12 @@ Each object is represented as a simple Python `dict`, with the following propert
 Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to two derived lists of objects: `.rect_edges` (which decomposes each rectangle into its four lines) and `.edges` (which combines `.rect_edges` with `.lines`). 
 
 ## Visual debugging
+
+__Note:__ To use `pdfplumber`'s visual-debugging tools, you'll also need to have two additional pieces of software installed on your computer:
+
+- [`ImageMagick`](https://www.imagemagick.org/). [Installation instructions here](http://docs.wand-py.org/en/latest/guide/install.html#install-imagemagick-debian).
+- [`ghostscript`](https://www.ghostscript.com). [Installation instructions here](https://www.ghostscript.com/doc/9.21/Install.htm), or simply `apt install ghostscript` (Ubuntu) / `brew install ghostscript` (Mac).
+
 
 ### Creating a `PageImage` with `.to_image()`
 
