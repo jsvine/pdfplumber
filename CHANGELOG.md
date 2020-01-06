@@ -4,17 +4,23 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.15] — 2020-01-05
+### Changed
+- Upgrade `pdfminer.six` requirement to `==20200104`
+- Upgrade `pillow` requirement `>=7.0.0`
+- Remove Python 2.7 and 3.4 from `tox` tests
+
 ## [0.5.14] — 2019-10-06
 ### Fixed
 - Fix sorting bug in `page.extract_table()`
 - Fix support for password-protected PDFs (PR #138)
 
 ## [0.5.13] — 2019-08-29
-## Fixed
+### Fixed
 - Fixed PDF object resolution for rotation (PR #136)
 
 ## [0.5.12] — 2019-04-14
-## Added
+### Added
 - `cdecimal` support for Python 2
 - Support for password-protected PDFs
 
@@ -22,7 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 - Caching for `.decimalize()` method
 
-## Changed
+### Changed
 - Upgrade to `pdfminer.six==20181108`
 - Make whitespace checking more robust (PR #88)
 

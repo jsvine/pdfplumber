@@ -56,3 +56,10 @@ class Test(unittest.TestCase):
         pdf = pdfplumber.open(path, password = "test")
         assert(len(pdf.chars) > 0)
         pdf.close()
+
+    def test_colors(self):
+        path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
+        pdf = pdfplumber.open(path)
+        rect = pdf.pages[0].rects[0]
+        assert rect['non_stroking_color'] == [0.8, 1, 1]
+        pdf.close()
