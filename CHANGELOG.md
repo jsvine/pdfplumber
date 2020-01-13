@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.16] — 2020-01-12
+### Fixed
+- Prevent custom LAParams from raising exception (Issue #168 / PR #169) [h/t @frascuchon]
+- Add `six` as explicit dependency (for now)
+
 ## [0.5.15] — 2020-01-05
 ### Changed
 - Upgrade `pdfminer.six` requirement to `==20200104`
