@@ -81,20 +81,6 @@ class Page(Container):
                 h - d(y)
             )
 
-        IGNORE = [
-            "bbox",
-            "matrix",
-            "_text",
-            "_objs",
-            "groups",
-            "stream",
-            "colorspace",
-            "ncs",
-            "graphicstate",
-            "imagemask",
-            "pts",
-        ]
-
         noop = lambda x: x
         str_conv = lambda x: str(x or "")
 
@@ -135,10 +121,12 @@ class Page(Container):
             "stroking_color": noop,
         }
 
+        CONVERSIONS_KEYS = set(CONVERSIONS.keys())
+
         def process_object(obj):
             attr = dict((k, CONVERSIONS[k](resolve_all(v)))
                 for k, v in obj.__dict__.items()
-                    if k not in IGNORE)
+                    if k in CONVERSIONS_KEYS)
 
             kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
             attr["object_type"] = kind
