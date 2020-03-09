@@ -206,7 +206,7 @@ def edges_to_intersections(edges, x_tolerance=1, y_tolerance=1):
 
 def intersections_to_cells(intersections):
     """
-    Given a list of points (`intersections`), return all retangular "cells" those points describe.
+    Given a list of points (`intersections`), return all rectangular "cells" those points describe.
 
     `intersections` should be a dictionary with (x0, top) tuples as keys,
     and a list of edge objects as values. The edge objects should correspond
@@ -261,7 +261,7 @@ def intersections_to_cells(intersections):
 
 def cells_to_tables(cells):
     """
-    Given a list of bounding boxes (`cells`), return a list of tables that hold those those cells most simply (and contiguously).
+    Given a list of bounding boxes (`cells`), return a list of tables that hold those cells most simply (and contiguously).
     """
     def bbox_to_corners(bbox):
         x0, top, x1, bottom = bbox

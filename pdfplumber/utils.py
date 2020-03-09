@@ -73,7 +73,7 @@ def cluster_objects(objs, attr, tolerance):
 def decode_text(s):
     """
     Decodes a PDFDocEncoding string to Unicode.
-    Adds py3 compatability to pdfminer's version.
+    Adds py3 compatibility to pdfminer's version.
     """
     if type(s) == bytes and s.startswith(b'\xfe\xff'):
         return six.text_type(s[2:], 'utf-16be', 'ignore')
