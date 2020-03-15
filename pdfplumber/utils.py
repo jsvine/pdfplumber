@@ -35,7 +35,7 @@ def cluster_list(xs, tolerance=0):
         else:
             groups.append(current_group)
             current_group = [x]
-        last = x
+            last = x
     groups.append(current_group)
     return groups
 
