@@ -248,66 +248,40 @@ def filter_objects(objs, fn):
 
     return initial_type(filtered)
 
-def point_inside_bbox(point, bbox):
-    px, py = point
-    bx0, by0, bx1, by1 = map(decimalize, bbox)
-    return (px >= bx0) and (px <= bx1) and (py >= by0) and (py <= by1)
+def get_bbox_overlap(a, b):
+    a_left, a_top, a_right, a_bottom = decimalize(a)
+    b_left, b_top, b_right, b_bottom = decimalize(b)
+    o_left = max(a_left, b_left)
+    o_right = min(a_right, b_right)
+    o_bottom = min(a_bottom, b_bottom)
+    o_top = max(a_top, b_top)
+    o_width = o_right - o_left
+    o_height = o_bottom - o_top
+    if o_height >= 0 and o_width >= 0 and o_height + o_width > 0:
+        return (o_left, o_top, o_right, o_bottom)
+    else:
+        return None
 
-def obj_inside_bbox_score(obj, bbox):
-    corners = (
-        (obj["x0"], obj["top"]),
-        (obj["x0"], obj["bottom"]),
-        (obj["x1"], obj["top"]),
-        (obj["x1"], obj["bottom"]),
-    )
-    score = sum(point_inside_bbox(c, bbox) for c in corners)
-    return score
+def clip_obj(obj, bbox):
+    bbox = decimalize(bbox)
 
-def objects_overlap(a, b):
-    bbox = (b["x0"], b["top"], b["x1"], b["bottom"])
-    return obj_inside_bbox_score(a, bbox) > 0
+    overlap = get_bbox_overlap(obj_to_bbox(obj), bbox)
+    if overlap is None: return None
 
-def clip_obj(obj, bbox, score=None):
-    if score == None:
-        score = obj_inside_bbox_score(obj, bbox)
-    if score == 0: return None
-    if score == 4: return obj
-    x0, top, x1, bottom = map(decimalize, bbox)
-
+    dims = bbox_to_rect(overlap)
     copy = dict(obj)
-    x_changed = False
-    y_changed = False
-    if copy["x0"] < x0:
-        copy["x0"] = x0
-        x_changed = True
-    if copy["x1"] > x1:
-        copy["x1"] = x1
-        x_changed = True
-    if copy["top"] < top:
-        diff = top - copy["top"]
-        copy["top"] = top
-        copy["doctop"] = copy["doctop"] + diff
-        copy["y1"] = copy["y1"] - diff
-        y_changed = True
-    if copy["bottom"] > bottom:
-        diff = bottom - copy["bottom"]
-        copy["bottom"] = bottom
-        copy["y0"] = copy["y0"] + diff
-        y_changed = True
 
-    if x_changed:
-        copy["width"] = copy["x1"] - copy["x0"]
-    if y_changed:
-        copy["height"] = copy["bottom"] - copy["top"]
+    for attr in [ "x0", "top", "x1", "bottom" ]:
+        copy[attr] = dims[attr]
+
+    if dims["top"] != obj["bottom"] or dims["top"] != obj["bottom"]:
+        diff = dims["top"] - obj["top"]
+        copy["doctop"] = obj["doctop"] + diff
+
+    copy["width"] = copy["x1"] - copy["x0"]
+    copy["height"] = copy["bottom"] - copy["top"]
 
     return copy
-
-def n_points_intersecting_bbox(objs, bbox):
-    bbox = decimalize(bbox)
-    objs = to_list(objs)
-    scores = (obj_inside_bbox_score(obj, bbox) for obj in objs)
-    return list(scores)
-
 
 def intersects_bbox(objs, bbox):
     """
@@ -315,9 +289,8 @@ def intersects_bbox(objs, bbox):
     """
     initial_type = type(objs)
     objs = to_list(objs)
-    scores = n_points_intersecting_bbox(objs, bbox)
-    matching = [ obj for obj, score in zip(objs, scores)
-        if score > 0 ]
+    matching = [ obj for obj in objs
+        if get_bbox_overlap(obj_to_bbox(obj), bbox) is not None ]
     return initial_type(matching)
 
 def within_bbox(objs, bbox):
@@ -330,9 +303,8 @@ def within_bbox(objs, bbox):
 
     initial_type = type(objs)
     objs = to_list(objs)
-    scores = n_points_intersecting_bbox(objs, bbox)
-    matching = [ obj for obj, score in zip(objs, scores)
-        if score == 4 ]
+    matching = [ obj for obj in objs
+        if get_bbox_overlap(obj_to_bbox(obj), bbox) == obj_to_bbox(obj) ]
     return initial_type(matching)
 
 def crop_to_bbox(objs, bbox):
@@ -346,10 +318,7 @@ def crop_to_bbox(objs, bbox):
 
     initial_type = type(objs)
     objs = to_list(objs)
-    scores = n_points_intersecting_bbox(objs, bbox)
-    cropped = [ clip_obj(obj, bbox, score)
-        for obj, score in zip(objs, scores)
-            if score > 0 ]
+    cropped = list(filter(None, (clip_obj(obj, bbox) for obj in objs)))
     return initial_type(cropped)
 
 def move_object(obj, axis, value):
