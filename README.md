@@ -1,10 +1,10 @@
-# PDFPlumber `v0.5.16`
+# PDFPlumber `v0.5.17`
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
 Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer`](https://github.com/euske/pdfminer) and [`pdfminer.six`](https://github.com/goulu/pdfminer). 
 
-Currently [tested](tests/) on [Python 2.7, 3.1, 3.4, 3.5, and 3.6](tox.ini).
+Currently [tested](tests/) on [Python 3.5, 3.6, 3.7, and 3.8](tox.ini).
 
 ## Table of Contents
 
