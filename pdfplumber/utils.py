@@ -164,10 +164,13 @@ def bbox_to_rect(bbox):
         "bottom": bbox[3]
     }
 
+
 def extract_words(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
-    keep_blank_chars=False
+    keep_blank_chars=False,
+    horizontal_ltr = True, # Should words be read left-to-right?
+    vertical_ttb = True, # Should vertical words be read top-to-bottom?
     ):
 
     x_tolerance = decimalize(x_tolerance)
@@ -183,10 +186,13 @@ def extract_words(chars,
             "text": "".join(map(itemgetter("text"), chars))
         }
 
-
-    def get_line_words(chars, tolerance=DEFAULT_X_TOLERANCE):
+    def get_line_words(chars, is_upright, tolerance=DEFAULT_X_TOLERANCE):
         get_text = itemgetter("text")
-        chars_sorted = sorted(chars, key=itemgetter("x0"))
+        min_key = "x0" if is_upright else "top"
+        max_key = "x1" if is_upright else "bottom"
+
+        chars_sorted = sorted(chars, key=itemgetter(min_key))
+
         words = []
         current_word = []
 
@@ -200,23 +206,43 @@ def extract_words(chars,
                 current_word.append(char)
             else:
                 last_char = current_word[-1]
-                if char["x0"] > (last_char["x1"] + tolerance):
+                if char[min_key] > (last_char[max_key] + tolerance):
                     words.append(current_word)
                     current_word = []
                 current_word.append(char)
 
         if len(current_word) > 0:
-            words.append(current_word)
+            if upright:
+                if horizontal_ltr:
+                    sorted_chars = current_word
+                else:
+                    sorted_chars = sorted(current_word, key = lambda x: -x["x1"])
+            else:
+                if vertical_ttb:
+                    sorted_chars = sorted(current_word, key = itemgetter("doctop"))
+                else:
+                    sorted_chars = sorted(current_word, key = lambda x: -x["bottom"])
+
+            words.append(sorted_chars)
+
         processed_words = list(map(process_word_chars, words))
         return processed_words
 
-    chars = to_list(chars)
-    doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
+    chars_by_upright = { 1: [], 0: [] }
+    words = []
+    for char in to_list(chars):
+        chars_by_upright[char.get("upright", 1)].append(char)
 
-    nested = [ get_line_words(line_chars, tolerance=x_tolerance)
-        for line_chars in doctop_clusters ]
+    for upright, char_group in chars_by_upright.items():
+        clusters = cluster_objects(
+            char_group,
+            "doctop" if upright else "x0",
+            y_tolerance, # Still use y-tolerance here, even for vertical words
+        )
 
-    words = list(itertools.chain(*nested))
+        for line_chars in clusters:
+            words += get_line_words(line_chars, upright, tolerance = x_tolerance)
+
     return words
 
 def extract_text(chars,
