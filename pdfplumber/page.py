@@ -164,7 +164,13 @@ class Page(Container):
 
     def extract_tables(self, table_settings={}):
         tables = self.find_tables(table_settings)
-        return [ table.extract() for table in tables ]
+
+        extract_kwargs = dict((k, table_settings["text_" + k]) for k in [
+            "x_tolerance",
+            "y_tolerance",
+        ] if "text_" + k in table_settings)
+
+        return [ table.extract(**extract_kwargs) for table in tables ]
 
     def extract_table(self, table_settings={}):
         tables = self.find_tables(table_settings)
