@@ -165,6 +165,7 @@ def bbox_to_rect(bbox):
     }
 
 
+
 def extract_words(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
@@ -176,20 +177,33 @@ def extract_words(chars,
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
 
-    def process_word_chars(chars):
+    def process_word_chars(chars, upright):
         x0, top, x1, bottom = objects_to_bbox(chars)
+
+        if upright:
+            if horizontal_ltr:
+                sorted_chars = chars
+            else:
+                sorted_chars = sorted(chars, key = lambda x: -x["x1"])
+        else:
+            if vertical_ttb:
+                sorted_chars = sorted(chars, key = itemgetter("doctop"))
+            else:
+                sorted_chars = sorted(chars, key = lambda x: -x["bottom"])
+
         return {
             "x0": x0,
             "x1": x1,
             "top": top,
             "bottom": bottom,
-            "text": "".join(map(itemgetter("text"), chars))
+            "upright": upright,
+            "text": "".join(map(itemgetter("text"), sorted_chars))
         }
 
-    def get_line_words(chars, is_upright, tolerance=DEFAULT_X_TOLERANCE):
+    def get_line_words(chars, upright, tolerance=DEFAULT_X_TOLERANCE):
         get_text = itemgetter("text")
-        min_key = "x0" if is_upright else "top"
-        max_key = "x1" if is_upright else "bottom"
+        min_key = "x0" if upright else "top"
+        max_key = "x1" if upright else "bottom"
 
         chars_sorted = sorted(chars, key=itemgetter(min_key))
 
@@ -212,21 +226,10 @@ def extract_words(chars,
                 current_word.append(char)
 
         if len(current_word) > 0:
-            if upright:
-                if horizontal_ltr:
-                    sorted_chars = current_word
-                else:
-                    sorted_chars = sorted(current_word, key = lambda x: -x["x1"])
-            else:
-                if vertical_ttb:
-                    sorted_chars = sorted(current_word, key = itemgetter("doctop"))
-                else:
-                    sorted_chars = sorted(current_word, key = lambda x: -x["bottom"])
+            words.append(current_word)
 
-            words.append(sorted_chars)
-
-        processed_words = list(map(process_word_chars, words))
-        return processed_words
+        return [ process_word_chars(chars, upright)
+            for chars in words ]
 
     chars_by_upright = { 1: [], 0: [] }
     words = []
