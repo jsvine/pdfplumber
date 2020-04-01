@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.17] — 2020-04-01
+### Fixed
+- Fix and simplify obj-in-bbox logic (see commit 25672961)
+- Improve/fix the way `utils.extract_text` handles vertical text (see commit 8a5d858b) [h/t @dwalton76]
+- Have `Page.to_image` use bytes stream instead of file path (Issue #124 / PR #179) [h/t @cheungpat]
+- Fix issue #176, in which `Page.extract_tables` did not pass kwargs to `Table.extract` [h/t @jsfenfen]
+
 ## [0.5.16] — 2020-01-12
 ### Fixed
 - Prevent custom LAParams from raising exception (Issue #168 / PR #169) [h/t @frascuchon]
