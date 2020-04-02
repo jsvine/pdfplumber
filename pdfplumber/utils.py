@@ -407,6 +407,19 @@ def resize_object(obj, key, value):
             ]
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
+def curve_to_edges(curve):
+    point_pairs = zip(curve["points"], curve["points"][1:]) 
+    return [ {
+        "x0": min(p0[0], p1[0]),
+        "x1": max(p0[0], p1[0]),
+        "top": min(p0[1], p1[1]),
+        "doctop": min(p0[1], p1[1]) + (curve["doctop"] - curve["top"]),
+        "bottom": max(p0[1], p1[1]),
+        "width": abs(p0[0] - p1[0]),
+        "height": abs(p0[1] - p1[1]),
+        "orientation": "v" if p0[0] == p1[0] else ("h" if p0[1] == p1[1] else None)
+    } for p0, p1 in point_pairs ]
+
 def rect_to_edges(rect):
     top, bottom, left, right = [ dict(rect) for x in range(4) ]
     top.update({
@@ -442,6 +455,13 @@ def line_to_edge(line):
     edge = dict(line)
     edge["orientation"] = "h" if (line["top"] == line["bottom"]) else "v"
     return edge
+
+def obj_to_edges(obj):
+    return {
+        "line": lambda x: [ line_to_edge(x) ],
+        "rect": rect_to_edges,
+        "curve": curve_to_edges,
+    }[obj["object_type"]](obj)
 
 def filter_edges(edges, orientation=None,
     edge_type=None,

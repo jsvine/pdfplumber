@@ -479,27 +479,21 @@ class TableFinder(object):
                 keep_blank_chars=settings["keep_blank_chars"]
             )
 
-        def v_edge_desc_to_edge(desc):
+        v_explicit = []
+        for desc in settings["explicit_vertical_lines"]:
             if isinstance(desc, dict):
-                edge = {
-                    "x0": desc.get("x0", desc.get("x")),
-                    "x1": desc.get("x1", desc.get("x")),
-                    "top": desc.get("top", self.page.bbox[1]),
-                    "bottom": desc.get("bottom", self.page.bbox[3]),
-                    "orientation": "v"
-                }
+                for e in utils.obj_to_edges(desc):
+                    if e["orientation"] == "v":
+                        v_explicit.append(e)
             else:
-                edge = {
+                v_explicit.append({
                     "x0": desc,
                     "x1": desc,
                     "top": self.page.bbox[1],
                     "bottom": self.page.bbox[3],
-                }
-            edge["height"] = edge["bottom"] - edge["top"]
-            edge["orientation"] = "v"
-            return edge
-
-        v_explicit = list(map(v_edge_desc_to_edge, settings["explicit_vertical_lines"]))
+                    "height": self.page.bbox[3] - self.page.bbox[1],
+                    "orientation": "v",
+                })
 
         if  v_strat == "lines":
             v_base = utils.filter_edges(self.page.edges, "v")
@@ -514,26 +508,21 @@ class TableFinder(object):
 
         v = v_base + v_explicit
         
-        def h_edge_desc_to_edge(desc):
+        h_explicit = []
+        for desc in settings["explicit_horizontal_lines"]:
             if isinstance(desc, dict):
-                edge = {
-                    "x0": desc.get("x0", self.page.bbox[0]),
-                    "x1": desc.get("x1", self.page.bbox[2]),
-                    "top": desc.get("top", desc.get("bottom")),
-                    "bottom": desc.get("bottom", desc.get("top")),
-                }
+                for e in utils.obj_to_edges(desc):
+                    if e["orientation"] == "h":
+                        h_explicit.append(e)
             else:
-                edge = {
+                h_explicit.append({
                     "x0": self.page.bbox[0],
                     "x1": self.page.bbox[2],
+                    "width": self.page.bbox[2] - self.page.bbox[0],
                     "top": desc,
                     "bottom": desc,
-                }
-            edge["width"] = edge["x1"] - edge["x0"]
-            edge["orientation"] = "h"
-            return edge
-
-        h_explicit = list(map(h_edge_desc_to_edge, settings["explicit_horizontal_lines"]))
+                    "orientation": "h",
+                })
 
         if  h_strat == "lines":
             h_base = utils.filter_edges(self.page.edges, "h")
@@ -549,6 +538,7 @@ class TableFinder(object):
         h = h_base + h_explicit
 
         edges = list(v) + list(h)
+
         if settings["snap_tolerance"] > 0 or settings["join_tolerance"] > 0:
             edges = merge_edges(edges,
                 snap_tolerance=settings["snap_tolerance"],
