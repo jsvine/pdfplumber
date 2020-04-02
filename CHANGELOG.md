@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.18] — 2020-04-01
+### Changed
+- Allow `rect` and `curve` objects also to be passed to "explicit_..._lines" setting when table-finding. (And disallow other types of dicts to be passed.)
+
+### Fixed
+- Fix `utils.extract_text` bug introduced in prior version
+
 ## [0.5.17] — 2020-04-01
 ### Fixed
 - Fix and simplify obj-in-bbox logic (see commit 25672961)
