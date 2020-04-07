@@ -460,6 +460,7 @@ def obj_to_edges(obj):
     return {
         "line": lambda x: [ line_to_edge(x) ],
         "rect": rect_to_edges,
+        "rect_edge": rect_to_edges,
         "curve": curve_to_edges,
     }[obj["object_type"]](obj)
 
