@@ -135,6 +135,11 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             page = pdf.pages[0]
             assert len(page.chars) == 5140
+            page.extract_tables({
+                "vertical_strategy": "explicit",
+                "horizontal_strategy": "lines",
+                "explicit_vertical_lines": page.curves + page.edges,
+            })
 
     def test_issue_140(self):
         path = os.path.join(HERE, "pdfs/issue-140-example.pdf")
