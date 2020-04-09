@@ -133,22 +133,24 @@ def words_to_edges_v(words,
     sorted_clusters = sorted(clusters, key=lambda x: -len(x))
     large_clusters = filter(lambda x: len(x) >= word_threshold, sorted_clusters)
     
-    # For each of those points, find the rectangles fitting all matching words
-    rects = list(map(utils.objects_to_rect, large_clusters))
+    # For each of those points, find the bboxes fitting all matching words
+    bboxes = list(map(utils.objects_to_bbox, large_clusters))
     
-    # Iterate through those rectangles, condensing overlapping rectangles
-    condensed_rects = []
-    for rect in rects:
+    # Iterate through those bboxes, condensing overlapping bboxes
+    condensed_bboxes = []
+    for bbox in bboxes:
         overlap = False
-        for c in condensed_rects:
-            if utils.objects_overlap(rect, c):
+        for c in condensed_bboxes:
+            if utils.get_bbox_overlap(bbox, c):
                 overlap = True
                 break
         if overlap == False:
-            condensed_rects.append(rect)
+            condensed_bboxes.append(bbox)
             
-    if len(condensed_rects) == 0:
+    if len(condensed_bboxes) == 0:
         return []
+
+    condensed_rects = map(utils.bbox_to_rect, condensed_bboxes)
     sorted_rects = list(sorted(condensed_rects, key=itemgetter("x0")))
 
     # Find the far-right boundary of the rightmost rectangle
