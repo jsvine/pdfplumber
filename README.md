@@ -377,6 +377,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Samkit Jain](https://github.com/samkit-jain)
 - [Francisco Aranda](https://github.com/frascuchon)
 - [Kwok-kuen Cheung](https://github.com/cheungpat)
+- [Marco](https://github.com/ubmarco)
 
 ## Contributing
 

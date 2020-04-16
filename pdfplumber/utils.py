@@ -88,7 +88,7 @@ def decode_psl_list(_list):
 @cache(maxsize = int(10e4))
 def _decimalize(v, q = None):
     # If already a decimal, just return itself
-    if isinstance(v, Decimal):
+    if type(v) == Decimal:
         return v
 
     # If tuple/list passed, bulk-convert
@@ -110,6 +110,10 @@ def _decimalize(v, q = None):
         raise ValueError("Cannot convert {0} to Decimal.".format(v))
 
 def decimalize(v, q = None):
+    # If already a decimal, just return itself
+    if type(v) == Decimal:
+        return v
+
     # If tuple/list passed, bulk-convert
     if isinstance(v, (tuple, list)):
         return type(v)(decimalize(x, q) for x in v)
