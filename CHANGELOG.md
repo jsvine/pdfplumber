@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.19] — 2020-04-16
+### Changed
+- Add `utils.decimalize` performance improvement (830d117) [h/t @ubmarco]
+
+### Fixed
+- Fix un-referenced method when using "text" table-finding strategy (2a0c4a2c)
+- Add missing object type `rect_edge` to `obj_to_edges()` (0edc6bfa)
+
 ## [0.5.18] — 2020-04-01
 ### Changed
 - Allow `rect` and `curve` objects also to be passed to "explicit_..._lines" setting when table-finding. (And disallow other types of dicts to be passed.)
