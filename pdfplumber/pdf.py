@@ -38,7 +38,11 @@ class PDF(Container):
                 self.metadata[k] = decode_text(v.name)
             elif isinstance(v, bool):
                 self.metadata[k] = v
-            else:
+            elif isinstance(v, dict):
+                pass
+            elif v is None:
+                pass
+            elif type(v) in [bytes, str]:
                 self.metadata[k] = decode_text(v)
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)

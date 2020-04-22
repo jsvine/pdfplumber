@@ -1,5 +1,6 @@
 from pdfminer.utils import PDFDocEncoding
 from pdfminer.psparser import PSLiteral
+from pdfminer.pdftypes import resolve_all, PDFObjRef
 try:
     from cdecimal import Decimal, ROUND_HALF_UP
 except ImportError:
@@ -94,6 +95,10 @@ def _decimalize(v, q = None):
     # If tuple/list passed, bulk-convert
     elif isinstance(v, (tuple, list)):
         return type(v)(decimalize(x, q) for x in v)
+
+    # If PDFObjRef passed, resolve it
+    elif isinstance(v, PDFObjRef):
+        return decimalize(resolve_all(v), q)
 
     # Convert int-like
     elif isinstance(v, numbers.Integral):
