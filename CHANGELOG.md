@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.20] — 2020-04-28
+### Fixed
+- TKTK
+
 ## [0.5.19] — 2020-04-16
 ### Changed
 - Add `utils.decimalize` performance improvement (830d117) [h/t @ubmarco]

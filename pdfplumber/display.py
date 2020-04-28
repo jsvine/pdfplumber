@@ -21,9 +21,20 @@ def get_page_image(stream, page_no, resolution):
     """
     For kwargs, see http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image
     """
-    stream.seek(0)
-    with wand.image.Image(file=stream, resolution=resolution) as pages:
-        img = wand.image.Image(image=pages.sequence[page_no])
+
+    # If we are working with a file object saved to disk
+    if hasattr(stream, "name"):
+        spec = dict(filename = "{0}[{1}]".format(stream.name, page_no))
+        postprocess = lambda img: img
+
+    # If we instead are working with a BytesIO stream
+    else: 
+        stream.seek(0)
+        spec = dict(file = stream)
+        postprocess = lambda img: wand.image.Image(image=img.sequence[page_no])
+
+    with wand.image.Image(resolution=resolution, **spec) as img_init:
+        img = postprocess(img_init)
         if img.alpha_channel:
             img.background_color = wand.image.Color('white')
             img.alpha_channel = 'background'
