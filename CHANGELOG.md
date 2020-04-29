@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.5.20] — 2020-04-28
+## [0.5.20] — 2020-04-29
 ### Fixed
-- TKTK
+- Fix `.get_page_image` to prefer paths over streams, when possible (ab957de) [h/t @ubmarco]
+- Local-fix pdfminer.six's `.resolve_all` to handle tuples and simplify (85f422d)
+
+### Changed
+- Remove support for Python 2 and Python <3.3
 
 ## [0.5.19] — 2020-04-16
 ### Changed
