@@ -105,12 +105,12 @@ class Page(Container):
             # Strings
             "font": str_conv,
             "fontname": str_conv,
-            "imagemask": noop,
             "name": str_conv,
             "object_type": str_conv,
             "text": str_conv,
 
             # No conversion
+            "imagemask": noop,
             "colorspace": noop,
             "evenodd": noop,
             "fill": noop,
