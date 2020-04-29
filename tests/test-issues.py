@@ -148,3 +148,8 @@ class Test(unittest.TestCase):
             cropped_page = page.crop((0, 0, page.width, 122))
             assert len(cropped_page.extract_table()) == 5
 
+
+    def test_issue_203(self):
+        path = os.path.join(HERE, "pdfs/issue-203-decimalize.pdf")
+        with pdfplumber.open(path) as pdf:
+            assert len(pdf.objects)

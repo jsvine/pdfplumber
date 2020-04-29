@@ -1,12 +1,13 @@
 from . import utils
+from .utils import resolve_all
 from .table import TableFinder
 from .container import Container
 from copy import copy
 
-from pdfminer.pdftypes import resolve_all
 from six import string_types
 import re
 lt_pat = re.compile(r"^LT")
+
 
 class Page(Container):
     cached_properties = Container.cached_properties + [ "_layout" ]

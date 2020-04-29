@@ -1,5 +1,6 @@
 from pdfminer.utils import PDFDocEncoding
 from pdfminer.psparser import PSLiteral
+from pdfminer.pdftypes import PDFObjRef
 try:
     from cdecimal import Decimal, ROUND_HALF_UP
 except ImportError:
@@ -84,6 +85,23 @@ def decode_text(s):
 def decode_psl_list(_list):
     return [ decode_text(value.name) if isinstance(value, PSLiteral) else value
         for value in _list ]
+
+# via pdfminer.pdftypes, altered slightly
+def resolve_all(x):
+    """
+    Recursively resolves the given object and all the internals.
+    """
+    t = type(x)
+    if t == PDFObjRef:
+        return resolve_all(x.resolve())
+    elif t == list:
+        return [ resolve_all(v) for v in x ]
+    elif t == tuple:
+        return tuple(resolve_all(v) for v in x)
+    elif t == dict:
+        return dict((k, resolve_all(v)) for k, v in x.items())
+    else:
+        return x
 
 @cache(maxsize = int(10e4))
 def _decimalize(v, q = None):
