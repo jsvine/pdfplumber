@@ -1,10 +1,11 @@
+from . import utils
+from .table import TableFinder
+
 import PIL.Image
 import PIL.ImageDraw
 import wand.image
 import sys, os
 from io import BytesIO
-from pdfplumber import utils
-from pdfplumber.table import TableFinder
 
 class COLORS(object):
     RED = (255, 0, 0)

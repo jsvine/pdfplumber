@@ -1,5 +1,5 @@
-from pdfplumber.pdf import PDF
-import pdfplumber.utils
+from .pdf import PDF
+from . import utils
 import pdfminer
 import pdfminer.pdftypes
 from ._version import __version__

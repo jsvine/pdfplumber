@@ -1,4 +1,4 @@
-from pdfplumber import utils
+from . import utils
 from operator import itemgetter
 import itertools
 
