@@ -13,7 +13,6 @@ base_reqs = [
     "pycryptodome",
     "unicodecsv>=0.14.1",
     "pdfminer.six==20200104",
-    "six",
     "pillow>=7.0.0",
     "wand"
 ]

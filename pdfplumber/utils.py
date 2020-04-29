@@ -1,23 +1,11 @@
 from pdfminer.utils import PDFDocEncoding
 from pdfminer.psparser import PSLiteral
 from pdfminer.pdftypes import PDFObjRef
-try:
-    from cdecimal import Decimal, ROUND_HALF_UP
-except ImportError:
-    from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP
 import numbers
 from operator import itemgetter
 import itertools
-import six
-
-if six.PY3:
-    from functools import lru_cache as cache
-else:
-    # Python 2 has no lru_cache, so defining as a no-op
-    def cache(**kwargs):
-        def decorator(fn):
-            return fn
-        return decorator
+from functools import lru_cache as cache
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
@@ -77,7 +65,7 @@ def decode_text(s):
     Adds py3 compatibility to pdfminer's version.
     """
     if type(s) == bytes and s.startswith(b'\xfe\xff'):
-        return six.text_type(s[2:], 'utf-16be', 'ignore')
+        return str(s[2:], 'utf-16be', 'ignore')
     else:
         ords = (ord(c) if type(c) == str else c for c in s)
         return ''.join(PDFDocEncoding[o] for o in ords)

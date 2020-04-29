@@ -4,7 +4,6 @@ from .table import TableFinder
 from .container import Container
 from copy import copy
 
-from six import string_types
 import re
 lt_pat = re.compile(r"^LT")
 
