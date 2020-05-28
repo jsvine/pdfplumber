@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.21] — 2020-05-27
+### Fixed
+- Fix `Page.extract_table(...)` to return `None` instead of crashing when no table is found (d64afa8) [h/t @stucka]
+
 ## [0.5.20] — 2020-04-29
 ### Fixed
 - Fix `.get_page_image` to prefer paths over streams, when possible (ab957de) [h/t @ubmarco]
