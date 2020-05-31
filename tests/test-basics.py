@@ -62,6 +62,12 @@ class Test(unittest.TestCase):
             rect = pdf.pages[0].rects[0]
             assert rect['non_stroking_color'] == [0.8, 1, 1]
 
+    def test_text_colors(self):
+        path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
+        with pdfplumber.open(path) as pdf:
+            char = pdf.pages[0].chars[3358]
+            assert char['non_stroking_color'] == [1, 0, 0]
+
     def test_load_with_custom_laparams(self):
         # See https://github.com/jsvine/pdfplumber/issues/168
         path = os.path.join(HERE, "pdfs/cupertino_usd_4-6-16.pdf")
