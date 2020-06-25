@@ -177,7 +177,7 @@ def bbox_to_rect(bbox):
 def extract_text(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
-    word_joiner = " ",line_joiner = "\n"):
+    word_joiner ,line_joiner):
 
     if len(chars) == 0:
         return None
