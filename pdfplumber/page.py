@@ -185,12 +185,12 @@ class Page(Container):
 
     def extract_text(self,
         x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE,word_joiner = " ",line_joiner = "\n"):
 
         return utils.extract_text(self.chars,
             x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance,
-    word_joiner = " ",line_joiner = "\n")
+            y_tolerance=y_tolerance,word_joiner,line_joiner
+    )
 
     def extract_words(self,
         x_tolerance=utils.DEFAULT_X_TOLERANCE,
