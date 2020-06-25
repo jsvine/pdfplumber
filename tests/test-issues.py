@@ -124,3 +124,41 @@ class Test(unittest.TestCase):
             page = pdf.pages[0]
             words = page.extract_words()
 
+    def test_pr_136(self):
+        path = os.path.join(HERE, "pdfs/pr-136-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            words = page.extract_words()
+
+    def test_pr_138(self):
+        path = os.path.join(HERE, "pdfs/pr-138-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            assert len(page.chars) == 5140
+            page.extract_tables({
+                "vertical_strategy": "explicit",
+                "horizontal_strategy": "lines",
+                "explicit_vertical_lines": page.curves + page.edges,
+            })
+
+    def test_issue_140(self):
+        path = os.path.join(HERE, "pdfs/issue-140-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            cropped_page = page.crop((0, 0, page.width, 122))
+            assert len(cropped_page.extract_table()) == 5
+
+    def test_issue_203(self):
+        path = os.path.join(HERE, "pdfs/issue-203-decimalize.pdf")
+        with pdfplumber.open(path) as pdf:
+            assert len(pdf.objects)
+
+    def test_issue_216(self):
+        """
+        .extract_table() should return None if there's no table,
+        instead of crashing
+        """
+        path = os.path.join(HERE, "pdfs/issue-140-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            cropped = pdf.pages[0].crop((0, 0, 1, 1))
+            assert cropped.extract_table() is None

@@ -1,26 +1,14 @@
 from pdfminer.utils import PDFDocEncoding
 from pdfminer.psparser import PSLiteral
-try:
-    from cdecimal import Decimal, ROUND_HALF_UP
-except ImportError:
-    from decimal import Decimal, ROUND_HALF_UP
+from pdfminer.pdftypes import PDFObjRef
+from decimal import Decimal, ROUND_HALF_UP
 import numbers
 from operator import itemgetter
 import itertools
-import six
-
-if six.PY3:
-    from functools import lru_cache as cache
-else:
-    # Python 2 has no lru_cache, so defining as a no-op
-    def cache(**kwargs):
-        def decorator(fn):
-            return fn
-        return decorator
+from functools import lru_cache as cache
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
-DEFAULT_DELIMITER = " "
 
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
@@ -74,10 +62,10 @@ def cluster_objects(objs, attr, tolerance):
 def decode_text(s):
     """
     Decodes a PDFDocEncoding string to Unicode.
-    Adds py3 compatability to pdfminer's version.
+    Adds py3 compatibility to pdfminer's version.
     """
     if type(s) == bytes and s.startswith(b'\xfe\xff'):
-        return six.text_type(s[2:], 'utf-16be', 'ignore')
+        return str(s[2:], 'utf-16be', 'ignore')
     else:
         ords = (ord(c) if type(c) == str else c for c in s)
         return ''.join(PDFDocEncoding[o] for o in ords)
@@ -86,10 +74,27 @@ def decode_psl_list(_list):
     return [ decode_text(value.name) if isinstance(value, PSLiteral) else value
         for value in _list ]
 
+# via pdfminer.pdftypes, altered slightly
+def resolve_all(x):
+    """
+    Recursively resolves the given object and all the internals.
+    """
+    t = type(x)
+    if t == PDFObjRef:
+        return resolve_all(x.resolve())
+    elif t == list:
+        return [ resolve_all(v) for v in x ]
+    elif t == tuple:
+        return tuple(resolve_all(v) for v in x)
+    elif t == dict:
+        return dict((k, resolve_all(v)) for k, v in x.items())
+    else:
+        return x
+
 @cache(maxsize = int(10e4))
 def _decimalize(v, q = None):
     # If already a decimal, just return itself
-    if isinstance(v, Decimal):
+    if type(v) == Decimal:
         return v
 
     # If tuple/list passed, bulk-convert
@@ -111,6 +116,10 @@ def _decimalize(v, q = None):
         raise ValueError("Cannot convert {0} to Decimal.".format(v))
 
 def decimalize(v, q = None):
+    # If already a decimal, just return itself
+    if type(v) == Decimal:
+        return v
+
     # If tuple/list passed, bulk-convert
     if isinstance(v, (tuple, list)):
         return type(v)(decimalize(x, q) for x in v)
@@ -168,7 +177,7 @@ def bbox_to_rect(bbox):
 def extract_text(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
-    delimiter=DEFAULT_DELIMITER):
+    word_joiner = " ",line_joiner = "\n"):
 
     if len(chars) == 0:
         return None
@@ -176,35 +185,53 @@ def extract_text(chars,
     chars = to_list(chars)
     doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
 
-    lines = (collate_line(line_chars, x_tolerance, delimiter)
+    lines = (collate_line(line_chars, x_tolerance, word_joiner)
         for line_chars in doctop_clusters)
 
-    coll = "\n".join(lines)
+    coll = line_joiner.join(lines)
     return coll
 
 def extract_words(chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
-    keep_blank_chars=False
+    keep_blank_chars=False,
+    horizontal_ltr = True, # Should words be read left-to-right?
+    vertical_ttb = True, # Should vertical words be read top-to-bottom?
     ):
 
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
 
-    def process_word_chars(chars):
+    def process_word_chars(chars, upright):
         x0, top, x1, bottom = objects_to_bbox(chars)
+
+        if upright:
+            if horizontal_ltr:
+                sorted_chars = chars
+            else:
+                sorted_chars = sorted(chars, key = lambda x: -x["x1"])
+        else:
+            if vertical_ttb:
+                sorted_chars = sorted(chars, key = itemgetter("doctop"))
+            else:
+                sorted_chars = sorted(chars, key = lambda x: -x["bottom"])
+
         return {
             "x0": x0,
             "x1": x1,
             "top": top,
             "bottom": bottom,
-            "text": "".join(map(itemgetter("text"), chars))
+            "upright": upright,
+            "text": "".join(map(itemgetter("text"), sorted_chars))
         }
 
-
-    def get_line_words(chars, tolerance=DEFAULT_X_TOLERANCE):
+    def get_line_words(chars, upright, tolerance=DEFAULT_X_TOLERANCE):
         get_text = itemgetter("text")
-        chars_sorted = sorted(chars, key=itemgetter("x0"))
+        min_key = "x0" if upright else "top"
+        max_key = "x1" if upright else "bottom"
+
+        chars_sorted = sorted(chars, key=itemgetter(min_key))
+
         words = []
         current_word = []
 
@@ -218,23 +245,32 @@ def extract_words(chars,
                 current_word.append(char)
             else:
                 last_char = current_word[-1]
-                if char["x0"] > (last_char["x1"] + tolerance):
+                if char[min_key] > (last_char[max_key] + tolerance):
                     words.append(current_word)
                     current_word = []
                 current_word.append(char)
 
         if len(current_word) > 0:
             words.append(current_word)
-        processed_words = list(map(process_word_chars, words))
-        return processed_words
 
-    chars = to_list(chars)
-    doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
+        return [ process_word_chars(chars, upright)
+            for chars in words ]
 
-    nested = [ get_line_words(line_chars, tolerance=x_tolerance)
-        for line_chars in doctop_clusters ]
+    chars_by_upright = { 1: [], 0: [] }
+    words = []
+    for char in to_list(chars):
+        chars_by_upright[char.get("upright", 1)].append(char)
 
-    words = list(itertools.chain(*nested))
+    for upright, char_group in chars_by_upright.items():
+        clusters = cluster_objects(
+            char_group,
+            "doctop" if upright else "x0",
+            y_tolerance, # Still use y-tolerance here, even for vertical words
+        )
+
+        for line_chars in clusters:
+            words += get_line_words(line_chars, upright, tolerance = x_tolerance)
+
     return words
 
 collate_chars = extract_text
@@ -250,66 +286,40 @@ def filter_objects(objs, fn):
 
     return initial_type(filtered)
 
-def point_inside_bbox(point, bbox):
-    px, py = point
-    bx0, by0, bx1, by1 = map(decimalize, bbox)
-    return (px >= bx0) and (px <= bx1) and (py >= by0) and (py <= by1)
+def get_bbox_overlap(a, b):
+    a_left, a_top, a_right, a_bottom = decimalize(a)
+    b_left, b_top, b_right, b_bottom = decimalize(b)
+    o_left = max(a_left, b_left)
+    o_right = min(a_right, b_right)
+    o_bottom = min(a_bottom, b_bottom)
+    o_top = max(a_top, b_top)
+    o_width = o_right - o_left
+    o_height = o_bottom - o_top
+    if o_height >= 0 and o_width >= 0 and o_height + o_width > 0:
+        return (o_left, o_top, o_right, o_bottom)
+    else:
+        return None
 
-def obj_inside_bbox_score(obj, bbox):
-    corners = (
-        (obj["x0"], obj["top"]),
-        (obj["x0"], obj["bottom"]),
-        (obj["x1"], obj["top"]),
-        (obj["x1"], obj["bottom"]),
-    )
-    score = sum(point_inside_bbox(c, bbox) for c in corners)
-    return score
+def clip_obj(obj, bbox):
+    bbox = decimalize(bbox)
 
-def objects_overlap(a, b):
-    bbox = (b["x0"], b["top"], b["x1"], b["bottom"])
-    return obj_inside_bbox_score(a, bbox) > 0
+    overlap = get_bbox_overlap(obj_to_bbox(obj), bbox)
+    if overlap is None: return None
 
-def clip_obj(obj, bbox, score=None):
-    if score == None:
-        score = obj_inside_bbox_score(obj, bbox)
-    if score == 0: return None
-    if score == 4: return obj
-    x0, top, x1, bottom = map(decimalize, bbox)
-
+    dims = bbox_to_rect(overlap)
     copy = dict(obj)
-    x_changed = False
-    y_changed = False
-    if copy["x0"] < x0:
-        copy["x0"] = x0
-        x_changed = True
-    if copy["x1"] > x1:
-        copy["x1"] = x1
-        x_changed = True
-    if copy["top"] < top:
-        diff = top - copy["top"]
-        copy["top"] = top
-        copy["doctop"] = copy["doctop"] + diff
-        copy["y1"] = copy["y1"] - diff
-        y_changed = True
-    if copy["bottom"] > bottom:
-        diff = bottom - copy["bottom"]
-        copy["bottom"] = bottom
-        copy["y0"] = copy["y0"] + diff
-        y_changed = True
 
-    if x_changed:
-        copy["width"] = copy["x1"] - copy["x0"]
-    if y_changed:
-        copy["height"] = copy["bottom"] - copy["top"]
+    for attr in [ "x0", "top", "x1", "bottom" ]:
+        copy[attr] = dims[attr]
+
+    if dims["top"] != obj["bottom"] or dims["top"] != obj["bottom"]:
+        diff = dims["top"] - obj["top"]
+        copy["doctop"] = obj["doctop"] + diff
+
+    copy["width"] = copy["x1"] - copy["x0"]
+    copy["height"] = copy["bottom"] - copy["top"]
 
     return copy
-
-def n_points_intersecting_bbox(objs, bbox):
-    bbox = decimalize(bbox)
-    objs = to_list(objs)
-    scores = (obj_inside_bbox_score(obj, bbox) for obj in objs)
-    return list(scores)
-
 
 def intersects_bbox(objs, bbox):
     """
@@ -317,9 +327,8 @@ def intersects_bbox(objs, bbox):
     """
     initial_type = type(objs)
     objs = to_list(objs)
-    scores = n_points_intersecting_bbox(objs, bbox)
-    matching = [ obj for obj, score in zip(objs, scores)
-        if score > 0 ]
+    matching = [ obj for obj in objs
+        if get_bbox_overlap(obj_to_bbox(obj), bbox) is not None ]
     return initial_type(matching)
 
 def within_bbox(objs, bbox):
@@ -332,9 +341,8 @@ def within_bbox(objs, bbox):
 
     initial_type = type(objs)
     objs = to_list(objs)
-    scores = n_points_intersecting_bbox(objs, bbox)
-    matching = [ obj for obj, score in zip(objs, scores)
-        if score == 4 ]
+    matching = [ obj for obj in objs
+        if get_bbox_overlap(obj_to_bbox(obj), bbox) == obj_to_bbox(obj) ]
     return initial_type(matching)
 
 def crop_to_bbox(objs, bbox):
@@ -348,10 +356,7 @@ def crop_to_bbox(objs, bbox):
 
     initial_type = type(objs)
     objs = to_list(objs)
-    scores = n_points_intersecting_bbox(objs, bbox)
-    cropped = [ clip_obj(obj, bbox, score)
-        for obj, score in zip(objs, scores)
-            if score > 0 ]
+    cropped = list(filter(None, (clip_obj(obj, bbox) for obj in objs)))
     return initial_type(cropped)
 
 def move_object(obj, axis, value):
@@ -411,6 +416,19 @@ def resize_object(obj, key, value):
             ]
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
+def curve_to_edges(curve):
+    point_pairs = zip(curve["points"], curve["points"][1:]) 
+    return [ {
+        "x0": min(p0[0], p1[0]),
+        "x1": max(p0[0], p1[0]),
+        "top": min(p0[1], p1[1]),
+        "doctop": min(p0[1], p1[1]) + (curve["doctop"] - curve["top"]),
+        "bottom": max(p0[1], p1[1]),
+        "width": abs(p0[0] - p1[0]),
+        "height": abs(p0[1] - p1[1]),
+        "orientation": "v" if p0[0] == p1[0] else ("h" if p0[1] == p1[1] else None)
+    } for p0, p1 in point_pairs ]
+
 def rect_to_edges(rect):
     top, bottom, left, right = [ dict(rect) for x in range(4) ]
     top.update({
@@ -446,6 +464,14 @@ def line_to_edge(line):
     edge = dict(line)
     edge["orientation"] = "h" if (line["top"] == line["bottom"]) else "v"
     return edge
+
+def obj_to_edges(obj):
+    return {
+        "line": lambda x: [ line_to_edge(x) ],
+        "rect": rect_to_edges,
+        "rect_edge": rect_to_edges,
+        "curve": curve_to_edges,
+    }[obj["object_type"]](obj)
 
 def filter_edges(edges, orientation=None,
     edge_type=None,

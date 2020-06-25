@@ -4,8 +4,62 @@ All notable changes to this project will be documented in this file. Currently g
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.21] — 2020-05-27
+### Fixed
+- Fix `Page.extract_table(...)` to return `None` instead of crashing when no table is found (d64afa8) [h/t @stucka]
+
+## [0.5.20] — 2020-04-29
+### Fixed
+- Fix `.get_page_image` to prefer paths over streams, when possible (ab957de) [h/t @ubmarco]
+- Local-fix pdfminer.six's `.resolve_all` to handle tuples and simplify (85f422d)
+
+### Changed
+- Remove support for Python 2 and Python <3.3
+
+## [0.5.19] — 2020-04-16
+### Changed
+- Add `utils.decimalize` performance improvement (830d117) [h/t @ubmarco]
+
+### Fixed
+- Fix un-referenced method when using "text" table-finding strategy (2a0c4a2c)
+- Add missing object type `rect_edge` to `obj_to_edges()` (0edc6bfa)
+
+## [0.5.18] — 2020-04-01
+### Changed
+- Allow `rect` and `curve` objects also to be passed to "explicit_..._lines" setting when table-finding. (And disallow other types of dicts to be passed.)
+
+### Fixed
+- Fix `utils.extract_text` bug introduced in prior version
+
+## [0.5.17] — 2020-04-01
+### Fixed
+- Fix and simplify obj-in-bbox logic (see commit 25672961)
+- Improve/fix the way `utils.extract_text` handles vertical text (see commit 8a5d858b) [h/t @dwalton76]
+- Have `Page.to_image` use bytes stream instead of file path (Issue #124 / PR #179) [h/t @cheungpat]
+- Fix issue #176, in which `Page.extract_tables` did not pass kwargs to `Table.extract` [h/t @jsfenfen]
+
+## [0.5.16] — 2020-01-12
+### Fixed
+- Prevent custom LAParams from raising exception (Issue #168 / PR #169) [h/t @frascuchon]
+- Add `six` as explicit dependency (for now)
+
+## [0.5.15] — 2020-01-05
+### Changed
+- Upgrade `pdfminer.six` requirement to `==20200104`
+- Upgrade `pillow` requirement `>=7.0.0`
+- Remove Python 2.7 and 3.4 from `tox` tests
+
+## [0.5.14] — 2019-10-06
+### Fixed
+- Fix sorting bug in `page.extract_table()`
+- Fix support for password-protected PDFs (PR #138)
+
+## [0.5.13] — 2019-08-29
+### Fixed
+- Fixed PDF object resolution for rotation (PR #136)
+
 ## [0.5.12] — 2019-04-14
-## Added
+### Added
 - `cdecimal` support for Python 2
 - Support for password-protected PDFs
 
@@ -13,7 +67,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 - Caching for `.decimalize()` method
 
-## Changed
+### Changed
 - Upgrade to `pdfminer.six==20181108`
 - Make whitespace checking more robust (PR #88)
 

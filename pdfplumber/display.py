@@ -1,10 +1,11 @@
+from . import utils
+from .table import TableFinder
+
 import PIL.Image
 import PIL.ImageDraw
 import wand.image
 import sys, os
 from io import BytesIO
-from pdfplumber import utils
-from pdfplumber.table import TableFinder
 
 class COLORS(object):
     RED = (255, 0, 0)
@@ -17,12 +18,24 @@ DEFAULT_STROKE = COLORS.RED + (200,)
 DEFAULT_STROKE_WIDTH = 1
 DEFAULT_RESOLUTION = 72
 
-def get_page_image(pdf_path, page_no, resolution):
+def get_page_image(stream, page_no, resolution):
     """
     For kwargs, see http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image
     """
-    page_path = "{0}[{1}]".format(pdf_path, page_no)
-    with wand.image.Image(filename=page_path, resolution=resolution) as img:
+
+    # If we are working with a file object saved to disk
+    if hasattr(stream, "name"):
+        spec = dict(filename = "{0}[{1}]".format(stream.name, page_no))
+        postprocess = lambda img: img
+
+    # If we instead are working with a BytesIO stream
+    else: 
+        stream.seek(0)
+        spec = dict(file = stream)
+        postprocess = lambda img: wand.image.Image(image=img.sequence[page_no])
+
+    with wand.image.Image(resolution=resolution, **spec) as img_init:
+        img = postprocess(img_init)
         if img.alpha_channel:
             img.background_color = wand.image.Color('white')
             img.alpha_channel = 'background'
@@ -39,7 +52,7 @@ class PageImage(object):
         self.page = page
         if original == None:
             self.original = get_page_image(
-                page.pdf.stream.name,
+                page.pdf.stream,
                 page.page_number - 1,
                 resolution
             )

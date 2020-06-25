@@ -1,10 +1,10 @@
-# PDFPlumber `v0.5.12`
+# PDFPlumber `v0.5.21`
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
 Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer`](https://github.com/euske/pdfminer) and [`pdfminer.six`](https://github.com/goulu/pdfminer). 
 
-Currently [tested](tests/) on [Python 2.7, 3.1, 3.4, 3.5, and 3.6](tox.ini).
+Currently [tested](tests/) on [Python 3.5, 3.6, 3.7, and 3.8](tox.ini).
 
 ## Table of Contents
 
@@ -13,6 +13,7 @@ Currently [tested](tests/) on [Python 2.7, 3.1, 3.4, 3.5, and 3.6](tox.ini).
 - [Python library](#python-library)
 - [Visual debugging](#visual-debugging)
 - [Extracting tables](#extracting-tables)
+- [Extracting form values](#extracting-form-values)
 - [Demonstrations](#demonstrations)
 - [Acknowledgments / Contributors](#acknowledgments--contributors)
 - [Contributing](#contributing)
@@ -22,8 +23,6 @@ Currently [tested](tests/) on [Python 2.7, 3.1, 3.4, 3.5, and 3.6](tox.ini).
 ```sh
 pip install pdfplumber
 ```
-
-To use `pdfplumber`'s visual-debugging tools, you'll also need to have [`ImageMagick`](https://www.imagemagick.org/) installed on your computer. [Installation instructions here](http://docs.wand-py.org/en/latest/guide/install.html#install-imagemagick-debian).
 
 ## Command line interface
 
@@ -85,7 +84,7 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 |`.page_number`| The sequential page number, starting with `1` for the first page, `2` for the second, and so on.|
 |`.width`| The page's width.|
 |`.height`| The page's height.|
-|`.objects` / `.chars` / `.lines` / `.rects`| Each of these properties is a list, and each list contains one dictionary for each such object embedded on the page. For more detail, see "[Objects](#objects)" below.|
+|`.objects` / `.chars` / `.lines` / `.rects` / `.curves` / `.figures` / `.images`| Each of these properties is a list, and each list contains one dictionary for each such object embedded on the page. For more detail, see "[Objects](#objects)" below.|
 
 ... and these main methods:
 
@@ -95,7 +94,7 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 |`.within_bbox(bounding_box)`| Similar to `.crop`, but only retains objects that fall *entirely* within the bounding box.|
 |`.filter(test_function)`| Returns a version of the page with only the `.objects` for which `test_function(obj)` returns `True`.|
 |`.extract_text(x_tolerance=0, y_tolerance=0)`| Collates all of the page's character objects into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.|
-|`.extract_words(x_tolerance=0, y_tolerance=0)`| Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`.|
+|`.extract_words(x_tolerance=0, y_tolerance=0, horizontal_ltr=True, vertical_ttb=True)`| Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where (for "upright" characters) the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`. A similar approach is taken for non-upright characters, but instead measuring the vertical, rather than horizontal, distances between them. The parameters `horizontal_ltr` and `vertical_ttb` indicate whether the words should be read from left-to-right (for horizontal words) / top-to-bottom (for vertical words).|
 |`.extract_tables(table_settings)`| Extracts tabular data from the page. For more details see "[Extracting tables](#extracting-tables)" below.|
 |`.to_image(**conversion_kwargs)`| Returns an instance of the `PageImage` class. For more details, see "[Visual debugging](#visual-debugging)" below. For conversion_kwargs, see [here](http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image).|
 
@@ -108,6 +107,8 @@ Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to four 
 - `.lines`, each representing a single 1-dimensional line.
 - `.rects`, each representing a single 2-dimensional rectangle.
 - `.curves`, each representing a series of connected points.
+- `.images`, each representing an image.
+- `.figures`, each representing a figure.
 
 Each object is represented as a simple Python `dict`, with the following properties:
 
@@ -186,7 +187,21 @@ Each object is represented as a simple Python `dict`, with the following propert
 
 Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to two derived lists of objects: `.rect_edges` (which decomposes each rectangle into its four lines) and `.edges` (which combines `.rect_edges` with `.lines`). 
 
+#### `image` properties
+
+[To be completed.]
+
+#### `figure` properties
+
+[To be completed.]
+
 ## Visual debugging
+
+__Note:__ To use `pdfplumber`'s visual-debugging tools, you'll also need to have two additional pieces of software installed on your computer:
+
+- [`ImageMagick`](https://www.imagemagick.org/). [Installation instructions here](http://docs.wand-py.org/en/latest/guide/install.html#install-imagemagick-debian).
+- [`ghostscript`](https://www.ghostscript.com). [Installation instructions here](https://www.ghostscript.com/doc/9.21/Install.htm), or simply `apt install ghostscript` (Ubuntu) / `brew install ghostscript` (Mac).
+
 
 ### Creating a `PageImage` with `.to_image()`
 
@@ -299,8 +314,8 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 |---------|-------------|
 |`"vertical_strategy"`| Either `"lines"`, `"lines_strict"`, `"text"`, or `"explicit"`. See explanation below.|
 |`"horizontal_strategy"`| Either `"lines"`, `"lines_strict"`, `"text"`, or `"explicit"`. See explanation below.|
-|`"explicit_vertical_lines"`| A list of vertical lines that explicitly demarcate cells in the table. Can be used in combination with any of the strategies above. Items in the list should be either numbers — indicating the `x` coordinate of a line the full height of the page — or a dictionary describing the line, with at least the following keys: `x`, `top`, `bottom`. |
-|`"explicit_horizontal_lines"`| A list of vertical lines that explicitly demarcate cells in the table. Can be used in combination with any of the strategies above. Items in the list should be either numbers — indicating the `y` coordinate of a line the full height of the page — or a dictionary describing the line, with at least the following keys: `top`, `x0`, `x1`.|
+|`"explicit_vertical_lines"`| A list of vertical lines that explicitly demarcate cells in the table. Can be used in combination with any of the strategies above. Items in the list should be either numbers — indicating the `x` coordinate of a line the full height of the page — or `line`/`rect`/`curve` objects.|
+|`"explicit_horizontal_lines"`| A list of horizontal lines that explicitly demarcate cells in the table. Can be used in combination with any of the strategies above. Items in the list should be either numbers — indicating the `y` coordinate of a line the full height of the page — or `line`/`rect`/`curve` objects.|
 |`"snap_tolerance"`| Parallel lines within `snap_tolerance` pixels will be "snapped" to the same horizontal or vertical position.|
 |`"join_tolerance"`| Line segments on the same infinite line, and whose ends are within `join_tolerance` of one another, will be "joined" into a single line segment.|
 |`"edge_min_length"`| Edges shorter than `edge_min_length` will be discarded before attempting to reconstruct the table.|
@@ -328,6 +343,28 @@ Both `vertical_strategy` and `horizontal_strategy` accept the following options:
 - Table extraction for `pdfplumber` was radically redesigned for `v0.5.0`, and introduced breaking changes.
 
 
+## Extracting form values
+
+Sometimes PDF files can contain forms that include inputs that people can fill out and save. While values in form fields appear like other text in a PDF file, form data is handled differently. If you want the gory details, see page 671 of this [specification](https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdf_reference_archive/pdf_reference_1-7.pdf).
+
+`pdfplumber` doesn't have an interface for working with form data, but you can access it using `pdfplumber`'s wrappers around `pdfminer`.
+
+For example, this snippet will retrieve form field names and values and store them in a dictionary. You may have to modify this script to handle cases like nested fields (see page 676 of the specification).
+
+```python
+pdf = pdfplumber.open("document_with_form.pdf")
+
+fields = pdf.doc.catalog["AcroForm"].resolve()["Fields"]
+
+form_data = {}
+
+for field in fields:
+    field_name = field.resolve()["T"]
+    field_value = field.resolve()["V"]
+    form_data[field_name] = field_value
+```
+
+
 ## Demonstrations
 
 - [Using `extract_table` on a California Worker Adjustment and Retraining Notification (WARN) report](examples/notebooks/extract-table-ca-warn-report.ipynb). Demonstrates basic visual debugging and table extraction.
@@ -347,7 +384,11 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [@yevgnen](https://github.com/Yevgnen)
 - [@meldonization](https://github.com/meldonization)
 - [Oisín Moran](https://github.com/OisinMoran)
+- [Samkit Jain](https://github.com/samkit-jain)
+- [Francisco Aranda](https://github.com/frascuchon)
+- [Kwok-kuen Cheung](https://github.com/cheungpat)
+- [Marco](https://github.com/ubmarco)
 
 ## Contributing
 
-Pull requests are welcome, but please submit an issue (or email jsvine@gmail.com) before submitting one, as the library is in active development. The current development branch is `v0.6.0`.
+Pull requests are welcome, but please submit an issue (or email jsvine@gmail.com) before submitting one, as the library is in active development.

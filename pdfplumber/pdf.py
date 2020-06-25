@@ -1,6 +1,6 @@
-from pdfplumber.container import Container
-from pdfplumber.page import Page
-from pdfplumber.utils import decode_text
+from .container import Container
+from .page import Page
+from .utils import decode_text
 
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
@@ -18,7 +18,7 @@ class PDF(Container):
         pages = None,
         laparams = None,
         precision = 0.001,
-        password = b""
+        password = ""
     ):
         self.laparams = None if laparams == None else LAParams(**laparams)
         self.stream = stream

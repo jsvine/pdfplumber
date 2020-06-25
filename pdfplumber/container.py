@@ -1,5 +1,5 @@
 from itertools import chain
-from pdfplumber import utils
+from . import utils
 
 class Container(object):
     cached_properties = [ "_rect_edges", "_edges", "_objects" ]

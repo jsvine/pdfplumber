@@ -1,4 +1,4 @@
-from pdfplumber import utils
+from . import utils
 from operator import itemgetter
 import itertools
 
@@ -133,22 +133,24 @@ def words_to_edges_v(words,
     sorted_clusters = sorted(clusters, key=lambda x: -len(x))
     large_clusters = filter(lambda x: len(x) >= word_threshold, sorted_clusters)
     
-    # For each of those points, find the rectangles fitting all matching words
-    rects = list(map(utils.objects_to_rect, large_clusters))
+    # For each of those points, find the bboxes fitting all matching words
+    bboxes = list(map(utils.objects_to_bbox, large_clusters))
     
-    # Iterate through those rectangles, condensing overlapping rectangles
-    condensed_rects = []
-    for rect in rects:
+    # Iterate through those bboxes, condensing overlapping bboxes
+    condensed_bboxes = []
+    for bbox in bboxes:
         overlap = False
-        for c in condensed_rects:
-            if utils.objects_overlap(rect, c):
+        for c in condensed_bboxes:
+            if utils.get_bbox_overlap(bbox, c):
                 overlap = True
                 break
         if overlap == False:
-            condensed_rects.append(rect)
+            condensed_bboxes.append(bbox)
             
-    if len(condensed_rects) == 0:
+    if len(condensed_bboxes) == 0:
         return []
+
+    condensed_rects = map(utils.bbox_to_rect, condensed_bboxes)
     sorted_rects = list(sorted(condensed_rects, key=itemgetter("x0")))
 
     # Find the far-right boundary of the rightmost rectangle
@@ -206,7 +208,7 @@ def edges_to_intersections(edges, x_tolerance=1, y_tolerance=1):
 
 def intersections_to_cells(intersections):
     """
-    Given a list of points (`intersections`), return all retangular "cells" those points describe.
+    Given a list of points (`intersections`), return all rectangular "cells" those points describe.
 
     `intersections` should be a dictionary with (x0, top) tuples as keys,
     and a list of edge objects as values. The edge objects should correspond
@@ -261,7 +263,7 @@ def intersections_to_cells(intersections):
 
 def cells_to_tables(cells):
     """
-    Given a list of bounding boxes (`cells`), return a list of tables that hold those those cells most simply (and contiguously).
+    Given a list of bounding boxes (`cells`), return a list of tables that hold those cells most simply (and contiguously).
     """
     def bbox_to_corners(bbox):
         x0, top, x1, bottom = bbox
@@ -479,27 +481,21 @@ class TableFinder(object):
                 keep_blank_chars=settings["keep_blank_chars"]
             )
 
-        def v_edge_desc_to_edge(desc):
+        v_explicit = []
+        for desc in settings["explicit_vertical_lines"]:
             if isinstance(desc, dict):
-                edge = {
-                    "x0": desc.get("x0", desc.get("x")),
-                    "x1": desc.get("x1", desc.get("x")),
-                    "top": desc.get("top", self.page.bbox[1]),
-                    "bottom": desc.get("bottom", self.page.bbox[3]),
-                    "orientation": "v"
-                }
+                for e in utils.obj_to_edges(desc):
+                    if e["orientation"] == "v":
+                        v_explicit.append(e)
             else:
-                edge = {
+                v_explicit.append({
                     "x0": desc,
                     "x1": desc,
                     "top": self.page.bbox[1],
                     "bottom": self.page.bbox[3],
-                }
-            edge["height"] = edge["bottom"] - edge["top"]
-            edge["orientation"] = "v"
-            return edge
-
-        v_explicit = list(map(v_edge_desc_to_edge, settings["explicit_vertical_lines"]))
+                    "height": self.page.bbox[3] - self.page.bbox[1],
+                    "orientation": "v",
+                })
 
         if  v_strat == "lines":
             v_base = utils.filter_edges(self.page.edges, "v")
@@ -514,26 +510,21 @@ class TableFinder(object):
 
         v = v_base + v_explicit
         
-        def h_edge_desc_to_edge(desc):
+        h_explicit = []
+        for desc in settings["explicit_horizontal_lines"]:
             if isinstance(desc, dict):
-                edge = {
-                    "x0": desc.get("x0", self.page.bbox[0]),
-                    "x1": desc.get("x1", self.page.bbox[2]),
-                    "top": desc.get("top", desc.get("bottom")),
-                    "bottom": desc.get("bottom", desc.get("top")),
-                }
+                for e in utils.obj_to_edges(desc):
+                    if e["orientation"] == "h":
+                        h_explicit.append(e)
             else:
-                edge = {
+                h_explicit.append({
                     "x0": self.page.bbox[0],
                     "x1": self.page.bbox[2],
+                    "width": self.page.bbox[2] - self.page.bbox[0],
                     "top": desc,
                     "bottom": desc,
-                }
-            edge["width"] = edge["x1"] - edge["x0"]
-            edge["orientation"] = "h"
-            return edge
-
-        h_explicit = list(map(h_edge_desc_to_edge, settings["explicit_horizontal_lines"]))
+                    "orientation": "h",
+                })
 
         if  h_strat == "lines":
             h_base = utils.filter_edges(self.page.edges, "h")
@@ -549,6 +540,7 @@ class TableFinder(object):
         h = h_base + h_explicit
 
         edges = list(v) + list(h)
+
         if settings["snap_tolerance"] > 0 or settings["join_tolerance"] > 0:
             edges = merge_edges(edges,
                 snap_tolerance=settings["snap_tolerance"],

@@ -1,12 +1,12 @@
 from . import utils
+from .utils import resolve_all
 from .table import TableFinder
 from .container import Container
 from copy import copy
 
-from pdfminer.pdftypes import resolve_all
-from six import string_types
 import re
 lt_pat = re.compile(r"^LT")
+
 
 class Page(Container):
     cached_properties = Container.cached_properties + [ "_layout" ]
@@ -16,7 +16,7 @@ class Page(Container):
         self.pdf = pdf
         self.page_obj = page_obj
         self.page_number = page_number
-        _rotation = self.decimalize(self.page_obj.attrs.get("Rotate", 0))
+        _rotation = self.decimalize(resolve_all(self.page_obj.attrs.get("Rotate", 0)))
         self.rotation =  _rotation % 360
         self.page_obj.rotate = self.rotation
         self.initial_doctop = self.decimalize(initial_doctop)
@@ -81,20 +81,6 @@ class Page(Container):
                 h - d(y)
             )
 
-        IGNORE = [
-            "bbox",
-            "matrix",
-            "_text",
-            "_objs",
-            "groups",
-            "stream",
-            "colorspace",
-            "ncs",
-            "graphicstate",
-            "imagemask",
-            "pts",
-        ]
-
         noop = lambda x: x
         str_conv = lambda x: str(x or "")
 
@@ -119,12 +105,12 @@ class Page(Container):
             # Strings
             "font": str_conv,
             "fontname": str_conv,
-            "imagemask": noop,
             "name": str_conv,
             "object_type": str_conv,
             "text": str_conv,
 
             # No conversion
+            "imagemask": noop,
             "colorspace": noop,
             "evenodd": noop,
             "fill": noop,
@@ -135,10 +121,12 @@ class Page(Container):
             "stroking_color": noop,
         }
 
+        CONVERSIONS_KEYS = set(CONVERSIONS.keys())
+
         def process_object(obj):
             attr = dict((k, CONVERSIONS[k](resolve_all(v)))
                 for k, v in obj.__dict__.items()
-                    if k not in IGNORE)
+                    if k in CONVERSIONS_KEYS)
 
             kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
             attr["object_type"] = kind
@@ -176,24 +164,32 @@ class Page(Container):
 
     def extract_tables(self, table_settings={}):
         tables = self.find_tables(table_settings)
-        return [ table.extract() for table in tables ]
+
+        extract_kwargs = dict((k, table_settings["text_" + k]) for k in [
+            "x_tolerance",
+            "y_tolerance",
+        ] if "text_" + k in table_settings)
+
+        return [ table.extract(**extract_kwargs) for table in tables ]
 
     def extract_table(self, table_settings={}):
         tables = self.find_tables(table_settings)
+        
+        if len(tables) == 0:
+            return None
+
         # Return the largest table, as measured by number of cells.
-        sorter = lambda x: (len(x.cells), x.bbox[1], x.bbox[0])
+        sorter = lambda x: (-len(x.cells), x.bbox[1], x.bbox[0])
         largest = list(sorted(tables, key=sorter))[0]
         return largest.extract()
 
     def extract_text(self,
         x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE,
-        delimiter=utils.DEFAULT_DELIMITER):
+        y_tolerance=utils.DEFAULT_Y_TOLERANCE):
 
         return utils.extract_text(self.chars,
             x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance,
-            delimiter=delimiter)
+            y_tolerance=y_tolerance)
 
     def extract_words(self,
         x_tolerance=utils.DEFAULT_X_TOLERANCE,
@@ -202,7 +198,8 @@ class Page(Container):
 
         return utils.extract_words(self.chars,
             x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance)
+            y_tolerance=y_tolerance,
+            keep_blank_chars=keep_blank_chars)
 
     def crop(self, bbox):
         class CroppedPage(DerivedPage):
