@@ -1,8 +1,13 @@
 # Change Log
 
-All notable changes to this project will be documented in this file. Currently goes back to `v0.4.3`.
+All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/).
+## [0.5.22] — 2020-07-18
+### Changed
+- Upgraded `pdfminer.six` requirement to `==20200517` (cddbff7) [h/t @youngquan]
+
+### Added
+- Add support for `non_stroking_color` attribute on `char` objects (0254da3) [h/t @idan-david]
 
 ## [0.5.21] — 2020-05-27
 ### Fixed
