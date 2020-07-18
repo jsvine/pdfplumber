@@ -112,7 +112,7 @@ class Test(unittest.TestCase):
         page = self.pdf.pages[0]
         def test(obj):
             if obj["object_type"] == "char":
-                if obj["size"] < 20:
+                if obj["size"] < 15:
                     return False
             return True
         filtered = page.filter(test)

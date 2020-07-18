@@ -7,7 +7,7 @@ name = "pypi"
 chardet = "*"
 pycryptodome = "*"
 unicodecsv = ">=0.14.1"
-"pdfminer.six" = "==20200104"
+"pdfminer.six" = "==20200517"
 Pillow = ">=7.0.0"
 Wand = "*"
 

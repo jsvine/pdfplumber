@@ -73,4 +73,4 @@ class Test(unittest.TestCase):
         path = os.path.join(HERE, "pdfs/cupertino_usd_4-6-16.pdf")
         laparams = dict(line_margin = 0.2)
         with pdfplumber.open(path, laparams = laparams) as pdf:
-            assert float(pdf.pages[0].chars[0]["top"]) == 61.656
+            assert float(pdf.pages[0].chars[0]["top"]) == 66.384
