@@ -132,6 +132,11 @@ class Page(Container):
             attr["object_type"] = kind
             attr["page_number"] = pno
 
+            if hasattr(obj, "graphicstate"):
+                gs = obj.graphicstate
+                attr['stroking_color'] = gs.scolor
+                attr['non_stroking_color'] = gs.ncolor
+
             if hasattr(obj, "get_text"):
                 attr["text"] = obj.get_text()
 
