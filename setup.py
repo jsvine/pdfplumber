@@ -15,9 +15,14 @@ with open(os.path.join(HERE, "requirements.txt")) as f:
 with open(os.path.join(HERE, "requirements-dev.txt")) as f:
     dev_reqs = f.read().strip().split("\n")
 
+with open(os.path.join(HERE, "README.md")) as f:
+    long_description = f.read()
+
 setup(
     name=NAME,
     description="Plumb a PDF for detailed information about each char, rectangle, and line.",
+    long_description = long_description,
+    long_description_content_type = "text/markdown",
     version=version_ns['__version__'],
     packages=find_packages(exclude=["test",]),
     tests_require = base_reqs + dev_reqs,
