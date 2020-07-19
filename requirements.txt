@@ -1,0 +1,6 @@
+pdfminer.six==20200104
+unicodecsv>=0.14.1
+Pillow>=7.0.0
+chardet
+pycryptodome
+Wand
