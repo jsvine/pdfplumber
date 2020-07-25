@@ -11,4 +11,4 @@ venv:
 	${PIP} install -e .
 
 tests:
-	${PYTHON} -m pytest
+	${PYTHON} -m pytest --cov=pdfplumber --cov-config=.coveragerc --cov-report xml:coverage.xml --cov-report term
