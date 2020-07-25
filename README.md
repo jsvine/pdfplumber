@@ -1,4 +1,6 @@
-# PDFPlumber `v0.5.22`
+# pdfplumber
+
+[![Version](https://img.shields.io/pypi/v/pdfplumber.svg)](https://pypi.python.org/pypi/pdfplumber) ![Tests](https://github.com/jsvine/pdfplumber/workflows/Tests/badge.svg) [![Code coverage](https://img.shields.io/codecov/c/gh/jsvine/pdfplumber/stable)](https://codecov.io/gh/jsvine/pdfplumber) [![Support Python versions](https://img.shields.io/pypi/pyversions/pdfplumber.svg)](https://pypi.python.org/pypi/pdfplumber)
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
