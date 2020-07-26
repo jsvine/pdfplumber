@@ -12,9 +12,14 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 class Test(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setup_class(self):
         path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
-        self.pdf = pdfplumber.from_path(path)
+        self.pdf = pdfplumber.open(path)
+
+    @classmethod
+    def teardown_class(self):
+        self.pdf.close()
 
     def test_metadata(self):
         metadata = self.pdf.metadata
@@ -39,17 +44,15 @@ class Test(unittest.TestCase):
         assert(len(step_2.rects) == 0)
 
     def test_rotation(self):
-        rotated = pdfplumber.from_path(
-            os.path.join(HERE, "pdfs/nics-background-checks-2015-11-rotated.pdf")
-        )
         assert(self.pdf.pages[0].width == 1008)
         assert(self.pdf.pages[0].height == 612)
+        path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11-rotated.pdf")
+        with pdfplumber.open(path) as rotated:
+            assert(rotated.pages[0].width == 612)
+            assert(rotated.pages[0].height == 1008)
 
-        assert(rotated.pages[0].width == 612)
-        assert(rotated.pages[0].height == 1008)
-
-        assert(rotated.pages[0].cropbox == self.pdf.pages[0].cropbox)
-        assert(rotated.pages[0].bbox != self.pdf.pages[0].bbox)
+            assert(rotated.pages[0].cropbox == self.pdf.pages[0].cropbox)
+            assert(rotated.pages[0].bbox != self.pdf.pages[0].bbox)
 
     def test_password(self):
         path = os.path.join(HERE, "pdfs/password-example.pdf")

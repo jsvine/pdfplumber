@@ -2,6 +2,7 @@ from .container import Container
 from .page import Page
 from .utils import decode_text
 
+import pathlib
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
@@ -44,8 +45,11 @@ class PDF(Container):
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 
     @classmethod
-    def open(cls, path, **kwargs):
-        return cls(open(path, "rb"), **kwargs)
+    def open(cls, path_or_fp, **kwargs):
+        if isinstance(path_or_fp, (str, pathlib.Path)):
+            return cls(open(path_or_fp, "rb"), **kwargs)
+        else:
+            return cls(path_or_fp, **kwargs)
 
     def process_page(self, page):
         self.interpreter.process_page(page)

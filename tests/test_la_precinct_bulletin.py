@@ -100,11 +100,15 @@ class PrecinctPage(object):
         }
 
 class Test(unittest.TestCase):
-
-    def setUp(self):
+    @classmethod
+    def setup_class(self):
         path = os.path.join(HERE, "pdfs/la-precinct-bulletin-2014-p1.pdf")
-        self.pdf = pdfplumber.from_path(path)
+        self.pdf = pdfplumber.open(path)
         self.PDF_WIDTH = self.pdf.pages[0].width
+
+    @classmethod
+    def teardown_class(self):
+        self.pdf.close()
 
     def test_pandas(self):
         p1 = PrecinctPage(self.pdf.pages[0]).to_dict()

@@ -59,12 +59,13 @@ with pdfplumber.open("path/to/file.pdf") as pdf:
 
 ### Loading a PDF
 
-`pdfplumber` provides two main ways to load a PDF:
+To start working with a PDF, call `pdfplumber.open(x)`, where `x` can be a:
 
-- `pdfplumber.open("path/to/file.pdf")`
-- `pdfplumber.load(file_like_object)`
+- path to your PDF file
+- file object, loaded as bytes
+- file-like object, loaded as bytes
 
-Both methods return an instance of the `pdfplumber.PDF` class.
+The `open` method returns an instance of the `pdfplumber.PDF` class.
 
 To load a password-protected PDF, pass the `password` keyword argument, e.g., `pdfplumber.open("file.pdf", password = "test")`.
 

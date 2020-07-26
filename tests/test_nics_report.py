@@ -40,11 +40,15 @@ COLUMNS = [
 ]
 
 class Test(unittest.TestCase):
-
-    def setUp(self):
+    @classmethod
+    def setup_class(self):
         path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
-        self.pdf = pdfplumber.from_path(path)
+        self.pdf = pdfplumber.open(path)
         self.PDF_WIDTH = self.pdf.pages[0].width
+
+    @classmethod
+    def teardown_class(self):
+        self.pdf.close()
 
     def test_plain(self):
         page = self.pdf.pages[0]

@@ -16,10 +16,15 @@ def fix_row_spaces(row):
 
 class Test(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setup_class(self):
         path = os.path.join(HERE, "pdfs/WARN-Report-for-7-1-2015-to-03-25-2016.pdf")
-        self.pdf = pdfplumber.from_path(path)
+        self.pdf = pdfplumber.open(path)
         self.PDF_WIDTH = self.pdf.pages[0].width
+
+    @classmethod
+    def teardown_class(self):
+        self.pdf.close()
 
     def test_pandas(self):
 

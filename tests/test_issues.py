@@ -16,7 +16,7 @@ class Test(unittest.TestCase):
         """
         Test slightly simplified from gist here: https://github.com/jsvine/pdfplumber/issues/13
         """
-        pdf = pdfplumber.from_path(
+        pdf = pdfplumber.open(
             os.path.join(HERE, "pdfs/issue-13-151201DSP-Fond-581-90D.pdf")
         )
 
@@ -72,36 +72,42 @@ class Test(unittest.TestCase):
             for rect in rects ])
 
         assert(n_checked == 5)
+        pdf.close()
 
     def test_issue_14(self):
-        pdf = pdfplumber.from_path(
+        pdf = pdfplumber.open(
             os.path.join(HERE, "pdfs/cupertino_usd_4-6-16.pdf")
         )
         assert len(pdf.objects)
+        pdf.close()
 
     def test_issue_21(self):
-        pdf = pdfplumber.from_path(
+        pdf = pdfplumber.open(
             os.path.join(HERE, "pdfs/150109DSP-Milw-505-90D.pdf")
         )
         assert len(pdf.objects)
+        pdf.close()
 
     def test_issue_33(self):
-        pdf = pdfplumber.from_path(
+        pdf = pdfplumber.open(
             os.path.join(HERE, "pdfs/issue-33-lorem-ipsum.pdf")
         )
         assert len(pdf.metadata.keys())
+        pdf.close()
         
     def test_issue_53(self):
-        pdf = pdfplumber.from_path(
+        pdf = pdfplumber.open(
             os.path.join(HERE, "pdfs/issue-53-example.pdf")
         )
         assert len(pdf.objects)
+        pdf.close()
 
     def test_issue_67(self):
-        pdf = pdfplumber.from_path(
+        pdf = pdfplumber.open(
             os.path.join(HERE, "pdfs/issue-67-example.pdf")
         )
         assert len(pdf.metadata.keys())
+        pdf.close()
 
     def test_pr_77(self):
         # via https://github.com/jsvine/pdfplumber/pull/77

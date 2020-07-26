@@ -93,7 +93,7 @@ def to_json(pdf, types, encoding):
 
 def main():
     args = parse_args()
-    pdf = pdfplumber.load(args.infile, pages=args.pages)
+    pdf = pdfplumber.open(args.infile, pages=args.pages)
     if args.format == "csv":
         to_csv(pdf, args.types, args.encoding)
     else:

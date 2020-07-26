@@ -12,4 +12,5 @@ class Test(unittest.TestCase):
 
     def test_load(self):
         path = os.path.join(HERE, "pdfs/cupertino_usd_4-6-16.pdf")
-        pdf = pdfplumber.from_path(path)
+        with pdfplumber.open(path) as pdf:
+            assert len(pdf.metadata)
