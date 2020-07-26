@@ -4,7 +4,6 @@ from .table import TableFinder
 import PIL.Image
 import PIL.ImageDraw
 import wand.image
-import sys, os
 from io import BytesIO
 
 class COLORS(object):
