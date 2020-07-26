@@ -50,6 +50,10 @@ class Test(unittest.TestCase):
     def teardown_class(self):
         self.pdf.close()
 
+    def test_edges(self):
+        assert len(self.pdf.vertical_edges) == 700
+        assert len(self.pdf.horizontal_edges) == 508
+
     def test_plain(self):
         page = self.pdf.pages[0]
         cropped = page.crop((0, 80, self.PDF_WIDTH, 485))

@@ -26,6 +26,12 @@ class Test(unittest.TestCase):
     def teardown_class(self):
         self.pdf.close()
 
+    def test_objects(self):
+        assert len(self.pdf.chars)
+        assert len(self.pdf.rects)
+        assert len(self.pdf.figures)
+        assert len(self.pdf.images)
+
     def test_pandas(self):
 
         rect_x0_clusters = utils.cluster_list([ r["x0"]
