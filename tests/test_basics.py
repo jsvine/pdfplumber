@@ -77,3 +77,21 @@ class Test(unittest.TestCase):
         laparams = dict(line_margin = 0.2)
         with pdfplumber.open(path, laparams = laparams) as pdf:
             assert float(pdf.pages[0].chars[0]["top"]) == 66.384
+
+    def test_loading_pathobj(self):
+        from pathlib import Path
+        path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
+        path_obj = Path(path)
+        with pdfplumber.open(path_obj) as pdf:
+            assert len(pdf.metadata)
+
+    def test_loading_fileobj(self):
+        path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
+        with open(path, "rb") as f:
+            with pdfplumber.open(f) as pdf:
+                assert len(pdf.metadata)
+
+        # Will be removed from library soon
+        with open(path, "rb") as f:
+            with pdfplumber.load(f) as pdf:
+                assert len(pdf.metadata)
