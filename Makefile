@@ -4,8 +4,8 @@ PIP=venv/bin/pip
 
 venv:
 	python -m venv venv
-	${PIP} install -U pip
-	${PIP} freeze --exclude-editable | xargs ${PIP} uninstall -y
+	${PIP} install --upgrade pip
+	${PIP} freeze --exclude-editable | xargs ${PIP} uninstall -y | true
 	${PIP} install -r requirements.txt
 	${PIP} install -r requirements-dev.txt
 	${PIP} install -e .
