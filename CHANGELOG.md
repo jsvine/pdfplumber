@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.23] — UNRELEASED
+
+## Changed
+- Removed `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF.
+
+### Development Changes
+- Switched from nosetests to pytest
+- Switched from pipenv to standard requirements.txt + python -m venv
+- Added GitHub action for tests + codecov
+- Added Makefile for building development virtual environment and running tests
+- Added badges to README.md
+- Added Trove classifiers for Python versions to setup.py
+- Added MANIFEST.in
+
 ## [0.5.22] — 2020-07-18
 ### Changed
 - Upgraded `pdfminer.six` requirement to `==20200517` (cddbff7) [h/t @youngquan]
