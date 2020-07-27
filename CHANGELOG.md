@@ -4,10 +4,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.5.23] — UNRELEASED
 
-## Changed
+### Changed
 - Removed `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF.
 
 ### Development Changes
+
+- Renamed default branch to "stable," to clarify its purpose
 - Switched from nosetests to pytest
 - Switched from pipenv to standard requirements.txt + python -m venv
 - Added GitHub action for tests + codecov
