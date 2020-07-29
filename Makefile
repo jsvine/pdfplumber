@@ -14,4 +14,5 @@ tests:
 	${PYTHON} -m pytest --cov=pdfplumber --cov-config=.coveragerc --cov-report xml:coverage.xml --cov-report term
 
 format:
+	${PYTHON} -m black pdfplumber
 	${PYTHON} -m flake8 pdfplumber

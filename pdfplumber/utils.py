@@ -10,10 +10,13 @@ from functools import lru_cache as cache
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
 
+
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
-    if tolerance == 0: return [ [x] for x in sorted(xs) ]
-    if len(xs) < 2: return [ [x] for x in sorted(xs) ]
+    if tolerance == 0:
+        return [[x] for x in sorted(xs)]
+    if len(xs) < 2:
+        return [[x] for x in sorted(xs)]
     groups = []
     xs = list(sorted(xs))
     current_group = [xs[0]]
@@ -28,15 +31,18 @@ def cluster_list(xs, tolerance=0):
     groups.append(current_group)
     return groups
 
+
 def make_cluster_dict(values, tolerance):
     tolerance = decimalize(tolerance)
     clusters = cluster_list(set(values), tolerance)
 
-    nested_tuples = [ [ (val, i) for val in value_cluster ]
-        for i, value_cluster in enumerate(clusters) ]
+    nested_tuples = [
+        [(val, i) for val in value_cluster] for i, value_cluster in enumerate(clusters)
+    ]
 
     cluster_dict = dict(itertools.chain(*nested_tuples))
     return cluster_dict
+
 
 def cluster_objects(objs, attr, tolerance):
     if isinstance(attr, (str, int)):
@@ -49,30 +55,35 @@ def cluster_objects(objs, attr, tolerance):
 
     get_0, get_1 = itemgetter(0), itemgetter(1)
 
-    cluster_tuples = sorted(((obj, cluster_dict.get(attr_getter(obj)))
-        for obj in objs), key=get_1)
+    cluster_tuples = sorted(
+        ((obj, cluster_dict.get(attr_getter(obj))) for obj in objs), key=get_1
+    )
 
     grouped = itertools.groupby(cluster_tuples, key=get_1)
 
-    clusters = [ list(map(get_0, v))
-        for k, v in grouped ]
+    clusters = [list(map(get_0, v)) for k, v in grouped]
 
     return clusters
+
 
 def decode_text(s):
     """
     Decodes a PDFDocEncoding string to Unicode.
     Adds py3 compatibility to pdfminer's version.
     """
-    if type(s) == bytes and s.startswith(b'\xfe\xff'):
-        return str(s[2:], 'utf-16be', 'ignore')
+    if type(s) == bytes and s.startswith(b"\xfe\xff"):
+        return str(s[2:], "utf-16be", "ignore")
     else:
         ords = (ord(c) if type(c) == str else c for c in s)
-        return ''.join(PDFDocEncoding[o] for o in ords)
+        return "".join(PDFDocEncoding[o] for o in ords)
+
 
 def decode_psl_list(_list):
-    return [ decode_text(value.name) if isinstance(value, PSLiteral) else value
-        for value in _list ]
+    return [
+        decode_text(value.name) if isinstance(value, PSLiteral) else value
+        for value in _list
+    ]
+
 
 # via pdfminer.pdftypes, altered slightly
 def resolve_all(x):
@@ -83,7 +94,7 @@ def resolve_all(x):
     if t == PDFObjRef:
         return resolve_all(x.resolve())
     elif t == list:
-        return [ resolve_all(v) for v in x ]
+        return [resolve_all(v) for v in x]
     elif t == tuple:
         return tuple(resolve_all(v) for v in x)
     elif t == dict:
@@ -91,8 +102,9 @@ def resolve_all(x):
     else:
         return x
 
-@cache(maxsize = int(10e4))
-def _decimalize(v, q = None):
+
+@cache(maxsize=int(10e4))
+def _decimalize(v, q=None):
     # If already a decimal, just return itself
     if type(v) == Decimal:
         return v
@@ -107,15 +119,15 @@ def _decimalize(v, q = None):
 
     # Convert float-like
     elif isinstance(v, numbers.Real):
-        if q != None:
-            return Decimal(repr(v)).quantize(Decimal(repr(q)),
-                rounding=ROUND_HALF_UP)
+        if q is not None:
+            return Decimal(repr(v)).quantize(Decimal(repr(q)), rounding=ROUND_HALF_UP)
         else:
             return Decimal(repr(v))
     else:
         raise ValueError("Cannot convert {0} to Decimal.".format(v))
 
-def decimalize(v, q = None):
+
+def decimalize(v, q=None):
     # If already a decimal, just return itself
     if type(v) == Decimal:
         return v
@@ -126,10 +138,12 @@ def decimalize(v, q = None):
     else:
         return _decimalize(v, q)
 
+
 def is_dataframe(collection):
     cls = collection.__class__
-    name = ".".join([ cls.__module__, cls.__name__ ])
+    name = ".".join([cls.__module__, cls.__name__])
     return name == "pandas.core.frame.DataFrame"
+
 
 def to_list(collection):
     if is_dataframe(collection):
@@ -137,16 +151,18 @@ def to_list(collection):
     else:
         return list(collection)
 
+
 def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
     tolerance = decimalize(tolerance)
     coll = ""
     last_x1 = None
     for char in sorted(line_chars, key=itemgetter("x0")):
-        if (last_x1 != None) and (char["x0"] > (last_x1 + tolerance)):
+        if (last_x1 is not None) and (char["x0"] > (last_x1 + tolerance)):
             coll += " "
         last_x1 = char["x1"]
         coll += char["text"]
     return coll
+
 
 def objects_to_rect(objects):
     return {
@@ -156,6 +172,7 @@ def objects_to_rect(objects):
         "bottom": max(map(itemgetter("bottom"), objects)),
     }
 
+
 def objects_to_bbox(objects):
     return (
         min(map(itemgetter("x0"), objects)),
@@ -164,25 +181,22 @@ def objects_to_bbox(objects):
         max(map(itemgetter("bottom"), objects)),
     )
 
+
 obj_to_bbox = itemgetter("x0", "top", "x1", "bottom")
 
+
 def bbox_to_rect(bbox):
-    return {
-        "x0": bbox[0],
-        "top": bbox[1],
-        "x1": bbox[2],
-        "bottom": bbox[3]
-    }
+    return {"x0": bbox[0], "top": bbox[1], "x1": bbox[2], "bottom": bbox[3]}
 
 
-
-def extract_words(chars,
+def extract_words(
+    chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
     keep_blank_chars=False,
-    horizontal_ltr = True, # Should words be read left-to-right?
-    vertical_ttb = True, # Should vertical words be read top-to-bottom?
-    ):
+    horizontal_ltr=True,  # Should words be read left-to-right?
+    vertical_ttb=True,  # Should vertical words be read top-to-bottom?
+):
 
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
@@ -194,12 +208,12 @@ def extract_words(chars,
             if horizontal_ltr:
                 sorted_chars = chars
             else:
-                sorted_chars = sorted(chars, key = lambda x: -x["x1"])
+                sorted_chars = sorted(chars, key=lambda x: -x["x1"])
         else:
             if vertical_ttb:
-                sorted_chars = sorted(chars, key = itemgetter("doctop"))
+                sorted_chars = sorted(chars, key=itemgetter("doctop"))
             else:
-                sorted_chars = sorted(chars, key = lambda x: -x["bottom"])
+                sorted_chars = sorted(chars, key=lambda x: -x["bottom"])
 
         return {
             "x0": x0,
@@ -207,7 +221,7 @@ def extract_words(chars,
             "top": top,
             "bottom": bottom,
             "upright": upright,
-            "text": "".join(map(itemgetter("text"), sorted_chars))
+            "text": "".join(map(itemgetter("text"), sorted_chars)),
         }
 
     def get_line_words(chars, upright, tolerance=DEFAULT_X_TOLERANCE):
@@ -225,7 +239,8 @@ def extract_words(chars,
                 if len(current_word) > 0:
                     words.append(current_word)
                     current_word = []
-                else: pass
+                else:
+                    pass
             elif len(current_word) == 0:
                 current_word.append(char)
             else:
@@ -238,10 +253,9 @@ def extract_words(chars,
         if len(current_word) > 0:
             words.append(current_word)
 
-        return [ process_word_chars(chars, upright)
-            for chars in words ]
+        return [process_word_chars(chars, upright) for chars in words]
 
-    chars_by_upright = { 1: [], 0: [] }
+    chars_by_upright = {1: [], 0: []}
     words = []
     for char in to_list(chars):
         chars_by_upright[char.get("upright", 1)].append(char)
@@ -250,17 +264,18 @@ def extract_words(chars,
         clusters = cluster_objects(
             char_group,
             "doctop" if upright else "x0",
-            y_tolerance, # Still use y-tolerance here, even for vertical words
+            y_tolerance,  # Still use y-tolerance here, even for vertical words
         )
 
         for line_chars in clusters:
-            words += get_line_words(line_chars, upright, tolerance = x_tolerance)
+            words += get_line_words(line_chars, upright, tolerance=x_tolerance)
 
     return words
 
-def extract_text(chars,
-    x_tolerance=DEFAULT_X_TOLERANCE,
-    y_tolerance=DEFAULT_Y_TOLERANCE):
+
+def extract_text(
+    chars, x_tolerance=DEFAULT_X_TOLERANCE, y_tolerance=DEFAULT_Y_TOLERANCE
+):
 
     if len(chars) == 0:
         return None
@@ -268,24 +283,25 @@ def extract_text(chars,
     chars = to_list(chars)
     doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
 
-    lines = (collate_line(line_chars, x_tolerance)
-        for line_chars in doctop_clusters)
+    lines = (collate_line(line_chars, x_tolerance) for line_chars in doctop_clusters)
 
     coll = "\n".join(lines)
     return coll
 
+
 collate_chars = extract_text
+
 
 def filter_objects(objs, fn):
     if isinstance(objs, dict):
-        return dict((k, filter_objects(v, fn))
-            for k,v in objs.items())
+        return dict((k, filter_objects(v, fn)) for k, v in objs.items())
 
     initial_type = type(objs)
     objs = to_list(objs)
     filtered = filter(fn, objs)
 
     return initial_type(filtered)
+
 
 def get_bbox_overlap(a, b):
     a_left, a_top, a_right, a_bottom = decimalize(a)
@@ -301,16 +317,18 @@ def get_bbox_overlap(a, b):
     else:
         return None
 
+
 def clip_obj(obj, bbox):
     bbox = decimalize(bbox)
 
     overlap = get_bbox_overlap(obj_to_bbox(obj), bbox)
-    if overlap is None: return None
+    if overlap is None:
+        return None
 
     dims = bbox_to_rect(overlap)
     copy = dict(obj)
 
-    for attr in [ "x0", "top", "x1", "bottom" ]:
+    for attr in ["x0", "top", "x1", "bottom"]:
         copy[attr] = dims[attr]
 
     if dims["top"] != obj["bottom"] or dims["top"] != obj["bottom"]:
@@ -322,29 +340,35 @@ def clip_obj(obj, bbox):
 
     return copy
 
+
 def intersects_bbox(objs, bbox):
     """
     Filters objs to only those intersecting the bbox
     """
     initial_type = type(objs)
     objs = to_list(objs)
-    matching = [ obj for obj in objs
-        if get_bbox_overlap(obj_to_bbox(obj), bbox) is not None ]
+    matching = [
+        obj for obj in objs if get_bbox_overlap(obj_to_bbox(obj), bbox) is not None
+    ]
     return initial_type(matching)
+
 
 def within_bbox(objs, bbox):
     """
     Filters objs to only those fully within the bbox
     """
     if isinstance(objs, dict):
-        return dict((k, within_bbox(v, bbox))
-            for k,v in objs.items())
+        return dict((k, within_bbox(v, bbox)) for k, v in objs.items())
 
     initial_type = type(objs)
     objs = to_list(objs)
-    matching = [ obj for obj in objs
-        if get_bbox_overlap(obj_to_bbox(obj), bbox) == obj_to_bbox(obj) ]
+    matching = [
+        obj
+        for obj in objs
+        if get_bbox_overlap(obj_to_bbox(obj), bbox) == obj_to_bbox(obj)
+    ]
     return initial_type(matching)
+
 
 def crop_to_bbox(objs, bbox):
     """
@@ -352,16 +376,16 @@ def crop_to_bbox(objs, bbox):
     and crops the extent of the objects to the bbox.
     """
     if isinstance(objs, dict):
-        return dict((k, crop_to_bbox(v, bbox))
-            for k,v in objs.items())
+        return dict((k, crop_to_bbox(v, bbox)) for k, v in objs.items())
 
     initial_type = type(objs)
     objs = to_list(objs)
     cropped = list(filter(None, (clip_obj(obj, bbox) for obj in objs)))
     return initial_type(cropped)
 
+
 def move_object(obj, axis, value):
-    assert(axis in ("h", "v"))
+    assert axis in ("h", "v")
     if axis == "h":
         new_items = (
             ("x0", obj["x0"] + value),
@@ -373,7 +397,7 @@ def move_object(obj, axis, value):
             ("bottom", obj["bottom"] + value),
         ]
         if "doctop" in obj:
-            new_items += [ ("doctop", obj["doctop"] + value) ]
+            new_items += [("doctop", obj["doctop"] + value)]
         if "y0" in obj:
             new_items += [
                 ("y0", obj["y0"] - value),
@@ -381,21 +405,22 @@ def move_object(obj, axis, value):
             ]
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
+
 def resize_object(obj, key, value):
-    assert(key in ("x0", "x1", "top", "bottom"))
+    assert key in ("x0", "x1", "top", "bottom")
     old_value = obj[key]
     diff = value - old_value
     if key in ("x0", "x1"):
         if key == "x0":
-            assert(value <= obj["x1"])
+            assert value <= obj["x1"]
         else:
-            assert(value >= obj["x0"])
+            assert value >= obj["x0"]
         new_items = (
             (key, value),
             ("width", obj["width"] + diff),
         )
     if key == "top":
-        assert(value <= obj["bottom"])
+        assert value <= obj["bottom"]
         new_items = [
             (key, value),
             ("doctop", obj["doctop"] + diff),
@@ -406,7 +431,7 @@ def resize_object(obj, key, value):
                 ("y1", obj["y1"] - diff),
             ]
     if key == "bottom":
-        assert(value >= obj["top"])
+        assert value >= obj["top"]
         new_items = [
             (key, value),
             ("height", obj["height"] + diff),
@@ -417,77 +442,89 @@ def resize_object(obj, key, value):
             ]
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
+
 def curve_to_edges(curve):
-    point_pairs = zip(curve["points"], curve["points"][1:]) 
-    return [ {
-        "x0": min(p0[0], p1[0]),
-        "x1": max(p0[0], p1[0]),
-        "top": min(p0[1], p1[1]),
-        "doctop": min(p0[1], p1[1]) + (curve["doctop"] - curve["top"]),
-        "bottom": max(p0[1], p1[1]),
-        "width": abs(p0[0] - p1[0]),
-        "height": abs(p0[1] - p1[1]),
-        "orientation": "v" if p0[0] == p1[0] else ("h" if p0[1] == p1[1] else None)
-    } for p0, p1 in point_pairs ]
+    point_pairs = zip(curve["points"], curve["points"][1:])
+    return [
+        {
+            "x0": min(p0[0], p1[0]),
+            "x1": max(p0[0], p1[0]),
+            "top": min(p0[1], p1[1]),
+            "doctop": min(p0[1], p1[1]) + (curve["doctop"] - curve["top"]),
+            "bottom": max(p0[1], p1[1]),
+            "width": abs(p0[0] - p1[0]),
+            "height": abs(p0[1] - p1[1]),
+            "orientation": "v" if p0[0] == p1[0] else ("h" if p0[1] == p1[1] else None),
+        }
+        for p0, p1 in point_pairs
+    ]
+
 
 def rect_to_edges(rect):
-    top, bottom, left, right = [ dict(rect) for x in range(4) ]
-    top.update({
-        "object_type": "rect_edge",
-        "height": decimalize(0),
-        "y0": rect["y1"],
-        "bottom": rect["top"],
-        "orientation": "h"
-    })
-    bottom.update({
-        "object_type": "rect_edge",
-        "height": decimalize(0),
-        "y1": rect["y0"],
-        "top": rect["top"] + rect["height"],
-        "doctop": rect["doctop"] + rect["height"],
-        "orientation": "h"
-    })
-    left.update({
-        "object_type": "rect_edge",
-        "width": decimalize(0),
-        "x1": rect["x0"],
-        "orientation": "v"
-    })
-    right.update({
-        "object_type": "rect_edge",
-        "width": decimalize(0),
-        "x0": rect["x1"],
-        "orientation": "v"
-    })
-    return [ top, bottom, left, right ]
+    top, bottom, left, right = [dict(rect) for x in range(4)]
+    top.update(
+        {
+            "object_type": "rect_edge",
+            "height": decimalize(0),
+            "y0": rect["y1"],
+            "bottom": rect["top"],
+            "orientation": "h",
+        }
+    )
+    bottom.update(
+        {
+            "object_type": "rect_edge",
+            "height": decimalize(0),
+            "y1": rect["y0"],
+            "top": rect["top"] + rect["height"],
+            "doctop": rect["doctop"] + rect["height"],
+            "orientation": "h",
+        }
+    )
+    left.update(
+        {
+            "object_type": "rect_edge",
+            "width": decimalize(0),
+            "x1": rect["x0"],
+            "orientation": "v",
+        }
+    )
+    right.update(
+        {
+            "object_type": "rect_edge",
+            "width": decimalize(0),
+            "x0": rect["x1"],
+            "orientation": "v",
+        }
+    )
+    return [top, bottom, left, right]
+
 
 def line_to_edge(line):
     edge = dict(line)
     edge["orientation"] = "h" if (line["top"] == line["bottom"]) else "v"
     return edge
 
+
 def obj_to_edges(obj):
     return {
-        "line": lambda x: [ line_to_edge(x) ],
+        "line": lambda x: [line_to_edge(x)],
         "rect": rect_to_edges,
         "rect_edge": rect_to_edges,
         "curve": curve_to_edges,
     }[obj["object_type"]](obj)
 
-def filter_edges(edges, orientation=None,
-    edge_type=None,
-    min_length=1):
+
+def filter_edges(edges, orientation=None, edge_type=None, min_length=1):
 
     if orientation not in ("v", "h", None):
         raise ValueError("Orientation must be 'v' or 'h'")
 
     def test(e):
         dim = "height" if e["orientation"] == "v" else "width"
-        et = (e["object_type"] == edge_type if edge_type != None else True)
-        return et & (
-            (True if orientation == None else (e["orientation"] == orientation)) & 
-            (e[dim] >= min_length)
-        )
+        et_correct = e["object_type"] == edge_type if edge_type is not None else True
+        orient_correct = orientation is None or e["orientation"] == orientation
+        return et_correct and orient_correct and (e[dim] >= min_length)
 
     edges = filter(test, edges)
     return list(edges)
