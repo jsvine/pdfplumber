@@ -5,18 +5,20 @@ All notable changes to this project will be documented in this file. The format 
 ## [0.5.23] — UNRELEASED
 
 ### Changed
-- Removed `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF.
+- Removed `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF. (00e789b)
 
 ### Development Changes
 
 - Renamed default branch to "stable," to clarify its purpose
-- Switched from nosetests to pytest
-- Switched from pipenv to standard requirements.txt + python -m venv
-- Added GitHub action for tests + codecov
-- Added Makefile for building development virtual environment and running tests
-- Added badges to README.md
-- Added Trove classifiers for Python versions to setup.py
-- Added MANIFEST.in
+- Reformatted code with psf/black (1258e09)
+- Added code linting via psf/black and flake8 (1258e09)
+- Switched from nosetests to pytest (1ac16dd)
+- Switched from pipenv to standard requirements.txt + python -m venv (48eaa51)
+- Added GitHub action for tests + codecov (b148fd1)
+- Added Makefile for building development virtual environment and running tests (4c69c58)
+- Added badges to README.md (9e42dc3)
+- Added Trove classifiers for Python versions to setup.py (6946e8d)
+- Added MANIFEST.in (eafc15c)
 
 ## [0.5.22] — 2020-07-18
 ### Changed
