@@ -18,13 +18,18 @@ class Test(unittest.TestCase):
 
     @classmethod
     def setup_class(self):
-        path = os.path.join(HERE, "pdfs/WARN-Report-for-7-1-2015-to-03-25-2016.pdf")
-        self.pdf = pdfplumber.open(path)
+        self.path = os.path.join(HERE, "pdfs/WARN-Report-for-7-1-2015-to-03-25-2016.pdf")
+        self.pdf = pdfplumber.open(self.path)
         self.PDF_WIDTH = self.pdf.pages[0].width
 
     @classmethod
     def teardown_class(self):
         self.pdf.close()
+
+    def test_page_limiting(self):
+        with pdfplumber.open(self.path, pages = [ 1, 3 ]) as pdf:
+            assert len(pdf.pages) == 2
+            assert pdf.pages[1].page_number == 3
 
     def test_objects(self):
         assert len(self.pdf.chars)
