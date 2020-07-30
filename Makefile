@@ -1,18 +1,22 @@
-.PHONY: venv tests
-PYTHON=venv/bin/python
-PIP=venv/bin/pip
+.PHONY: venv tests check-black check-flake format
+PYTHON := venv/bin/python
+PIP = venv/bin/pip
 
 venv:
 	python -m venv venv
 	${PIP} install --upgrade pip
-	${PIP} freeze --exclude-editable | xargs ${PIP} uninstall -y | true
 	${PIP} install -r requirements.txt
 	${PIP} install -r requirements-dev.txt
 	${PIP} install -e .
 
 tests:
-	${PYTHON} -m pytest --cov=pdfplumber --cov-config=.coveragerc --cov-report xml:coverage.xml --cov-report term
+	${PYTHON} -m pytest
+
+check-black:
+	${PYTHON} -m black pdfplumber --check
+
+check-flake:
+	${PYTHON} -m flake8 pdfplumber
 
 format:
 	${PYTHON} -m black pdfplumber
-	${PYTHON} -m flake8 pdfplumber

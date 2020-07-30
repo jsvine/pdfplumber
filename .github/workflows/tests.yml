@@ -22,16 +22,14 @@ jobs:
       name: Configure pip caching
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt')}}-${{ hashFiles('**/requirements-dev.txt') }}
     - name: Install Python dependencies
-      run: |
-        python -m pip install -r requirements.txt
-        python -m pip install -r requirements-dev.txt
-        python -m pip install -e .
+      run: make venv
+    - name: Validate against psf/black
+      run: make check-black
+    - name: Validate against flake8
+      run: make check-flake
     - name: Run tests
-      run: |-
-        pytest --cov=pdfplumber --cov-config=.coveragerc --cov-report xml:coverage.xml --cov-report term
-    - name: Codecov
+      run: make tests
+    - name: Examine code coverage
       uses: codecov/codecov-action@v1.0.12
