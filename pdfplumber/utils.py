@@ -85,6 +85,13 @@ def decode_psl_list(_list):
     ]
 
 
+def resolve(x):
+    if type(x) == PDFObjRef:
+        return x.resolve()
+    else:
+        return x
+
+
 # via pdfminer.pdftypes, altered slightly
 def resolve_all(x):
     """
