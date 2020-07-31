@@ -35,6 +35,18 @@ class Test(unittest.TestCase):
         assert len(self.pdf.chars)
         assert len(self.pdf.rects)
         assert len(self.pdf.lines)
+        assert len(self.pdf.rect_edges)
+        # Ensure that caching is working:
+        assert id(self.pdf._rect_edges) == id(self.pdf.rect_edges)
+
+    def test_annots(self):
+        # via http://www.pdfill.com/example/pdf_drawing_new.pdf
+        path = os.path.join(HERE, "pdfs/pdffill-demo.pdf")
+        with pdfplumber.open(path) as pdf:
+            assert len(pdf.annots)
+            assert len(pdf.hyperlinks) == 17
+            uri = "http://www.pdfill.com/pdf_drawing.html"
+            assert pdf.hyperlinks[0]["URI"] == uri
 
     def test_crop_and_filter(self):
         def test(obj):

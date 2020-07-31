@@ -1,5 +1,5 @@
 from . import utils
-from .utils import resolve_all
+from .utils import resolve, resolve_all
 from .table import TableFinder
 from .container import Container
 
@@ -56,6 +56,34 @@ class Page(Container):
             return self._layout
         self._layout = self.pdf.process_page(self.page_obj)
         return self._layout
+
+    @property
+    def annots(self):
+        def parse(annot):
+            data = resolve(annot.resolve())
+            rect = self.decimalize(resolve_all(data["Rect"]))
+            parsed = {
+                "page_number": self.page_number,
+                "doctop": self.initial_doctop + self.height - rect[3],
+                "top": self.height - rect[3],
+                "x0": rect[0],
+                "bottom": self.height - rect[1],
+                "x1": rect[2],
+                "width": rect[2] - rect[0],
+                "height": rect[3] - rect[1],
+                "data": data,
+            }
+            uri = data.get("A", {}).get("URI")
+            if uri is not None:
+                parsed["URI"] = uri.decode("utf-8")
+            return parsed
+
+        raw = resolve(self.page_obj.annots) or []
+        return list(map(parse, raw))
+
+    @property
+    def hyperlinks(self):
+        return [a for a in self.annots if "URI" in a]
 
     @property
     def objects(self):
