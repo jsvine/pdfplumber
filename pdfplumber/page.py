@@ -216,29 +216,11 @@ class Page(Container):
         largest = list(sorted(tables, key=sorter))[0]
         return largest.extract()
 
-    def extract_text(
-        self,
-        x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE,
-    ):
+    def extract_text(self, **kwargs):
+        return utils.extract_text(self.chars, **kwargs)
 
-        return utils.extract_text(
-            self.chars, x_tolerance=x_tolerance, y_tolerance=y_tolerance
-        )
-
-    def extract_words(
-        self,
-        x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE,
-        keep_blank_chars=False,
-    ):
-
-        return utils.extract_words(
-            self.chars,
-            x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance,
-            keep_blank_chars=keep_blank_chars,
-        )
+    def extract_words(self, **kwargs):
+        return utils.extract_words(self.chars, **kwargs)
 
     def crop(self, bbox):
         return CroppedPage(self, self.decimalize(bbox))
