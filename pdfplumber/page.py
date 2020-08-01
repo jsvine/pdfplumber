@@ -241,49 +241,16 @@ class Page(Container):
         )
 
     def crop(self, bbox):
-        class CroppedPage(DerivedPage):
-            @property
-            def objects(self):
-                if hasattr(self, "_objects"):
-                    return self._objects
-                self._objects = utils.crop_to_bbox(self.parent_page.objects, self.bbox)
-                return self._objects
-
-        cropped = CroppedPage(self)
-        cropped.bbox = self.decimalize(bbox)
-        return cropped
+        return CroppedPage(self, self.decimalize(bbox))
 
     def within_bbox(self, bbox):
         """
         Same as .crop, except only includes objects fully within the bbox
         """
-
-        class CroppedPage(DerivedPage):
-            @property
-            def objects(self):
-                if hasattr(self, "_objects"):
-                    return self._objects
-                self._objects = utils.within_bbox(self.parent_page.objects, self.bbox)
-                return self._objects
-
-        cropped = CroppedPage(self)
-        cropped.bbox = self.decimalize(bbox)
-        return cropped
+        return CroppedPage(self, self.decimalize(bbox), utils.within_bbox)
 
     def filter(self, test_function):
-        class FilteredPage(DerivedPage):
-            @property
-            def objects(self):
-                if hasattr(self, "_objects"):
-                    return self._objects
-                self._objects = utils.filter_objects(
-                    self.parent_page.objects, test_function
-                )
-                return self._objects
-
-        filtered = FilteredPage(self)
-        filtered.bbox = self.bbox
-        return filtered
+        return FilteredPage(self, test_function)
 
     def to_image(self, **conversion_kwargs):
         """
@@ -312,3 +279,31 @@ class DerivedPage(Page):
             self.root_page = parent_page
         else:
             self.root_page = parent_page.root_page
+
+
+class CroppedPage(DerivedPage):
+    def __init__(self, parent_page, bbox, crop_fn=utils.crop_to_bbox):
+        self.bbox = bbox
+        self.crop_fn = crop_fn
+        super().__init__(parent_page)
+
+    @property
+    def objects(self):
+        if hasattr(self, "_objects"):
+            return self._objects
+        self._objects = self.crop_fn(self.parent_page.objects, self.bbox)
+        return self._objects
+
+
+class FilteredPage(DerivedPage):
+    def __init__(self, parent_page, filter_fn):
+        self.bbox = parent_page.bbox
+        self.filter_fn = filter_fn
+        super().__init__(parent_page)
+
+    @property
+    def objects(self):
+        if hasattr(self, "_objects"):
+            return self._objects
+        self._objects = utils.filter_objects(self.parent_page.objects, self.filter_fn)
+        return self._objects

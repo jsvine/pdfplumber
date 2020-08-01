@@ -38,6 +38,7 @@ class Test(unittest.TestCase):
         assert len(self.pdf.rect_edges)
         # Ensure that caching is working:
         assert id(self.pdf._rect_edges) == id(self.pdf.rect_edges)
+        assert id(self.pdf.pages[0]._layout) == id(self.pdf.pages[0].layout)
 
     def test_annots(self):
         # via http://www.pdfill.com/example/pdf_drawing_new.pdf
@@ -53,12 +54,15 @@ class Test(unittest.TestCase):
             return obj["object_type"] == "char"
         bbox = (0, 0, 200, 200)
         original = self.pdf.pages[0]
-        step_1 = original.crop(bbox)
-        assert(step_1.width == 200)
-        assert(len(step_1.chars) < len(original.chars))
-        step_2 = step_1.filter(test)
-        assert(len(step_1.rects) > 0)
-        assert(len(step_2.rects) == 0)
+        cropped = original.crop(bbox)
+        assert id(cropped.chars) == id(cropped._objects["char"])
+        assert cropped.width == 200
+        assert len(cropped.rects) > 0
+        assert len(cropped.chars) < len(original.chars)
+
+        filtered = cropped.filter(test)
+        assert id(filtered.chars) == id(filtered._objects["char"])
+        assert len(filtered.rects) == 0
 
     def test_rotation(self):
         assert(self.pdf.pages[0].width == 1008)
