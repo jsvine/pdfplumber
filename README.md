@@ -43,7 +43,7 @@ The output will be a CSV containing info about every character, line, and rectan
 |----------|-------------|
 |`--format [format]`| `csv` or `json`. The `json` format returns slightly more information; it includes PDF-level metadata and height/width information about each page.|
 |`--pages [list of pages]`| A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.|
-|`--types [list of object types to extract]`| Choices are `char`, `anno`, `line`, `curve`, `rect`, `rect_edge`. Defaults to `char`, `anno`, `line`, `curve`, `rect`.|
+|`--types [list of object types to extract]`| Choices are `char`, `line`, `curve`, `rect`, `rect_edge`. Defaults to `char`, `line`, `curve`, `rect`.|
 
 ## Python library
 
@@ -106,16 +106,17 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to four types of PDF objects. The following properties each return a Python list of the matching objects:
 
 - `.chars`, each representing a single text character.
-- `.annos`, each representing a single annotation-text character.
 - `.lines`, each representing a single 1-dimensional line.
 - `.rects`, each representing a single 2-dimensional rectangle.
 - `.curves`, each representing a series of connected points.
 - `.images`, each representing an image.
 - `.figures`, each representing a figure.
+- `.annots`, each representing a single PDF annotation (cf. Section 8.4 of the [official PDF specification](https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf) for details)
+- `.hyperlinks`, each representing a single PDF annotation of the subtype `Link` and having an `URI` action attribute
 
 Each object is represented as a simple Python `dict`, with the following properties:
 
-#### `char` / `anno` properties
+#### `char` properties
 
 | Property | Description |
 |----------|-------------|
@@ -134,7 +135,7 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`top`| Distance of top of character from top of page.|
 |`bottom`| Distance of bottom of the character from top of page.|
 |`doctop`| Distance of top of character from top of document.|
-|`object_type`| "char" / "anno"|
+|`object_type`| "char"|
 
 #### `line` properties
 

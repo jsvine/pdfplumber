@@ -36,10 +36,6 @@ class Container(object):
         return self.objects.get("char", [])
 
     @property
-    def annos(self):
-        return self.objects.get("anno", [])
-
-    @property
     def rect_edges(self):
         if hasattr(self, "_rect_edges"):
             return self._rect_edges

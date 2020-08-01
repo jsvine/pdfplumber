@@ -3,6 +3,7 @@ from .page import Page
 from .utils import decode_text
 
 import pathlib
+import itertools
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfpage import PDFPage
@@ -87,3 +88,13 @@ class PDF(Container):
                 all_objects[kind] = all_objects.get(kind, []) + p.objects[kind]
         self._objects = all_objects
         return self._objects
+
+    @property
+    def annots(self):
+        gen = (p.annots for p in self.pages)
+        return list(itertools.chain(*gen))
+
+    @property
+    def hyperlinks(self):
+        gen = (p.hyperlinks for p in self.pages)
+        return list(itertools.chain(*gen))
