@@ -222,10 +222,7 @@ def extract_words(
         words = []
         current_word = []
 
-        asc_order = (
-            (upright and horizontal_ltr)
-            or (not upright and vertical_ttb)
-        )
+        asc_order = (upright and horizontal_ltr) or (not upright and vertical_ttb)
 
         comp_fn = gt if asc_order else lt
         tol_fn = add if asc_order else sub
