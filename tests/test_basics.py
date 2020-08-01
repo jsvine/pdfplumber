@@ -3,7 +3,6 @@ import unittest
 import pandas as pd
 import pdfplumber
 import sys, os
-import six
 
 import logging
 logging.disable(logging.ERROR)
@@ -23,7 +22,7 @@ class Test(unittest.TestCase):
 
     def test_metadata(self):
         metadata = self.pdf.metadata
-        assert(isinstance(metadata["Producer"], six.text_type))
+        assert(isinstance(metadata["Producer"], str))
 
     def test_pagecount(self):
         assert(len(self.pdf.pages) == 1)
@@ -59,6 +58,10 @@ class Test(unittest.TestCase):
         assert cropped.width == 200
         assert len(cropped.rects) > 0
         assert len(cropped.chars) < len(original.chars)
+
+        within_bbox = original.within_bbox(bbox)
+        assert len(within_bbox.chars) < len(cropped.chars)
+        assert len(within_bbox.chars) > 0
 
         filtered = cropped.filter(test)
         assert id(filtered.chars) == id(filtered._objects["char"])
