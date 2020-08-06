@@ -405,6 +405,17 @@ def move_object(obj, axis, value):
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
 
+def snap_objects(objs, attr, tolerance):
+    axis = {"x0": "h", "x1": "h", "top": "v", "bottom": "v"}[attr]
+    clusters = cluster_objects(objs, attr, tolerance)
+    avgs = [sum(map(itemgetter(attr), objs)) / len(objs) for objs in clusters]
+    snapped_clusters = [
+        [move_object(obj, axis, avg - obj[attr]) for obj in cluster]
+        for cluster, avg in zip(clusters, avgs)
+    ]
+    return list(itertools.chain(*snapped_clusters))
+
+
 def resize_object(obj, key, value):
     assert key in ("x0", "x1", "top", "bottom")
     old_value = obj[key]

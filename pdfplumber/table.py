@@ -8,23 +8,6 @@ DEFAULT_MIN_WORDS_VERTICAL = 3
 DEFAULT_MIN_WORDS_HORIZONTAL = 1
 
 
-def move_to_avg(objs, orientation):
-    """
-    Move `objs` vertically/horizontally to their average x/y position.
-    """
-    if orientation not in ("h", "v"):
-        raise ValueError("Orientation must be 'v' or 'h'")
-    if len(objs) == 0:
-        return []
-    move_axis = "v" if orientation == "h" else "h"
-    attr = "top" if orientation == "h" else "x0"
-    values = list(map(itemgetter(attr), objs))
-    q = pow(10, utils.decimalize(values[0]).as_tuple().exponent)
-    avg = utils.decimalize(float(sum(values) / len(values)), q)
-    new_objs = [utils.move_object(obj, move_axis, avg - obj[attr]) for obj in objs]
-    return new_objs
-
-
 def snap_edges(edges, tolerance=DEFAULT_SNAP_TOLERANCE):
     """
     Given a list of edges, snap any within `tolerance` pixels of one another
@@ -32,17 +15,8 @@ def snap_edges(edges, tolerance=DEFAULT_SNAP_TOLERANCE):
     """
     v, h = [list(filter(lambda x: x["orientation"] == o, edges)) for o in ("v", "h")]
 
-    v = [
-        move_to_avg(cluster, "v")
-        for cluster in utils.cluster_objects(v, "x0", tolerance)
-    ]
-
-    h = [
-        move_to_avg(cluster, "h")
-        for cluster in utils.cluster_objects(h, "top", tolerance)
-    ]
-
-    snapped = list(itertools.chain(*(v + h)))
+    snap = utils.snap_objects
+    snapped = snap(v, "x0", tolerance) + snap(h, "top", tolerance)
     return snapped
 
 

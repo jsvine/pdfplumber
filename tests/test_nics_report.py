@@ -126,3 +126,14 @@ class Test(unittest.TestCase):
         filtered = page.filter(test)
         text = filtered.extract_text()
         assert(text == "NICS Firearm Background Checks\nNovember - 2015")
+
+    def test_text_only_strategy(self):
+        cropped = self.pdf.pages[0].crop((0, 80, self.PDF_WIDTH, 475))
+        table = cropped.extract_table(dict(
+            horizontal_strategy="text",
+            vertical_strategy="text",
+        ))
+        assert table[0][0] == "Alabama"
+        assert table[0][22] == "71,137"
+        assert table[-1][0] == "Wyoming"
+        assert table[-1][22] == "5,017"

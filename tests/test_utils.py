@@ -154,6 +154,50 @@ class Test(unittest.TestCase):
             "y1": 50,
         }
 
+    def test_move_object(self):
+        a = {
+            "x0": 5,
+            "x1": 10,
+            "top": 20,
+            "bottom": 30,
+            "width": 5,
+            "height": 10,
+            "doctop": 120,
+            "y0": 40,
+            "y1": 50,
+        }
+
+        b = dict(a)
+        b["x0"] = 15
+        b["x1"] = 20
+
+        a_new = utils.move_object(a, "h", 10)
+        assert a_new == b
+
+    def test_snap_objects(self):
+        a = {
+            "x0": 5,
+            "x1": 10,
+            "top": 20,
+            "bottom": 30,
+            "width": 5,
+            "height": 10,
+            "doctop": 120,
+            "y0": 40,
+            "y1": 50,
+        }
+
+        b = dict(a)
+        b["x0"] = 6
+        b["x1"] = 11
+
+        c = dict(a)
+        c["x0"] = 7
+        c["x1"] = 12
+
+        a_new, b_new, c_new = utils.snap_objects([ a, b, c ], "x0", 1)
+        assert a_new == b_new == c_new
+
     def test_filter_edges(self):
         with pytest.raises(ValueError):
             utils.filter_edges([], "x")
