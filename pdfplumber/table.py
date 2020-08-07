@@ -481,15 +481,9 @@ class TableFinder(object):
         h_strat = settings["horizontal_strategy"]
 
         if v_strat == "text" or h_strat == "text":
-            xt = settings["text_x_tolerance"]
-            if xt is None:
-                xt = settings["text_tolerance"]
-            yt = settings["text_y_tolerance"]
-            if yt is None:
-                yt = settings["text_tolerance"]
             words = self.page.extract_words(
-                x_tolerance=xt,
-                y_tolerance=yt,
+                x_tolerance=settings["text_x_tolerance"],
+                y_tolerance=settings["text_y_tolerance"],
                 keep_blank_chars=settings["keep_blank_chars"],
             )
 
