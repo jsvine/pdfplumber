@@ -40,9 +40,6 @@ def join_edge_group(edges, orientation, tolerance=DEFAULT_JOIN_TOLERANCE):
             if e[max_prop] > last[max_prop]:
                 # Extend current edge to new extremity
                 joined[-1] = utils.resize_object(last, max_prop, e[max_prop])
-            else:
-                # Do nothing; edge is fully contained in pre-existing edge
-                pass
         else:
             # Edge is separate from previous edges
             joined.append(e)
