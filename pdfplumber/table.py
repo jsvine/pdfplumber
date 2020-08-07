@@ -508,7 +508,7 @@ class TableFinder(object):
         if v_strat == "lines":
             v_base = utils.filter_edges(self.page.edges, "v")
         elif v_strat == "lines_strict":
-            v_base = utils.filter_edges(self.page.edges, "v", edge_type="lines")
+            v_base = utils.filter_edges(self.page.edges, "v", edge_type="line")
         elif v_strat == "text":
             v_base = words_to_edges_v(
                 words, word_threshold=settings["min_words_vertical"]
@@ -539,7 +539,7 @@ class TableFinder(object):
         if h_strat == "lines":
             h_base = utils.filter_edges(self.page.edges, "h")
         elif h_strat == "lines_strict":
-            h_base = utils.filter_edges(self.page.edges, "h", edge_type="lines")
+            h_base = utils.filter_edges(self.page.edges, "h", edge_type="line")
         elif h_strat == "text":
             h_base = words_to_edges_h(
                 words, word_threshold=settings["min_words_horizontal"]
