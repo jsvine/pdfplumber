@@ -11,6 +11,7 @@ venv:
 
 tests:
 	${PYTHON} -m pytest
+	${PYTHON} -m coverage html
 
 check-black:
 	${PYTHON} -m black pdfplumber --check
