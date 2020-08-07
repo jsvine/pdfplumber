@@ -87,6 +87,7 @@ def words_to_edges_h(words, word_threshold=DEFAULT_MIN_WORDS_HORIZONTAL):
         return []
     min_x0 = min(map(itemgetter("x0"), rects))
     max_x1 = max(map(itemgetter("x1"), rects))
+    max_bottom = max(map(itemgetter("bottom"), rects))
     edges = [
         {
             "x0": min_x0,
@@ -101,12 +102,11 @@ def words_to_edges_h(words, word_threshold=DEFAULT_MIN_WORDS_HORIZONTAL):
         {
             "x0": min_x0,
             "x1": max_x1,
-            "top": r["bottom"],
-            "bottom": r["bottom"],
+            "top": max_bottom,
+            "bottom": max_bottom,
             "width": max_x1 - min_x0,
             "orientation": "h",
         }
-        for r in rects
     ]
 
     return edges
@@ -147,37 +147,28 @@ def words_to_edges_v(words, word_threshold=DEFAULT_MIN_WORDS_VERTICAL):
     condensed_rects = map(utils.bbox_to_rect, condensed_bboxes)
     sorted_rects = list(sorted(condensed_rects, key=itemgetter("x0")))
 
-    # Find the far-right boundary of the rightmost rectangle
-    last_rect = sorted_rects[-1]
-    while True:
-        words_inside = utils.intersects_bbox(
-            [w for w in words if w["x0"] >= last_rect["x0"]],
-            (last_rect["x0"], last_rect["top"], last_rect["x1"], last_rect["bottom"]),
-        )
-        rect = utils.objects_to_rect(words_inside)
-        if rect == last_rect:
-            break
-        else:
-            last_rect = rect
+    max_x1 = max(map(itemgetter("x1"), sorted_rects))
+    min_top = min(map(itemgetter("top"), sorted_rects))
+    max_bottom = max(map(itemgetter("bottom"), sorted_rects))
 
     # Describe all the left-hand edges of each text cluster
     edges = [
         {
             "x0": b["x0"],
             "x1": b["x0"],
-            "top": b["top"],
-            "bottom": b["bottom"],
-            "height": b["bottom"] - b["top"],
+            "top": min_top,
+            "bottom": max_bottom,
+            "height": max_bottom - min_top,
             "orientation": "v",
         }
         for b in sorted_rects
     ] + [
         {
-            "x0": last_rect["x1"],
-            "x1": last_rect["x1"],
-            "top": last_rect["top"],
-            "bottom": last_rect["bottom"],
-            "height": last_rect["bottom"] - last_rect["top"],
+            "x0": max_x1,
+            "x1": max_x1,
+            "top": min_top,
+            "bottom": max_bottom,
+            "height": max_bottom - min_top,
             "orientation": "v",
         }
     ]
