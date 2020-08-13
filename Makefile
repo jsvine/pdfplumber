@@ -1,4 +1,4 @@
-.PHONY: venv tests check-black check-flake format
+.PHONY: venv tests check-black check-flake lint format
 PYTHON := venv/bin/python
 PIP = venv/bin/pip
 
@@ -18,6 +18,8 @@ check-black:
 
 check-flake:
 	${PYTHON} -m flake8 pdfplumber
+
+lint: check-flake check-black
 
 format:
 	${PYTHON} -m black pdfplumber
