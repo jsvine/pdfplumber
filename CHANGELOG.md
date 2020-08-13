@@ -6,13 +6,17 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 - Add `utils.resolve` (non-recursive .resolve_all) (7a90630)
 - Add `page.annots` and `page.hyperlinks`, replacing non-functional `page.annos`, and mirroring pdfminer's language ("annot" vs. "anno"). (aa03961)
+- Add `page/pdf.to_json` and `page/pdf.to_csv` (cbc91c6)
 
 ### Changed
 - Remove `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF. (00e789b)
+- Simplify the logic in "text" table-finding strategies; in edge cases, may result in changes to results. (d224202)
 
 ### Fixed
 - Fix `.extract_words`, which had been returning incorrect results when `horizontal_ltr = False` (d16aa13)
 - Fix `utils.resize_object`, which had been failing in various permutations (d16aa13)
+- Fix `lines_strict` table-finding strategy, which a typo had prevented from being usable (f0c9b85)
+- Fix `utils.resolve_all` to guard against two known sources of infinite recursion (cbc91c6)
 
 ### Development Changes
 
