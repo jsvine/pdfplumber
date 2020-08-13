@@ -1,6 +1,6 @@
 from .utils import decode_text
 from decimal import Decimal, ROUND_HALF_UP
-from pdfminer.pdftypes import PDFStream, PDFObjRef
+from pdfminer.pdftypes import PDFStream
 from pdfminer.psparser import PSLiteral
 import json
 import csv
@@ -57,13 +57,14 @@ def serialize(obj):
     elif t is PSLiteral:
         return decode_text(obj.name)
     elif t is bytes:
-        try:
-            for e in ENCODINGS_TO_TRY:
+        for e in ENCODINGS_TO_TRY:
+            try:
                 return obj.decode(e)
+            except UnicodeDecodeError:  # pragma: no cover
+                pass
         # If none of the decodings work, raise whatever error
         # decoding with utf-8 causes
-        except:  # pragma: no cover
-            obj.decode(ENCODINGS_TO_TRY[0])
+        obj.decode(ENCODINGS_TO_TRY[0])  # pragma: no cover
     elif obj is None:
         return None
     elif t in (int, float, str, bool):

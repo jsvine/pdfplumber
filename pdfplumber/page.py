@@ -1,5 +1,5 @@
 from . import utils
-from .utils import resolve, resolve_all
+from .utils import resolve_all
 from .table import TableFinder
 from .container import Container
 import re

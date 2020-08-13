@@ -1,8 +1,6 @@
 from pdfminer.utils import PDFDocEncoding
 from pdfminer.psparser import PSLiteral
 from pdfminer.pdftypes import PDFObjRef
-from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfpage import PDFPage
 from decimal import Decimal, ROUND_HALF_UP
 import numbers
 from operator import itemgetter, gt, lt, add, sub
