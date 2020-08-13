@@ -28,7 +28,8 @@ class Test(unittest.TestCase):
         assert(len(self.pdf.pages) == 1)
 
     def test_page_number(self):
-        assert(self.pdf.pages[0].page_number == 1)
+        assert self.pdf.pages[0].page_number == 1
+        assert str(self.pdf.pages[0]) == "<Page:1>"
 
     def test_objects(self):
         assert len(self.pdf.chars)
@@ -46,7 +47,11 @@ class Test(unittest.TestCase):
             assert len(pdf.annots)
             assert len(pdf.hyperlinks) == 17
             uri = "http://www.pdfill.com/pdf_drawing.html"
-            assert pdf.hyperlinks[0]["URI"] == uri
+            assert pdf.hyperlinks[0]["uri"] == uri
+
+        path = os.path.join(HERE, "pdfs/annotations.pdf")
+        with pdfplumber.open(path) as pdf:
+            assert len(pdf.annots)
 
     def test_crop_and_filter(self):
         def test(obj):

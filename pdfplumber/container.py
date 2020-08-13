@@ -1,5 +1,5 @@
 from itertools import chain
-from . import utils
+from . import utils, convert
 
 
 class Container(object):
@@ -64,3 +64,7 @@ class Container(object):
             return x["orientation"] == "v"
 
         return list(filter(test, self.edges))
+
+
+Container.to_json = convert.to_json
+Container.to_csv = convert.to_csv

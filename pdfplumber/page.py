@@ -2,7 +2,6 @@ from . import utils
 from .utils import resolve, resolve_all
 from .table import TableFinder
 from .container import Container
-
 import re
 
 lt_pat = re.compile(r"^LT")
@@ -60,30 +59,45 @@ class Page(Container):
     @property
     def annots(self):
         def parse(annot):
-            data = resolve(annot.resolve())
-            rect = self.decimalize(resolve_all(data["Rect"]))
+            rect = self.decimalize(annot["Rect"])
+
+            a = annot.get("A", {})
+            extras = {
+                "uri": a.get("URI"),
+                "title": annot.get("T"),
+                "contents": annot.get("Contents"),
+            }
+            for k, v in extras.items():
+                if v is not None:
+                    extras[k] = v.decode("utf-8")
+
             parsed = {
                 "page_number": self.page_number,
+                "object_type": "annot",
+                "x0": rect[0],
+                "y0": rect[1],
+                "x1": rect[2],
+                "y1": rect[3],
                 "doctop": self.initial_doctop + self.height - rect[3],
                 "top": self.height - rect[3],
-                "x0": rect[0],
                 "bottom": self.height - rect[1],
-                "x1": rect[2],
                 "width": rect[2] - rect[0],
                 "height": rect[3] - rect[1],
-                "data": data,
             }
-            uri = data.get("A", {}).get("URI")
-            if uri is not None:
-                parsed["URI"] = uri.decode("utf-8")
+            parsed.update(extras)
+            # Replace the indirect reference to the page dictionary
+            # with a pointer to our actual page
+            if "P" in annot:
+                annot["P"] = self
+            parsed["data"] = annot
             return parsed
 
-        raw = resolve(self.page_obj.annots) or []
+        raw = resolve_all(self.page_obj.annots) or []
         return list(map(parse, raw))
 
     @property
     def hyperlinks(self):
-        return [a for a in self.annots if "URI" in a]
+        return [a for a in self.annots if a["uri"] is not None]
 
     @property
     def objects(self):
@@ -245,6 +259,9 @@ class Page(Container):
         if "resolution" not in conversion_kwargs:
             kwargs["resolution"] = DEFAULT_RESOLUTION
         return PageImage(self, **kwargs)
+
+    def __repr__(self):
+        return f"<Page:{self.page_number}>"
 
 
 class DerivedPage(Page):

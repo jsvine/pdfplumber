@@ -1,6 +1,8 @@
 from pdfminer.utils import PDFDocEncoding
 from pdfminer.psparser import PSLiteral
 from pdfminer.pdftypes import PDFObjRef
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfpage import PDFPage
 from decimal import Decimal, ROUND_HALF_UP
 import numbers
 from operator import itemgetter, gt, lt, add, sub
@@ -92,20 +94,37 @@ def resolve(x):
         return x
 
 
-# via pdfminer.pdftypes, altered slightly
+def get_dict_type(d):
+    if type(d) is not dict:
+        return None
+    t = d.get("Type")
+    if type(t) is PSLiteral:
+        return decode_text(t.name)
+    else:
+        return t
+
+
 def resolve_all(x):
     """
     Recursively resolves the given object and all the internals.
     """
     t = type(x)
     if t == PDFObjRef:
-        return resolve_all(x.resolve())
-    elif t == list:
-        return [resolve_all(v) for v in x]
-    elif t == tuple:
-        return tuple(resolve_all(v) for v in x)
+        resolved = x.resolve()
+
+        # Avoid infinite recursion
+        if get_dict_type(resolved) == "Page":
+            return x
+
+        return resolve_all(resolved)
+    elif t in (list, tuple):
+        return t(resolve_all(v) for v in x)
     elif t == dict:
-        return dict((k, resolve_all(v)) for k, v in x.items())
+        if get_dict_type(x) == "Annot":
+            exceptions = ["Parent"]
+        else:
+            exceptions = []
+        return dict((k, v if k in exceptions else resolve_all(v)) for k, v in x.items())
     else:
         return x
 

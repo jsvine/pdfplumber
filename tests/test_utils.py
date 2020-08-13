@@ -41,6 +41,7 @@ class Test(unittest.TestCase):
         annot = self.pdf.annots[0]
         annot_ad0 = utils.resolve(annot["data"]["A"]["D"][0])
         assert annot_ad0["MediaBox"] == [0, 0, 612, 792]
+        assert utils.resolve(1) == 1
 
     def test_resolve_all(self):
         info = self.pdf.doc.xrefs[0].trailer["Info"]
