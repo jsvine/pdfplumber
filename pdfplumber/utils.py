@@ -333,11 +333,13 @@ def get_bbox_overlap(a, b):
     else:
         return None
 
+
 def calculate_area(bbox):
     left, top, right, bottom = bbox
     if left > right or top > bottom:
         raise ValueError(f"{bbox} has a negative width or height.")
     return (right - left) * (bottom - top)
+
 
 def clip_obj(obj, bbox):
     bbox = decimalize(bbox)

@@ -243,7 +243,9 @@ class Page(Container):
         """
         Same as .crop, except only includes objects fully within the bbox
         """
-        return CroppedPage(self, self.decimalize(bbox), relative=relative, crop_fn=utils.within_bbox)
+        return CroppedPage(
+            self, self.decimalize(bbox), relative=relative, crop_fn=utils.within_bbox
+        )
 
     def filter(self, test_function):
         return FilteredPage(self, test_function)
@@ -292,6 +294,7 @@ def test_proposed_bbox(bbox, parent_bbox):
             f"Bounding box {bbox} is not fully within "
             f"parent page bounding box {parent_bbox}"
         )
+
 
 class CroppedPage(DerivedPage):
     def __init__(self, parent_page, bbox, crop_fn=utils.crop_to_bbox, relative=False):
