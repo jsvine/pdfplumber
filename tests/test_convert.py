@@ -58,7 +58,9 @@ class Test(unittest.TestCase):
 
     def test_cli(self):
         res = run([
-             "pdfplumber",
+             sys.executable,
+             "-m",
+             "pdfplumber.cli",
              self.path,
              "--format",
              "json",

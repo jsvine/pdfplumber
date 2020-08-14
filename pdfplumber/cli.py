@@ -48,3 +48,7 @@ def main(args_raw=sys.argv[1:]):
     kwargs = {"csv": {}, "json": {"indent": args.indent}}[args.format]
     with PDF.open(args.infile, pages=args.pages) as pdf:
         converter(pdf, sys.stdout, args.types, **kwargs)
+
+
+if __name__ == "__main__":
+    main()
