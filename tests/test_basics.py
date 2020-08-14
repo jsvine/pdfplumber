@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import unittest
+import pytest
 import pandas as pd
 import pdfplumber
 import sys, os
@@ -71,6 +72,33 @@ class Test(unittest.TestCase):
         filtered = cropped.filter(test)
         assert id(filtered.chars) == id(filtered._objects["char"])
         assert len(filtered.rects) == 0
+
+    def test_relative_crop(self):
+        original = self.pdf.pages[0]
+        cropped = original.crop((10, 10, 40, 40))
+        recropped = cropped.crop((10, 15, 20, 25), relative=True)
+        target_bbox = pdfplumber.utils.decimalize((20, 25, 30, 35))
+        assert recropped.bbox == target_bbox
+
+        recropped_wi = cropped.within_bbox((10, 15, 20, 25), relative=True)
+        assert recropped_wi.bbox == target_bbox
+
+    def test_invalid_crops(self):
+        original = self.pdf.pages[0]
+        with pytest.raises(ValueError):
+            original.crop((0, 0, 0, 0))
+
+        with pytest.raises(ValueError):
+            original.crop((0, 0, 10000, 10))
+
+        with pytest.raises(ValueError):
+            original.crop((-10, 0, 10, 10))
+
+        with pytest.raises(ValueError):
+            original.crop((100, 0, 0, 100))
+
+        with pytest.raises(ValueError):
+            original.crop((0, 100, 100, 0))
 
     def test_rotation(self):
         assert(self.pdf.pages[0].width == 1008)

@@ -236,14 +236,14 @@ class Page(Container):
     def extract_words(self, **kwargs):
         return utils.extract_words(self.chars, **kwargs)
 
-    def crop(self, bbox):
-        return CroppedPage(self, self.decimalize(bbox))
+    def crop(self, bbox, relative=False):
+        return CroppedPage(self, self.decimalize(bbox), relative=relative)
 
-    def within_bbox(self, bbox):
+    def within_bbox(self, bbox, relative=False):
         """
         Same as .crop, except only includes objects fully within the bbox
         """
-        return CroppedPage(self, self.decimalize(bbox), utils.within_bbox)
+        return CroppedPage(self, self.decimalize(bbox), relative=relative, crop_fn=utils.within_bbox)
 
     def filter(self, test_function):
         return FilteredPage(self, test_function)
@@ -280,9 +280,30 @@ class DerivedPage(Page):
             self.root_page = parent_page.root_page
 
 
+def test_proposed_bbox(bbox, parent_bbox):
+    bbox_area = utils.calculate_area(bbox)
+    if bbox_area == 0:
+        raise ValueError(f"Bounding box {bbox} has an area of zero.")
+
+    overlap = utils.get_bbox_overlap(bbox, parent_bbox)
+    overlap_area = utils.calculate_area(overlap)
+    if overlap_area < bbox_area:
+        raise ValueError(
+            f"Bounding box {bbox} is not fully within "
+            f"parent page bounding box {parent_bbox}"
+        )
+
 class CroppedPage(DerivedPage):
-    def __init__(self, parent_page, bbox, crop_fn=utils.crop_to_bbox):
-        self.bbox = bbox
+    def __init__(self, parent_page, bbox, crop_fn=utils.crop_to_bbox, relative=False):
+        if relative:
+            print("Parent page", parent_page.bbox)
+            o_x0, o_top, _, _ = parent_page.bbox
+            x0, top, x1, bottom = bbox
+            self.bbox = (x0 + o_x0, top + o_top, x1 + o_x0, bottom + o_top)
+        else:
+            self.bbox = bbox
+
+        test_proposed_bbox(self.bbox, parent_page.bbox)
         self.crop_fn = crop_fn
         super().__init__(parent_page)
 

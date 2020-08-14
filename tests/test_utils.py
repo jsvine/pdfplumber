@@ -96,7 +96,7 @@ class Test(unittest.TestCase):
         ])
 
         assert text == goal
-        assert self.pdf.pages[0].crop((0, 0, 0, 0)).extract_text() == None
+        assert self.pdf.pages[0].crop((0, 0, 1, 1)).extract_text() == None
 
     def test_resize_object(self):
         obj = {
