@@ -1,35 +1,51 @@
 name: Tests
 
-on:
-  - push
-  - pull_request
+on: [push]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8]
+
     steps:
-    - name: Prepare for installations
-      run: sudo apt update -y
-    - name: Install Python
-      run: sudo apt install -y python3-pip python3-dev python3-venv
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
     - name: Install ghostscript & imagemagick
-      run: sudo apt install -y ghostscript libmagickwand-dev
+      run: sudo apt install ghostscript libmagickwand-dev
+
     - name: Remove policy.xml
       run: sudo rm /etc/ImageMagick-6/policy.xml
-    - name: Check out repo
-      uses: actions/checkout@v2
+
     - name: Configure pip caching
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt')}}-${{ hashFiles('**/requirements-dev.txt') }}
+
     - name: Install Python dependencies
-      run: make venv
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
     - name: Validate against psf/black
-      run: make check-black
+      run: python -m black --check pdfplumber
+
     - name: Validate against flake8
-      run: make check-flake
+      run: python -m flake8 pdfplumber
+
     - name: Run tests
-      run: make tests
+      run: |
+        python -m pytest --workers auto
+        python -m coverage html
+
     - name: Upload code coverage
       uses: codecov/codecov-action@v1.0.12

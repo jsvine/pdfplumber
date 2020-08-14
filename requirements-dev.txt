@@ -1,5 +1,6 @@
 pandas>=1.0.0
 pytest
 pytest-cov
+pytest-parallel
 flake8
 black
