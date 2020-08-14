@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 - Add `utils.resolve` (non-recursive .resolve_all) (7a90630)
 - Add `page.annots` and `page.hyperlinks`, replacing non-functional `page.annos`, and mirroring pdfminer's language ("annot" vs. "anno"). (aa03961)
 - Add `page/pdf.to_json` and `page/pdf.to_csv` (cbc91c6)
+- Add `relative=True/False` parameter to `.crop` and `.within_bbox`; those methods also now raise exceptions for invalid and out-of-page bounding boxes. (047ad34) [h/t @samkit-jain]
 
 ### Changed
 - Remove `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF. (00e789b)
