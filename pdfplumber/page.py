@@ -1,8 +1,7 @@
 from . import utils
-from .utils import resolve, resolve_all
+from .utils import resolve_all
 from .table import TableFinder
 from .container import Container
-
 import re
 
 lt_pat = re.compile(r"^LT")
@@ -60,30 +59,45 @@ class Page(Container):
     @property
     def annots(self):
         def parse(annot):
-            data = resolve(annot.resolve())
-            rect = self.decimalize(resolve_all(data["Rect"]))
+            rect = self.decimalize(annot["Rect"])
+
+            a = annot.get("A", {})
+            extras = {
+                "uri": a.get("URI"),
+                "title": annot.get("T"),
+                "contents": annot.get("Contents"),
+            }
+            for k, v in extras.items():
+                if v is not None:
+                    extras[k] = v.decode("utf-8")
+
             parsed = {
                 "page_number": self.page_number,
+                "object_type": "annot",
+                "x0": rect[0],
+                "y0": rect[1],
+                "x1": rect[2],
+                "y1": rect[3],
                 "doctop": self.initial_doctop + self.height - rect[3],
                 "top": self.height - rect[3],
-                "x0": rect[0],
                 "bottom": self.height - rect[1],
-                "x1": rect[2],
                 "width": rect[2] - rect[0],
                 "height": rect[3] - rect[1],
-                "data": data,
             }
-            uri = data.get("A", {}).get("URI")
-            if uri is not None:
-                parsed["URI"] = uri.decode("utf-8")
+            parsed.update(extras)
+            # Replace the indirect reference to the page dictionary
+            # with a pointer to our actual page
+            if "P" in annot:
+                annot["P"] = self
+            parsed["data"] = annot
             return parsed
 
-        raw = resolve(self.page_obj.annots) or []
+        raw = resolve_all(self.page_obj.annots) or []
         return list(map(parse, raw))
 
     @property
     def hyperlinks(self):
-        return [a for a in self.annots if "URI" in a]
+        return [a for a in self.annots if a["uri"] is not None]
 
     @property
     def objects(self):
@@ -216,74 +230,25 @@ class Page(Container):
         largest = list(sorted(tables, key=sorter))[0]
         return largest.extract()
 
-    def extract_text(
-        self,
-        x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE,
-    ):
+    def extract_text(self, **kwargs):
+        return utils.extract_text(self.chars, **kwargs)
 
-        return utils.extract_text(
-            self.chars, x_tolerance=x_tolerance, y_tolerance=y_tolerance
-        )
+    def extract_words(self, **kwargs):
+        return utils.extract_words(self.chars, **kwargs)
 
-    def extract_words(
-        self,
-        x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE,
-        keep_blank_chars=False,
-    ):
+    def crop(self, bbox, relative=False):
+        return CroppedPage(self, self.decimalize(bbox), relative=relative)
 
-        return utils.extract_words(
-            self.chars,
-            x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance,
-            keep_blank_chars=keep_blank_chars,
-        )
-
-    def crop(self, bbox):
-        class CroppedPage(DerivedPage):
-            @property
-            def objects(self):
-                if hasattr(self, "_objects"):
-                    return self._objects
-                self._objects = utils.crop_to_bbox(self.parent_page.objects, self.bbox)
-                return self._objects
-
-        cropped = CroppedPage(self)
-        cropped.bbox = self.decimalize(bbox)
-        return cropped
-
-    def within_bbox(self, bbox):
+    def within_bbox(self, bbox, relative=False):
         """
         Same as .crop, except only includes objects fully within the bbox
         """
-
-        class CroppedPage(DerivedPage):
-            @property
-            def objects(self):
-                if hasattr(self, "_objects"):
-                    return self._objects
-                self._objects = utils.within_bbox(self.parent_page.objects, self.bbox)
-                return self._objects
-
-        cropped = CroppedPage(self)
-        cropped.bbox = self.decimalize(bbox)
-        return cropped
+        return CroppedPage(
+            self, self.decimalize(bbox), relative=relative, crop_fn=utils.within_bbox
+        )
 
     def filter(self, test_function):
-        class FilteredPage(DerivedPage):
-            @property
-            def objects(self):
-                if hasattr(self, "_objects"):
-                    return self._objects
-                self._objects = utils.filter_objects(
-                    self.parent_page.objects, test_function
-                )
-                return self._objects
-
-        filtered = FilteredPage(self)
-        filtered.bbox = self.bbox
-        return filtered
+        return FilteredPage(self, test_function)
 
     def to_image(self, **conversion_kwargs):
         """
@@ -296,6 +261,9 @@ class Page(Container):
         if "resolution" not in conversion_kwargs:
             kwargs["resolution"] = DEFAULT_RESOLUTION
         return PageImage(self, **kwargs)
+
+    def __repr__(self):
+        return f"<Page:{self.page_number}>"
 
 
 class DerivedPage(Page):
@@ -312,3 +280,58 @@ class DerivedPage(Page):
             self.root_page = parent_page
         else:
             self.root_page = parent_page.root_page
+
+
+def test_proposed_bbox(bbox, parent_bbox):
+    bbox_area = utils.calculate_area(bbox)
+    if bbox_area == 0:
+        raise ValueError(f"Bounding box {bbox} has an area of zero.")
+
+    overlap = utils.get_bbox_overlap(bbox, parent_bbox)
+    if overlap is None:
+        raise ValueError(
+            f"Bounding box {bbox} is entirely outside "
+            f"parent page bounding box {parent_bbox}"
+        )
+
+    overlap_area = utils.calculate_area(overlap)
+    if overlap_area < bbox_area:
+        raise ValueError(
+            f"Bounding box {bbox} is not fully within "
+            f"parent page bounding box {parent_bbox}"
+        )
+
+
+class CroppedPage(DerivedPage):
+    def __init__(self, parent_page, bbox, crop_fn=utils.crop_to_bbox, relative=False):
+        if relative:
+            o_x0, o_top, _, _ = parent_page.bbox
+            x0, top, x1, bottom = bbox
+            self.bbox = (x0 + o_x0, top + o_top, x1 + o_x0, bottom + o_top)
+        else:
+            self.bbox = bbox
+
+        test_proposed_bbox(self.bbox, parent_page.bbox)
+        self.crop_fn = crop_fn
+        super().__init__(parent_page)
+
+    @property
+    def objects(self):
+        if hasattr(self, "_objects"):
+            return self._objects
+        self._objects = self.crop_fn(self.parent_page.objects, self.bbox)
+        return self._objects
+
+
+class FilteredPage(DerivedPage):
+    def __init__(self, parent_page, filter_fn):
+        self.bbox = parent_page.bbox
+        self.filter_fn = filter_fn
+        super().__init__(parent_page)
+
+    @property
+    def objects(self):
+        if hasattr(self, "_objects"):
+            return self._objects
+        self._objects = utils.filter_objects(self.parent_page.objects, self.filter_fn)
+        return self._objects

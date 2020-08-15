@@ -8,23 +8,6 @@ DEFAULT_MIN_WORDS_VERTICAL = 3
 DEFAULT_MIN_WORDS_HORIZONTAL = 1
 
 
-def move_to_avg(objs, orientation):
-    """
-    Move `objs` vertically/horizontally to their average x/y position.
-    """
-    if orientation not in ("h", "v"):
-        raise ValueError("Orientation must be 'v' or 'h'")
-    if len(objs) == 0:
-        return []
-    move_axis = "v" if orientation == "h" else "h"
-    attr = "top" if orientation == "h" else "x0"
-    values = list(map(itemgetter(attr), objs))
-    q = pow(10, utils.decimalize(values[0]).as_tuple().exponent)
-    avg = utils.decimalize(float(sum(values) / len(values)), q)
-    new_objs = [utils.move_object(obj, move_axis, avg - obj[attr]) for obj in objs]
-    return new_objs
-
-
 def snap_edges(edges, tolerance=DEFAULT_SNAP_TOLERANCE):
     """
     Given a list of edges, snap any within `tolerance` pixels of one another
@@ -32,17 +15,8 @@ def snap_edges(edges, tolerance=DEFAULT_SNAP_TOLERANCE):
     """
     v, h = [list(filter(lambda x: x["orientation"] == o, edges)) for o in ("v", "h")]
 
-    v = [
-        move_to_avg(cluster, "v")
-        for cluster in utils.cluster_objects(v, "x0", tolerance)
-    ]
-
-    h = [
-        move_to_avg(cluster, "h")
-        for cluster in utils.cluster_objects(h, "top", tolerance)
-    ]
-
-    snapped = list(itertools.chain(*(v + h)))
+    snap = utils.snap_objects
+    snapped = snap(v, "x0", tolerance) + snap(h, "top", tolerance)
     return snapped
 
 
@@ -66,9 +40,6 @@ def join_edge_group(edges, orientation, tolerance=DEFAULT_JOIN_TOLERANCE):
             if e[max_prop] > last[max_prop]:
                 # Extend current edge to new extremity
                 joined[-1] = utils.resize_object(last, max_prop, e[max_prop])
-            else:
-                # Do nothing; edge is fully contained in pre-existing edge
-                pass
         else:
             # Edge is separate from previous edges
             joined.append(e)
@@ -113,6 +84,7 @@ def words_to_edges_h(words, word_threshold=DEFAULT_MIN_WORDS_HORIZONTAL):
         return []
     min_x0 = min(map(itemgetter("x0"), rects))
     max_x1 = max(map(itemgetter("x1"), rects))
+    max_bottom = max(map(itemgetter("bottom"), rects))
     edges = [
         {
             "x0": min_x0,
@@ -127,12 +99,11 @@ def words_to_edges_h(words, word_threshold=DEFAULT_MIN_WORDS_HORIZONTAL):
         {
             "x0": min_x0,
             "x1": max_x1,
-            "top": r["bottom"],
-            "bottom": r["bottom"],
+            "top": max_bottom,
+            "bottom": max_bottom,
             "width": max_x1 - min_x0,
             "orientation": "h",
         }
-        for r in rects
     ]
 
     return edges
@@ -173,37 +144,28 @@ def words_to_edges_v(words, word_threshold=DEFAULT_MIN_WORDS_VERTICAL):
     condensed_rects = map(utils.bbox_to_rect, condensed_bboxes)
     sorted_rects = list(sorted(condensed_rects, key=itemgetter("x0")))
 
-    # Find the far-right boundary of the rightmost rectangle
-    last_rect = sorted_rects[-1]
-    while True:
-        words_inside = utils.intersects_bbox(
-            [w for w in words if w["x0"] >= last_rect["x0"]],
-            (last_rect["x0"], last_rect["top"], last_rect["x1"], last_rect["bottom"]),
-        )
-        rect = utils.objects_to_rect(words_inside)
-        if rect == last_rect:
-            break
-        else:
-            last_rect = rect
+    max_x1 = max(map(itemgetter("x1"), sorted_rects))
+    min_top = min(map(itemgetter("top"), sorted_rects))
+    max_bottom = max(map(itemgetter("bottom"), sorted_rects))
 
     # Describe all the left-hand edges of each text cluster
     edges = [
         {
             "x0": b["x0"],
             "x1": b["x0"],
-            "top": b["top"],
-            "bottom": b["bottom"],
-            "height": b["bottom"] - b["top"],
+            "top": min_top,
+            "bottom": max_bottom,
+            "height": max_bottom - min_top,
             "orientation": "v",
         }
         for b in sorted_rects
     ] + [
         {
-            "x0": last_rect["x1"],
-            "x1": last_rect["x1"],
-            "top": last_rect["top"],
-            "bottom": last_rect["bottom"],
-            "height": last_rect["bottom"] - last_rect["top"],
+            "x0": max_x1,
+            "x1": max_x1,
+            "top": min_top,
+            "bottom": max_bottom,
+            "height": max_bottom - min_top,
             "orientation": "v",
         }
     ]
@@ -468,7 +430,7 @@ class TableFinder(object):
     def __init__(self, page, settings={}):
         for k in settings.keys():
             if k not in DEFAULT_TABLE_SETTINGS:
-                raise ValueError("Unrecognized table setting: '{0}'".format(k))
+                raise ValueError(f"Unrecognized table setting: '{k}'")
         self.page = page
         self.settings = dict(DEFAULT_TABLE_SETTINGS)
         self.settings.update(settings)
@@ -495,36 +457,23 @@ class TableFinder(object):
             strategy = settings[name + "_strategy"]
             if strategy not in TABLE_STRATEGIES:
                 raise ValueError(
-                    "{0} must be one of {{{1}}}".format(
-                        name + "_strategy", ",".join(TABLE_STRATEGIES)
-                    )
+                    f'{name}_strategy must be one of {{{",".join(TABLE_STRATEGIES)}}}'
                 )
             if strategy == "explicit":
                 if len(settings["explicit_" + name + "_lines"]) < 2:
-                    tmpl = (
-                        "If {0} == 'explicit', {1} must be specified as"
-                        "a list/tuple of two or more floats/ints."
-                    )
-
                     raise ValueError(
-                        tmpl.format(
-                            strategy + "_strategy", "explicit_" + name + "_lines",
-                        )
+                        f"If {strategy}_strategy == 'explicit', explicit_{name}_lines "
+                        f"must be specified as a list/tuple of two or more "
+                        f"floats/ints."
                     )
 
         v_strat = settings["vertical_strategy"]
         h_strat = settings["horizontal_strategy"]
 
         if v_strat == "text" or h_strat == "text":
-            xt = settings["text_x_tolerance"]
-            if xt is None:
-                xt = settings["text_tolerance"]
-            yt = settings["text_y_tolerance"]
-            if yt is None:
-                yt = settings["text_tolerance"]
             words = self.page.extract_words(
-                x_tolerance=xt,
-                y_tolerance=yt,
+                x_tolerance=settings["text_x_tolerance"],
+                y_tolerance=settings["text_y_tolerance"],
                 keep_blank_chars=settings["keep_blank_chars"],
             )
 
@@ -549,7 +498,7 @@ class TableFinder(object):
         if v_strat == "lines":
             v_base = utils.filter_edges(self.page.edges, "v")
         elif v_strat == "lines_strict":
-            v_base = utils.filter_edges(self.page.edges, "v", edge_type="lines")
+            v_base = utils.filter_edges(self.page.edges, "v", edge_type="line")
         elif v_strat == "text":
             v_base = words_to_edges_v(
                 words, word_threshold=settings["min_words_vertical"]
@@ -580,7 +529,7 @@ class TableFinder(object):
         if h_strat == "lines":
             h_base = utils.filter_edges(self.page.edges, "h")
         elif h_strat == "lines_strict":
-            h_base = utils.filter_edges(self.page.edges, "h", edge_type="lines")
+            h_base = utils.filter_edges(self.page.edges, "h", edge_type="line")
         elif h_strat == "text":
             h_base = words_to_edges_h(
                 words, word_threshold=settings["min_words_horizontal"]

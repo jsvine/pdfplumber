@@ -1,24 +1,39 @@
-# Change Log
+# Changelog
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.5.23] — UNRELEASED
+## [0.5.23] — 2020-08-15
+### Added
+- Add `utils.resolve` (non-recursive .resolve_all) (7a90630)
+- Add `page.annots` and `page.hyperlinks`, replacing non-functional `page.annos`, and mirroring pdfminer's language ("annot" vs. "anno"). (aa03961)
+- Add `page/pdf.to_json` and `page/pdf.to_csv` (cbc91c6)
+- Add `relative=True/False` parameter to `.crop` and `.within_bbox`; those methods also now raise exceptions for invalid and out-of-page bounding boxes. (047ad34) [h/t @samkit-jain]
 
 ### Changed
-- Removed `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF. (00e789b)
+- Remove `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF. (00e789b)
+- Simplify the logic in "text" table-finding strategies; in edge cases, may result in changes to results. (d224202)
+- Drop support for Python 3.5 (baf1033)
+
+### Fixed
+- Fix `.extract_words`, which had been returning incorrect results when `horizontal_ltr = False` (d16aa13)
+- Fix `utils.resize_object`, which had been failing in various permutations (d16aa13)
+- Fix `lines_strict` table-finding strategy, which a typo had prevented from being usable (f0c9b85)
+- Fix `utils.resolve_all` to guard against two known sources of infinite recursion (cbc91c6)
 
 ### Development Changes
 
-- Renamed default branch to "stable," to clarify its purpose
-- Reformatted code with psf/black (1258e09)
-- Added code linting via psf/black and flake8 (1258e09)
-- Switched from nosetests to pytest (1ac16dd)
-- Switched from pipenv to standard requirements.txt + python -m venv (48eaa51)
-- Added GitHub action for tests + codecov (b148fd1)
-- Added Makefile for building development virtual environment and running tests (4c69c58)
-- Added badges to README.md (9e42dc3)
-- Added Trove classifiers for Python versions to setup.py (6946e8d)
-- Added MANIFEST.in (eafc15c)
+- Rename default branch to "stable," to clarify its purpose
+- Reformat code with psf/black (1258e09)
+- Add code linting via psf/black and flake8 (1258e09)
+- Switch from nosetests to pytest (1ac16dd)
+- Switch from pipenv to standard requirements.txt + python -m venv (48eaa51)
+- Add GitHub action for tests + codecov (b148fd1)
+- Add Makefile for building development virtual environment and running tests (4c69c58)
+- Add badges to README.md (9e42dc3)
+- Add Trove classifiers for Python versions to setup.py (6946e8d)
+- Add MANIFEST.in (eafc15c)
+- Add GitHub issue templates (c4156d6)
+- Remove `pandas` from dev requirements and tests (a5e7d7f)
 
 ## [0.5.22] — 2020-07-18
 ### Changed

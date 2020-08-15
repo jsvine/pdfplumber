@@ -4,9 +4,11 @@
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
-Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer`](https://github.com/euske/pdfminer) and [`pdfminer.six`](https://github.com/goulu/pdfminer). 
+Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer.six`](https://github.com/goulu/pdfminer). 
 
-Currently [tested](tests/) on [Python 3.5, 3.6, 3.7, and 3.8](tox.ini).
+Currently [tested](tests/) on [Python 3.6, 3.7, and 3.8](.github/workflows/tests.yml).
+
+**Note:** pdfplumber v0.5.22 is the last version to support Python 3.5.
 
 ## Table of Contents
 
@@ -41,9 +43,9 @@ The output will be a CSV containing info about every character, line, and rectan
 
 | Argument | Description |
 |----------|-------------|
-|`--format [format]`| `csv` or `json`. The `json` format returns slightly more information; it includes PDF-level metadata and height/width information about each page.|
+|`--format [format]`| `csv` or `json`. The `json` format returns more information; it includes PDF-level and page-level metadata, plus dictionary-nested attributes.|
 |`--pages [list of pages]`| A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.|
-|`--types [list of object types to extract]`| Choices are `char`, `line`, `curve`, `rect`, `rect_edge`. Defaults to `char`, `line`, `curve`, `rect`.|
+|`--types [list of object types to extract]`| Choices are `char`, `rect`, `line`, `curve`, `image`, `annot`. Defaults to all.|
 
 ## Python library
 
@@ -93,8 +95,8 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 
 | Method | Description |
 |--------|-------------|
-|`.crop(bounding_box)`| Returns a version of the page cropped to the bounding box, which should be expressed as 4-tuple with the values `(x0, top, x1, bottom)`. Cropped pages retain objects that fall at least partly within the bounding box. If an object falls only partly within the box, its dimensions are sliced to fit the bounding box.|
-|`.within_bbox(bounding_box)`| Similar to `.crop`, but only retains objects that fall *entirely* within the bounding box.|
+|`.crop(bounding_box, relative=False)`| Returns a version of the page cropped to the bounding box, which should be expressed as 4-tuple with the values `(x0, top, x1, bottom)`. Cropped pages retain objects that fall at least partly within the bounding box. If an object falls only partly within the box, its dimensions are sliced to fit the bounding box. If `relative=True`, the bounding box is calculated as an offset from the top-left of the page's bounding box, rather than an absolute positioning. (See [Issue #245](https://github.com/jsvine/pdfplumber/issues/245) for a visual example and explanation.)|
+|`.within_bbox(bounding_box, relative=False)`| Similar to `.crop`, but only retains objects that fall *entirely* within the bounding box.|
 |`.filter(test_function)`| Returns a version of the page with only the `.objects` for which `test_function(obj)` returns `True`.|
 |`.extract_text(x_tolerance=3, y_tolerance=3)`| Collates all of the page's character objects into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.|
 |`.extract_words(x_tolerance=3, y_tolerance=3, horizontal_ltr=True, vertical_ttb=True)`| Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where (for "upright" characters) the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`. A similar approach is taken for non-upright characters, but instead measuring the vertical, rather than horizontal, distances between them. The parameters `horizontal_ltr` and `vertical_ttb` indicate whether the words should be read from left-to-right (for horizontal words) / top-to-bottom (for vertical words).|
@@ -396,4 +398,9 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 
 ## Contributing
 
-Pull requests are welcome, but please submit an issue (or email jsvine@gmail.com) before submitting one, as the library is in active development.
+Pull requests are welcome, but please submit a proposal issue first, as the library is in active development.
+
+Current maintainers:
+
+- [Jeremy Singer-Vine](https://github.com/jsvine)
+- [Samkit Jain](https://github.com/samkit-jain)

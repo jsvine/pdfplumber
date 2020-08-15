@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import unittest
-import pandas as pd
 import pdfplumber
 from pdfplumber import utils
 from pdfplumber import table
@@ -37,7 +36,7 @@ class Test(unittest.TestCase):
         assert len(self.pdf.figures)
         assert len(self.pdf.images)
 
-    def test_pandas(self):
+    def test_parse(self):
 
         rect_x0_clusters = utils.cluster_list([ r["x0"]
             for r in self.pdf.pages[1].rects ], tolerance=3)

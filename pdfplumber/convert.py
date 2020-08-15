@@ -1,0 +1,133 @@
+from .utils import decode_text
+from decimal import Decimal, ROUND_HALF_UP
+from pdfminer.pdftypes import PDFStream
+from pdfminer.psparser import PSLiteral
+import json
+import csv
+import base64
+from io import StringIO
+
+DEFAULT_TYPES = [
+    "char",
+    "rect",
+    "line",
+    "curve",
+    "image",
+    "annot",
+]
+
+COLS_TO_PREPEND = [
+    "object_type",
+    "page_number",
+    "x0",
+    "x1",
+    "y0",
+    "y1",
+    "doctop",
+    "top",
+    "bottom",
+    "width",
+    "height",
+]
+
+ENCODINGS_TO_TRY = [
+    "utf-8",
+    "latin-1",
+    "utf-16",
+    "utf-16le",
+]
+
+
+def to_b64(data_bytes):
+    return base64.b64encode(data_bytes).decode("ascii")
+
+
+def serialize(obj):
+    # Convert int-like
+    t = type(obj)
+    if t is Decimal:
+        return float(obj.quantize(Decimal(".0001"), rounding=ROUND_HALF_UP))
+    # If tuple/list passed, bulk-convert
+    elif t in (list, tuple):
+        return t(serialize(x) for x in obj)
+    elif t is dict:
+        return {k: serialize(v) for k, v in obj.items()}
+    elif t is PDFStream:
+        return {"rawdata": to_b64(obj.rawdata)}
+    elif t is PSLiteral:
+        return decode_text(obj.name)
+    elif t is bytes:
+        for e in ENCODINGS_TO_TRY:
+            try:
+                return obj.decode(e)
+            except UnicodeDecodeError:  # pragma: no cover
+                pass
+        # If none of the decodings work, raise whatever error
+        # decoding with utf-8 causes
+        obj.decode(ENCODINGS_TO_TRY[0])  # pragma: no cover
+    elif obj is None:
+        return None
+    elif t in (int, float, str, bool):
+        return obj
+    else:
+        return str(obj)
+
+
+def to_json(container, stream=None, types=DEFAULT_TYPES, indent=None):
+    def page_to_dict(page):
+        d = {
+            "page_number": page.page_number,
+            "initial_doctop": page.initial_doctop,
+            "rotation": page.rotation,
+            "cropbox": page.cropbox,
+            "mediabox": page.mediabox,
+            "bbox": page.bbox,
+            "width": page.width,
+            "height": page.height,
+        }
+        for t in types:
+            d[t + "s"] = getattr(page, t + "s")
+        return d
+
+    if hasattr(container, "pages"):
+        data = {
+            "metadata": container.metadata,
+            "pages": list(map(page_to_dict, container.pages)),
+        }
+    else:
+        data = page_to_dict(container)
+
+    serialized = serialize(data)
+
+    if stream is None:
+        return json.dumps(serialized, indent=indent)
+    else:
+        return json.dump(serialized, stream, indent=indent)
+
+
+def to_csv(container, stream=None, types=DEFAULT_TYPES):
+    if stream is None:
+        stream = StringIO()
+        to_string = True
+    else:
+        to_string = False
+
+    objs = []
+
+    # Determine set of fields for all objects
+    fields = set()
+    for t in types:
+        new_objs = getattr(container, t + "s")
+        if len(new_objs):
+            objs += new_objs
+            new_keys = [k for k, v in new_objs[0].items() if type(v) is not dict]
+            fields = fields.union(set(new_keys))
+
+    cols = COLS_TO_PREPEND + list(sorted(set(fields) - set(COLS_TO_PREPEND)))
+
+    w = csv.DictWriter(stream, fieldnames=cols, extrasaction="ignore")
+    w.writeheader()
+    w.writerows(serialize(objs))
+    if to_string:
+        stream.seek(0)
+        return stream.read()

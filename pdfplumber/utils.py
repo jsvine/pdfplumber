@@ -3,7 +3,7 @@ from pdfminer.psparser import PSLiteral
 from pdfminer.pdftypes import PDFObjRef
 from decimal import Decimal, ROUND_HALF_UP
 import numbers
-from operator import itemgetter
+from operator import itemgetter, gt, lt, add, sub
 import itertools
 from functools import lru_cache as cache
 
@@ -13,7 +13,7 @@ DEFAULT_Y_TOLERANCE = 3
 
 def cluster_list(xs, tolerance=0):
     tolerance = decimalize(tolerance)
-    if tolerance == 0:
+    if tolerance == Decimal(0):
         return [[x] for x in sorted(xs)]
     if len(xs) < 2:
         return [[x] for x in sorted(xs)]
@@ -92,36 +92,45 @@ def resolve(x):
         return x
 
 
-# via pdfminer.pdftypes, altered slightly
+def get_dict_type(d):
+    if type(d) is not dict:
+        return None
+    t = d.get("Type")
+    if type(t) is PSLiteral:
+        return decode_text(t.name)
+    else:
+        return t
+
+
 def resolve_all(x):
     """
     Recursively resolves the given object and all the internals.
     """
     t = type(x)
     if t == PDFObjRef:
-        return resolve_all(x.resolve())
-    elif t == list:
-        return [resolve_all(v) for v in x]
-    elif t == tuple:
-        return tuple(resolve_all(v) for v in x)
+        resolved = x.resolve()
+
+        # Avoid infinite recursion
+        if get_dict_type(resolved) == "Page":
+            return x
+
+        return resolve_all(resolved)
+    elif t in (list, tuple):
+        return t(resolve_all(v) for v in x)
     elif t == dict:
-        return dict((k, resolve_all(v)) for k, v in x.items())
+        if get_dict_type(x) == "Annot":
+            exceptions = ["Parent"]
+        else:
+            exceptions = []
+        return dict((k, v if k in exceptions else resolve_all(v)) for k, v in x.items())
     else:
         return x
 
 
 @cache(maxsize=int(10e4))
 def _decimalize(v, q=None):
-    # If already a decimal, just return itself
-    if type(v) == Decimal:
-        return v
-
-    # If tuple/list passed, bulk-convert
-    elif isinstance(v, (tuple, list)):
-        return type(v)(decimalize(x, q) for x in v)
-
     # Convert int-like
-    elif isinstance(v, numbers.Integral):
+    if isinstance(v, numbers.Integral):
         return Decimal(int(v))
 
     # Convert float-like
@@ -131,7 +140,7 @@ def _decimalize(v, q=None):
         else:
             return Decimal(repr(v))
     else:
-        raise ValueError("Cannot convert {0} to Decimal.".format(v))
+        raise ValueError(f"Cannot convert {v} to Decimal.")
 
 
 def decimalize(v, q=None):
@@ -154,7 +163,7 @@ def is_dataframe(collection):
 
 def to_list(collection):
     if is_dataframe(collection):
-        return collection.to_dict("records")
+        return collection.to_dict("records")  # pragma: nocover
     else:
         return list(collection)
 
@@ -211,37 +220,36 @@ def extract_words(
     def process_word_chars(chars, upright):
         x0, top, x1, bottom = objects_to_bbox(chars)
 
-        if upright:
-            if horizontal_ltr:
-                sorted_chars = chars
-            else:
-                sorted_chars = sorted(chars, key=lambda x: -x["x1"])
-        else:
-            if vertical_ttb:
-                sorted_chars = sorted(chars, key=itemgetter("doctop"))
-            else:
-                sorted_chars = sorted(chars, key=lambda x: -x["bottom"])
-
         return {
             "x0": x0,
             "x1": x1,
             "top": top,
             "bottom": bottom,
             "upright": upright,
-            "text": "".join(map(itemgetter("text"), sorted_chars)),
+            "text": "".join(map(itemgetter("text"), chars)),
         }
 
-    def get_line_words(chars, upright, tolerance=DEFAULT_X_TOLERANCE):
+    def get_line_words(chars, upright, tolerance):
         get_text = itemgetter("text")
-        min_key = "x0" if upright else "top"
-        max_key = "x1" if upright else "bottom"
-
-        chars_sorted = sorted(chars, key=itemgetter(min_key))
+        if upright:
+            min_key, max_key = ("x0", "x1") if horizontal_ltr else ("x1", "x0")
+        else:
+            min_key, max_key = ("top", "bottom") if vertical_ttb else ("bottom", "top")
 
         words = []
         current_word = []
 
-        for char in chars_sorted:
+        asc_order = (upright and horizontal_ltr) or (not upright and vertical_ttb)
+
+        comp_fn = gt if asc_order else lt
+        tol_fn = add if asc_order else sub
+
+        def sort_key(x):
+            return tol_fn(0, x[min_key])
+
+        sorted_chars = sorted(chars, key=sort_key)
+
+        for char in sorted_chars:
             if not keep_blank_chars and get_text(char).isspace():
                 if len(current_word) > 0:
                     words.append(current_word)
@@ -252,7 +260,8 @@ def extract_words(
                 current_word.append(char)
             else:
                 last_char = current_word[-1]
-                if char[min_key] > (last_char[max_key] + tolerance):
+                prev_pos = tol_fn(last_char[max_key], tolerance)
+                if comp_fn(char[min_key], prev_pos):
                     words.append(current_word)
                     current_word = []
                 current_word.append(char)
@@ -323,6 +332,13 @@ def get_bbox_overlap(a, b):
         return (o_left, o_top, o_right, o_bottom)
     else:
         return None
+
+
+def calculate_area(bbox):
+    left, top, right, bottom = bbox
+    if left > right or top > bottom:
+        raise ValueError(f"{bbox} has a negative width or height.")
+    return (right - left) * (bottom - top)
 
 
 def clip_obj(obj, bbox):
@@ -413,40 +429,41 @@ def move_object(obj, axis, value):
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
 
+def snap_objects(objs, attr, tolerance):
+    axis = {"x0": "h", "x1": "h", "top": "v", "bottom": "v"}[attr]
+    clusters = cluster_objects(objs, attr, tolerance)
+    avgs = [sum(map(itemgetter(attr), objs)) / len(objs) for objs in clusters]
+    snapped_clusters = [
+        [move_object(obj, axis, avg - obj[attr]) for obj in cluster]
+        for cluster, avg in zip(clusters, avgs)
+    ]
+    return list(itertools.chain(*snapped_clusters))
+
+
 def resize_object(obj, key, value):
     assert key in ("x0", "x1", "top", "bottom")
     old_value = obj[key]
     diff = value - old_value
-    if key in ("x0", "x1"):
-        if key == "x0":
-            assert value <= obj["x1"]
-        else:
-            assert value >= obj["x0"]
-        new_items = (
-            (key, value),
-            ("width", obj["width"] + diff),
-        )
-    if key == "top":
+    new_items = [
+        (key, value),
+    ]
+    if key == "x0":
+        assert value <= obj["x1"]
+        new_items.append(("width", obj["x1"] - value))
+    elif key == "x1":
+        assert value >= obj["x0"]
+        new_items.append(("width", value - obj["x0"]))
+    elif key == "top":
         assert value <= obj["bottom"]
-        new_items = [
-            (key, value),
-            ("doctop", obj["doctop"] + diff),
-            ("height", obj["height"] - diff),
-        ]
+        new_items.append(("doctop", obj["doctop"] + diff))
+        new_items.append(("height", obj["height"] - diff))
         if "y1" in obj:
-            new_items += [
-                ("y1", obj["y1"] - diff),
-            ]
-    if key == "bottom":
+            new_items.append(("y1", obj["y1"] - diff))
+    elif key == "bottom":
         assert value >= obj["top"]
-        new_items = [
-            (key, value),
-            ("height", obj["height"] + diff),
-        ]
+        new_items.append(("height", obj["height"] + diff))
         if "y0" in obj:
-            new_items += [
-                ("y0", obj["y0"] - diff),
-            ]
+            new_items.append(("y0", obj["y0"] - diff))
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
 

@@ -1,7 +1,9 @@
-/notebooks
+venv/
+notebooks/
+nonpublic/
 .ipynb_checkpoints
 .DS_Store
-venv/
+.idea/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

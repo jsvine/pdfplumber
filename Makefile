@@ -1,9 +1,9 @@
-.PHONY: venv tests check-black check-flake format
+.PHONY: venv tests check-black check-flake lint format
 PYTHON := venv/bin/python
 PIP = venv/bin/pip
 
 venv:
-	python -m venv venv
+	python3 -m venv venv
 	${PIP} install --upgrade pip
 	${PIP} install -r requirements.txt
 	${PIP} install -r requirements-dev.txt
@@ -11,12 +11,15 @@ venv:
 
 tests:
 	${PYTHON} -m pytest
+	${PYTHON} -m coverage html
 
 check-black:
 	${PYTHON} -m black pdfplumber --check
 
 check-flake:
 	${PYTHON} -m flake8 pdfplumber
+
+lint: check-flake check-black
 
 format:
 	${PYTHON} -m black pdfplumber
