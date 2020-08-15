@@ -288,6 +288,12 @@ def test_proposed_bbox(bbox, parent_bbox):
         raise ValueError(f"Bounding box {bbox} has an area of zero.")
 
     overlap = utils.get_bbox_overlap(bbox, parent_bbox)
+    if overlap is None:
+        raise ValueError(
+            f"Bounding box {bbox} is entirely outside "
+            f"parent page bounding box {parent_bbox}"
+        )
+
     overlap_area = utils.calculate_area(overlap)
     if overlap_area < bbox_area:
         raise ValueError(
@@ -299,7 +305,6 @@ def test_proposed_bbox(bbox, parent_bbox):
 class CroppedPage(DerivedPage):
     def __init__(self, parent_page, bbox, crop_fn=utils.crop_to_bbox, relative=False):
         if relative:
-            print("Parent page", parent_page.bbox)
             o_x0, o_top, _, _ = parent_page.bbox
             x0, top, x1, bottom = bbox
             self.bbox = (x0 + o_x0, top + o_top, x1 + o_x0, bottom + o_top)

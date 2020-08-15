@@ -74,8 +74,8 @@ class Test(unittest.TestCase):
         assert len(filtered.rects) == 0
 
     def test_relative_crop(self):
-        original = self.pdf.pages[0]
-        cropped = original.crop((10, 10, 40, 40))
+        page = self.pdf.pages[0]
+        cropped = page.crop((10, 10, 40, 40))
         recropped = cropped.crop((10, 15, 20, 25), relative=True)
         target_bbox = pdfplumber.utils.decimalize((20, 25, 30, 35))
         assert recropped.bbox == target_bbox
@@ -83,22 +83,34 @@ class Test(unittest.TestCase):
         recropped_wi = cropped.within_bbox((10, 15, 20, 25), relative=True)
         assert recropped_wi.bbox == target_bbox
 
+        # via issue #245, should not throw error when using `relative=True`
+        bottom = page.crop((0, 0.8 * float(page.height), page.width, page.height))
+        bottom_left = bottom.crop((0, 0, 0.5 * float(bottom.width), bottom.height), relative=True)
+        bottom_right = bottom.crop((0.5 * float(bottom.width), 0, bottom.width, bottom.height), relative=True)
+
     def test_invalid_crops(self):
-        original = self.pdf.pages[0]
+        page = self.pdf.pages[0]
         with pytest.raises(ValueError):
-            original.crop((0, 0, 0, 0))
+            page.crop((0, 0, 0, 0))
 
         with pytest.raises(ValueError):
-            original.crop((0, 0, 10000, 10))
+            page.crop((0, 0, 10000, 10))
 
         with pytest.raises(ValueError):
-            original.crop((-10, 0, 10, 10))
+            page.crop((-10, 0, 10, 10))
 
         with pytest.raises(ValueError):
-            original.crop((100, 0, 0, 100))
+            page.crop((100, 0, 0, 100))
 
         with pytest.raises(ValueError):
-            original.crop((0, 100, 100, 0))
+            page.crop((0, 100, 100, 0))
+
+        # via issue #245
+        bottom = page.crop((0, 0.8 * float(page.height), page.width, page.height))
+        with pytest.raises(ValueError):
+            bottom_left = bottom.crop((0, 0, 0.5 * float(bottom.width), bottom.height))
+        with pytest.raises(ValueError):
+            bottom_right = bottom.crop((0.5 * float(bottom.width), 0, bottom.width, bottom.height))
 
     def test_rotation(self):
         assert(self.pdf.pages[0].width == 1008)
