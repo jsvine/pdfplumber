@@ -6,7 +6,9 @@ Plumb a PDF for detailed information about each text character, rectangle, and l
 
 Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer.six`](https://github.com/goulu/pdfminer). 
 
-Currently [tested](tests/) on [Python 3.5, 3.6, 3.7, and 3.8](tox.ini).
+Currently [tested](tests/) on [Python 3.6, 3.7, and 3.8](tox.ini).
+
+**Note:** pdfplumber v0.5.22 is the last version to support Python 3.5.
 
 ## Table of Contents
 
