@@ -430,7 +430,7 @@ class TableFinder(object):
     def __init__(self, page, settings={}):
         for k in settings.keys():
             if k not in DEFAULT_TABLE_SETTINGS:
-                raise ValueError("Unrecognized table setting: '{0}'".format(k))
+                raise ValueError(f"Unrecognized table setting: '{k}'")
         self.page = page
         self.settings = dict(DEFAULT_TABLE_SETTINGS)
         self.settings.update(settings)
@@ -457,21 +457,14 @@ class TableFinder(object):
             strategy = settings[name + "_strategy"]
             if strategy not in TABLE_STRATEGIES:
                 raise ValueError(
-                    "{0} must be one of {{{1}}}".format(
-                        name + "_strategy", ",".join(TABLE_STRATEGIES)
-                    )
+                    f'{name}_strategy must be one of {{{",".join(TABLE_STRATEGIES)}}}'
                 )
             if strategy == "explicit":
                 if len(settings["explicit_" + name + "_lines"]) < 2:
-                    tmpl = (
-                        "If {0} == 'explicit', {1} must be specified as"
-                        "a list/tuple of two or more floats/ints."
-                    )
-
                     raise ValueError(
-                        tmpl.format(
-                            strategy + "_strategy", "explicit_" + name + "_lines",
-                        )
+                        f"If {strategy}_strategy == 'explicit', explicit_{name}_lines "
+                        f"must be specified as a list/tuple of two or more "
+                        f"floats/ints."
                     )
 
         v_strat = settings["vertical_strategy"]

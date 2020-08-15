@@ -27,7 +27,7 @@ def get_page_image(stream, page_no, resolution):
 
     # If we are working with a file object saved to disk
     if hasattr(stream, "name"):
-        spec = dict(filename="{0}[{1}]".format(stream.name, page_no))
+        spec = dict(filename=f"{stream.name}[{page_no}]")
 
         def postprocess(img):
             return img
