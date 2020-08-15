@@ -3,7 +3,37 @@ name: Tests
 on: [push]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Configure pip caching
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt')}}-${{ hashFiles('**/requirements-dev.txt') }}
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Validate against psf/black
+      run: python -m black --check pdfplumber
+
+    - name: Validate against flake8
+      run: python -m flake8 pdfplumber
+
   test:
+    needs: lint
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -34,13 +64,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install -r requirements-dev.txt
-
-    - name: Validate against psf/black
-      run: python -m black --check pdfplumber
-
-    - name: Validate against flake8
-      run: python -m flake8 pdfplumber
+        cat requirements-dev.txt | xargs -n 1 pip install
 
     - name: Run tests
       run: |
@@ -49,3 +73,4 @@ jobs:
 
     - name: Upload code coverage
       uses: codecov/codecov-action@v1.0.12
+      if: matrix.python-version == 3.8
