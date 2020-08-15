@@ -163,7 +163,7 @@ def is_dataframe(collection):
 
 def to_list(collection):
     if is_dataframe(collection):
-        return collection.to_dict("records")
+        return collection.to_dict("records")  # pragma: nocover
     else:
         return list(collection)
 

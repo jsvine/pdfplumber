@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import unittest
 import pytest
-import pandas as pd
 import pdfplumber
 from pdfplumber import table
 import sys, os
