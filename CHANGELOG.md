@@ -1,8 +1,8 @@
-# Change Log
+# Changelog
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.5.23] — UNRELEASED
+## [0.5.23] — 2020-08-15
 ### Added
 - Add `utils.resolve` (non-recursive .resolve_all) (7a90630)
 - Add `page.annots` and `page.hyperlinks`, replacing non-functional `page.annos`, and mirroring pdfminer's language ("annot" vs. "anno"). (aa03961)
@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Changed
 - Remove `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF. (00e789b)
 - Simplify the logic in "text" table-finding strategies; in edge cases, may result in changes to results. (d224202)
+- Drop support for Python 3.5 (baf1033)
 
 ### Fixed
 - Fix `.extract_words`, which had been returning incorrect results when `horizontal_ltr = False` (d16aa13)
@@ -32,6 +33,7 @@ All notable changes to this project will be documented in this file. The format 
 - Add Trove classifiers for Python versions to setup.py (6946e8d)
 - Add MANIFEST.in (eafc15c)
 - Add GitHub issue templates (c4156d6)
+- Remove `pandas` from dev requirements and tests (a5e7d7f)
 
 ## [0.5.22] — 2020-07-18
 ### Changed
