@@ -140,7 +140,7 @@ def _decimalize(v, q=None):
         else:
             return Decimal(repr(v))
     else:
-        raise ValueError("Cannot convert {0} to Decimal.".format(v))
+        raise ValueError(f"Cannot convert {v} to Decimal.")
 
 
 def decimalize(v, q=None):
