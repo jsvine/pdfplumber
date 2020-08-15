@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import unittest
-import pandas as pd
 import pdfplumber
 import sys, os
 import six

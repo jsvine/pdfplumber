@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import unittest
 import pytest
-import pandas as pd
 import pdfplumber
 from pdfplumber import utils
 from pdfminer.pdfparser import PDFObjRef
@@ -97,6 +96,55 @@ class Test(unittest.TestCase):
 
         assert text == goal
         assert self.pdf.pages[0].crop((0, 0, 1, 1)).extract_text() == None
+
+    def test_intersects_bbox(self):
+        objs = [
+            # Is same as bbox
+            { 
+                "x0": 0,
+                "top": 0,
+                "x1": 20,
+                "bottom": 20,
+            },
+            # Inside bbox
+            {
+                "x0": 10,
+                "top": 10,
+                "x1": 15,
+                "bottom": 15,
+            },
+            # Overlaps bbox
+            {
+                "x0": 10,
+                "top": 10,
+                "x1": 30,
+                "bottom": 30,
+            },
+            # Touching on one side
+            {
+                "x0": 20,
+                "top": 0,
+                "x1": 40,
+                "bottom": 20,
+            },
+            # Touching on one corner
+            {
+                "x0": 20,
+                "top": 20,
+                "x1": 40,
+                "bottom": 40,
+            },
+            # Fully outside
+            {
+                "x0": 21,
+                "top": 21,
+                "x1": 40,
+                "bottom": 40,
+            },
+        ]
+        bbox = utils.obj_to_bbox(objs[0])
+
+        assert utils.intersects_bbox(objs, bbox) == objs[:4]
 
     def test_resize_object(self):
         obj = {

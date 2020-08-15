@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import unittest
-import pandas as pd
 import pdfplumber
 from operator import itemgetter
 from pdfplumber.utils import within_bbox, collate_chars
@@ -80,36 +79,6 @@ class Test(unittest.TestCase):
         for c in COLUMNS[1:]:
             total = parsed_table[-1][c]
             colsum = sum(row[c] or 0 for row in parsed_table)
-            assert(colsum == (total * 2))
-
-        month_chars = within_bbox(page.chars, (0, 35, self.PDF_WIDTH, 65))
-        month_text = collate_chars(month_chars)
-        assert(month_text == "November - 2015")
-
-    def test_pandas(self):
-        page = self.pdf.pages[0]
-        cropped = page.crop((0, 80, self.PDF_WIDTH, 485))
-        table = cropped.extract_table({
-            "horizontal_strategy": "text",
-            "explicit_vertical_lines": [
-                min(map(itemgetter("x0"), cropped.chars))
-            ],
-            "intersection_tolerance": 5
-        })
-
-        table = pd.DataFrame(table)
-
-        def parse_value(x):
-            if pd.isnull(x) or x == "": return None
-            return int(x.replace(",", ""))
-
-        table.columns = COLUMNS
-        table[table.columns[1:]] = table[table.columns[1:]].applymap(parse_value)
-
-        # [1:] because first column is state name
-        for c in COLUMNS[1:]:
-            total = table[c].iloc[-1]
-            colsum = table[c].sum()
             assert(colsum == (total * 2))
 
         month_chars = within_bbox(page.chars, (0, 35, self.PDF_WIDTH, 65))
