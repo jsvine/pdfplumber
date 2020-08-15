@@ -396,4 +396,9 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 
 ## Contributing
 
-Pull requests are welcome, but please submit an issue (or email jsvine@gmail.com) before submitting one, as the library is in active development.
+Pull requests are welcome, but please submit a proposal issue first, as the library is in active development.
+
+Current maintainers:
+
+- [Jeremy Singer-Vine](https://github.com/jsvine)
+- [Samkit Jain](https://github.com/samkit-jain)
