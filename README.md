@@ -8,7 +8,7 @@ Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer.
 
 Currently [tested](tests/) on [Python 3.6, 3.7, and 3.8](.github/workflows/tests.yml).
 
-**Note:** pdfplumber v0.5.22 is the last version to support Python 3.5.
+**Note:** `pdfplumber` v0.5.22 was the final version to support Python 3.5.
 
 ## Table of Contents
 
