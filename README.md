@@ -19,6 +19,7 @@ Currently [tested](tests/) on [Python 3.6, 3.7, and 3.8](.github/workflows/tests
 - [Extracting tables](#extracting-tables)
 - [Extracting form values](#extracting-form-values)
 - [Demonstrations](#demonstrations)
+- [Comparison to other libraries](#comparison-to-other-libraries)
 - [Acknowledgments / Contributors](#acknowledgments--contributors)
 - [Contributing](#contributing)
 
@@ -377,6 +378,32 @@ for field in fields:
 - [Using `extract_table` on the FBI's National Instant Criminal Background Check System PDFs](examples/notebooks/extract-table-nics.ipynb). Demonstrates how to use visual debugging to find optimal table extraction settings. Also demonstrates `Page.crop(...)` and `Page.extract_text(...).`
 - [Inspecting and visualizing `curve` objects](examples/notebooks/ag-energy-roundup-curves.ipynb).
 - [Extracting fixed-width data from a San Jose PD firearm search report](examples/notebooks/san-jose-pd-firearm-report.ipynb), an example of using `Page.extract_text(...)`.
+
+## Comparison to other libraries
+
+Several other Python libraries help users to extract information from PDFs. As a broad overview, `pdfplumber` distinguishes itself from other PDF processing libraries by combining these features:
+
+- Easy access to detailed information about each PDF object
+- Higher-level, customizable methods for extracting text and tables
+- Tightly integrated visual debugging
+- Other useful utility functions, such as filtering objects via a crop-box
+
+It's also helpful to know what features `pdfplumber` does __not__ provide:
+
+- PDF *generation*
+- PDF *modification*
+- Optical character recognition (OCR)
+- Strong support for extracting tables from OCR'ed documents
+
+### Specific comparisons
+
+- [`pdfplumber.six`](https://github.com/pdfminer/pdfminer.six) provides the foundation for `pdfplumber`. It primarily focuses on parsing PDFs, analyzing PDF layouts and object positioning, and extracting text. It does not provide tools for table extraction or visual debugging.
+
+- [`pymupdf`](https://pymupdf.readthedocs.io/) is substantially faster than `pdfminer.six` (and thus also `pdfplumber`) and can generate and modify PDFs, but the library requires installation of non-Python software (MuPDF). It also does not provide table-extraction or visual debugging tools.
+
+- [`camelot`](https://github.com/camelot-dev/camelot), [`tabula-py`](https://github.com/chezou/tabula-py), and [`pdftables`](https://github.com/drj11/pdftables) all focus primarily on extracting tables. In some cases, they may be better suited to the particular tables you are trying to extract.
+
+- [`PyPDF2`](https://github.com/mstamy2/PyPDF2) and its successor libraries appear no longer to be maintained.
 
 ## Acknowledgments / Contributors
 
