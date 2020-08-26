@@ -90,7 +90,7 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 |`.page_number`| The sequential page number, starting with `1` for the first page, `2` for the second, and so on.|
 |`.width`| The page's width.|
 |`.height`| The page's height.|
-|`.objects` / `.chars` / `.lines` / `.rects` / `.curves` / `.figures` / `.images`| Each of these properties is a list, and each list contains one dictionary for each such object embedded on the page. For more detail, see "[Objects](#objects)" below.|
+|`.objects` / `.chars` / `.lines` / `.rects` / `.curves` / `.images`| Each of these properties is a list, and each list contains one dictionary for each such object embedded on the page. For more detail, see "[Objects](#objects)" below.|
 
 ... and these main methods:
 
@@ -113,7 +113,6 @@ Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to four 
 - `.rects`, each representing a single 2-dimensional rectangle.
 - `.curves`, each representing a series of connected points.
 - `.images`, each representing an image.
-- `.figures`, each representing a figure.
 - `.annots`, each representing a single PDF annotation (cf. Section 8.4 of the [official PDF specification](https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf) for details)
 - `.hyperlinks`, each representing a single PDF annotation of the subtype `Link` and having an `URI` action attribute
 
@@ -195,10 +194,6 @@ Each object is represented as a simple Python `dict`, with the following propert
 Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to two derived lists of objects: `.rect_edges` (which decomposes each rectangle into its four lines) and `.edges` (which combines `.rect_edges` with `.lines`). 
 
 #### `image` properties
-
-[To be completed.]
-
-#### `figure` properties
 
 [To be completed.]
 

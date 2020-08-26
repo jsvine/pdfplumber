@@ -161,6 +161,11 @@ class Page(Container):
         CONVERSIONS_KEYS = set(CONVERSIONS.keys())
 
         def process_object(obj):
+            if hasattr(obj, "_objs"):
+                for child in obj._objs:
+                    process_object(child)
+                return
+
             attr = dict(
                 (k, CONVERSIONS[k](resolve_all(v)))
                 for k, v in obj.__dict__.items()
@@ -190,10 +195,6 @@ class Page(Container):
             if objects.get(kind) is None:
                 objects[kind] = []
             objects[kind].append(attr)
-
-            if hasattr(obj, "_objs"):
-                for child in obj._objs:
-                    process_object(child)
 
         for obj in self.layout._objs:
             process_object(obj)

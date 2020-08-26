@@ -33,7 +33,6 @@ class Test(unittest.TestCase):
     def test_objects(self):
         assert len(self.pdf.chars)
         assert len(self.pdf.rects)
-        assert len(self.pdf.figures)
         assert len(self.pdf.images)
 
     def test_parse(self):
