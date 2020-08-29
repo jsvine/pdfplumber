@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.24] — Unreleased
+### Added
+- Added `extra_attrs=[...]` parameter to `.extract_text(...)` (c8b200) (#28)
+
+### Changed
+- Change character attribute `upright` from `int` to `bool` (per original `pdfminer.six` representation) (1f8789)
+- Remove access and reference to `Container.figures`, given that they are not fundamental objects (8e74cb)
+
+### Development Changes
+
+- Refactor/simplify `Page.process_objects` (1f8789), `utils.extract_words` (c8b200), and `convert.serialize` (a74d3bc)
+- Remove `test_issues.py:test_pr_77` (917467) and narrow `test_ca_warn_report:test_objects` (6233bbd) to speed up tests
+
 ## [0.5.23] — 2020-08-15
 ### Added
 - Add `utils.resolve` (non-recursive .resolve_all) (7a90630)
