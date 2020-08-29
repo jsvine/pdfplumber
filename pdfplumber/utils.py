@@ -205,6 +205,61 @@ def bbox_to_rect(bbox):
     return {"x0": bbox[0], "top": bbox[1], "x1": bbox[2], "bottom": bbox[3]}
 
 
+def merge_chars(ordered_chars, extra_attrs=[]):
+    x0, top, x1, bottom = objects_to_bbox(ordered_chars)
+
+    word = {
+        "text": "".join(map(itemgetter("text"), ordered_chars)),
+        "x0": x0,
+        "x1": x1,
+        "top": top,
+        "bottom": bottom,
+        "upright": ordered_chars[0]["upright"],
+    }
+
+    for key in extra_attrs:
+        word[key] = ordered_chars[0][key]
+
+    return word
+
+
+def cluster_line_chars(
+    chars, tolerance, keep_blank_chars=False, min_key="x0", max_key="x1", sort_asc=True
+):
+    get_text = itemgetter("text")
+
+    words = []
+    current_word = []
+
+    comp_fn = gt if sort_asc else lt
+    tol_fn = add if sort_asc else sub
+
+    def sort_key(x):
+        return tol_fn(0, x[min_key])
+
+    sorted_chars = sorted(chars, key=sort_key)
+
+    for char in sorted_chars:
+        if not keep_blank_chars and get_text(char).isspace():
+            if len(current_word) > 0:
+                words.append(current_word)
+                current_word = []
+        elif len(current_word) == 0:
+            current_word.append(char)
+        else:
+            last_char = current_word[-1]
+            prev_pos = tol_fn(last_char[max_key], tolerance)
+            if comp_fn(char[min_key], prev_pos):
+                words.append(current_word)
+                current_word = []
+            current_word.append(char)
+
+    if len(current_word) > 0:
+        words.append(current_word)
+
+    return words
+
+
 def extract_words(
     chars,
     x_tolerance=DEFAULT_X_TOLERANCE,
@@ -212,79 +267,41 @@ def extract_words(
     keep_blank_chars=False,
     horizontal_ltr=True,  # Should words be read left-to-right?
     vertical_ttb=True,  # Should vertical words be read top-to-bottom?
+    extra_attrs=[],
 ):
 
     x_tolerance = decimalize(x_tolerance)
     y_tolerance = decimalize(y_tolerance)
 
-    def process_word_chars(chars, upright):
-        x0, top, x1, bottom = objects_to_bbox(chars)
-
-        return {
-            "x0": x0,
-            "x1": x1,
-            "top": top,
-            "bottom": bottom,
-            "upright": upright,
-            "text": "".join(map(itemgetter("text"), chars)),
-        }
-
-    def get_line_words(chars, upright, tolerance):
-        get_text = itemgetter("text")
-        if upright:
-            min_key, max_key = ("x0", "x1") if horizontal_ltr else ("x1", "x0")
-        else:
-            min_key, max_key = ("top", "bottom") if vertical_ttb else ("bottom", "top")
-
-        words = []
-        current_word = []
-
-        asc_order = (upright and horizontal_ltr) or (not upright and vertical_ttb)
-
-        comp_fn = gt if asc_order else lt
-        tol_fn = add if asc_order else sub
-
-        def sort_key(x):
-            return tol_fn(0, x[min_key])
-
-        sorted_chars = sorted(chars, key=sort_key)
-
-        for char in sorted_chars:
-            if not keep_blank_chars and get_text(char).isspace():
-                if len(current_word) > 0:
-                    words.append(current_word)
-                    current_word = []
-                else:
-                    pass
-            elif len(current_word) == 0:
-                current_word.append(char)
-            else:
-                last_char = current_word[-1]
-                prev_pos = tol_fn(last_char[max_key], tolerance)
-                if comp_fn(char[min_key], prev_pos):
-                    words.append(current_word)
-                    current_word = []
-                current_word.append(char)
-
-        if len(current_word) > 0:
-            words.append(current_word)
-
-        return [process_word_chars(chars, upright) for chars in words]
-
-    chars_by_upright = {True: [], False: []}
     words = []
-    for char in to_list(chars):
-        chars_by_upright[char.get("upright", False)].append(char)
+    grouped = itertools.groupby(chars, itemgetter("upright", *extra_attrs))
 
-    for upright, char_group in chars_by_upright.items():
+    for keyvals, char_group in grouped:
+        upright = keyvals[0] if len(extra_attrs) else keyvals
+
         clusters = cluster_objects(
             char_group,
             "doctop" if upright else "x0",
             y_tolerance,  # Still use y-tolerance here, even for vertical words
         )
 
+        sort_asc = (upright and horizontal_ltr) or (not upright and vertical_ttb)
+        min_key, max_key = ("x0", "x1") if upright else ("top", "bottom")
+
+        if not sort_asc:
+            min_key, max_key = max_key, min_key
+
         for line_chars in clusters:
-            words += get_line_words(line_chars, upright, tolerance=x_tolerance)
+            word_clusters = cluster_line_chars(
+                line_chars,
+                # Still  use x-tolerance here, even for vertical words
+                tolerance=x_tolerance,
+                keep_blank_chars=keep_blank_chars,
+                min_key=min_key,
+                max_key=max_key,
+                sort_asc=sort_asc,
+            )
+            words += [merge_chars(c, extra_attrs) for c in word_clusters]
 
     return words
 

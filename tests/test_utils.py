@@ -68,11 +68,20 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             p = pdf.pages[0]
             words = p.extract_words(vertical_ttb=False)
+            words_attr = p.extract_words(vertical_ttb=False, extra_attrs = [ "size" ])
+            words_w_spaces = p.extract_words(vertical_ttb=False, keep_blank_chars=True)
             words_rtl = p.extract_words(horizontal_ltr=False)
 
         assert words[0]["text"] == "Agaaaaa:"
+
+        assert "size" not in words[0]
+        assert float(words_attr[0]["size"]) == 9.960
+
+        assert words_w_spaces[0]["text"] == "Agaaaaa: AAAA"
+
         vertical = [w for w in words if w["upright"] == 0]
         assert vertical[0]["text"] == "Aaaaaabag8"
+
         assert words_rtl[1]["text"] == "baaabaaA/AAA"
 
     def test_extract_text(self):
