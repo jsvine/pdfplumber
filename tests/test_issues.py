@@ -108,13 +108,6 @@ class Test(unittest.TestCase):
         assert len(pdf.metadata.keys())
         pdf.close()
 
-    def test_pr_77(self):
-        # via https://github.com/jsvine/pdfplumber/pull/77
-        path = os.path.join(HERE, "pdfs/pr-77-example.pdf")
-        with pdfplumber.open(path) as pdf:
-            first_page = pdf.pages[0]
-            first_page.objects
-
     def test_pr_88(self):
         # via https://github.com/jsvine/pdfplumber/pull/88
         path = os.path.join(HERE, "pdfs/pr-88-example.pdf")
