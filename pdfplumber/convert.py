@@ -61,6 +61,7 @@ serializers = {
     PDFStream: lambda obj: {"rawdata": to_b64(obj.rawdata)},
     PSLiteral: lambda obj: decode_text(obj.name),
     bytes: try_decode_bytes,
+    bool: int,
 }
 
 
@@ -71,7 +72,7 @@ def serialize(obj):
     t = type(obj)
 
     # Basic types don't need to be converted
-    if t in (int, float, str, bool):
+    if t in (int, float, str):
         return obj
 
     # Use one of the custom converters above, if possible

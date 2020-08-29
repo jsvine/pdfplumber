@@ -271,10 +271,10 @@ def extract_words(
 
         return [process_word_chars(chars, upright) for chars in words]
 
-    chars_by_upright = {1: [], 0: []}
+    chars_by_upright = {True: [], False: []}
     words = []
     for char in to_list(chars):
-        chars_by_upright[char.get("upright", 1)].append(char)
+        chars_by_upright[char.get("upright", False)].append(char)
 
     for upright, char_group in chars_by_upright.items():
         clusters = cluster_objects(
