@@ -3,7 +3,7 @@ from pdfminer.psparser import PSLiteral
 from pdfminer.pdftypes import PDFObjRef
 from decimal import Decimal, ROUND_HALF_UP
 import numbers
-from operator import itemgetter, gt, lt, add, sub
+from operator import itemgetter
 import itertools
 from functools import lru_cache as cache
 
@@ -205,105 +205,123 @@ def bbox_to_rect(bbox):
     return {"x0": bbox[0], "top": bbox[1], "x1": bbox[2], "bottom": bbox[3]}
 
 
-def merge_chars(ordered_chars, extra_attrs=[]):
-    x0, top, x1, bottom = objects_to_bbox(ordered_chars)
-
-    word = {
-        "text": "".join(map(itemgetter("text"), ordered_chars)),
-        "x0": x0,
-        "x1": x1,
-        "top": top,
-        "bottom": bottom,
-        "upright": ordered_chars[0]["upright"],
-    }
-
-    for key in extra_attrs:
-        word[key] = ordered_chars[0][key]
-
-    return word
-
-
-def cluster_line_chars(
-    chars, tolerance, keep_blank_chars=False, min_key="x0", max_key="x1", sort_asc=True
-):
-    get_text = itemgetter("text")
-
-    words = []
-    current_word = []
-
-    comp_fn = gt if sort_asc else lt
-    tol_fn = add if sort_asc else sub
-
-    def sort_key(x):
-        return tol_fn(0, x[min_key])
-
-    sorted_chars = sorted(chars, key=sort_key)
-
-    for char in sorted_chars:
-        if not keep_blank_chars and get_text(char).isspace():
-            if len(current_word) > 0:
-                words.append(current_word)
-                current_word = []
-        elif len(current_word) == 0:
-            current_word.append(char)
-        else:
-            last_char = current_word[-1]
-            prev_pos = tol_fn(last_char[max_key], tolerance)
-            if comp_fn(char[min_key], prev_pos):
-                words.append(current_word)
-                current_word = []
-            current_word.append(char)
-
-    if len(current_word) > 0:
-        words.append(current_word)
-
-    return words
-
-
-def extract_words(
-    chars,
+DEFAULT_WORD_EXTRACTION_SETTINGS = dict(
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
     keep_blank_chars=False,
+    use_text_flow=False,
     horizontal_ltr=True,  # Should words be read left-to-right?
     vertical_ttb=True,  # Should vertical words be read top-to-bottom?
     extra_attrs=[],
-):
+)
 
-    x_tolerance = decimalize(x_tolerance)
-    y_tolerance = decimalize(y_tolerance)
 
-    words = []
-    grouped = itertools.groupby(chars, itemgetter("upright", *extra_attrs))
+class WordExtractor:
+    def __init__(self, **settings):
+        for s, val in settings.items():
+            if s not in DEFAULT_WORD_EXTRACTION_SETTINGS:
+                raise ValueError(f"{s} is not a valid WordExtractor parameter")
 
-    for keyvals, char_group in grouped:
-        upright = keyvals[0] if len(extra_attrs) else keyvals
+            if s in ["x_tolerance", "y_tolerance"]:
+                val = decimalize(val)
 
-        clusters = cluster_objects(
-            char_group,
-            "doctop" if upright else "x0",
-            y_tolerance,  # Still use y-tolerance here, even for vertical words
+            setattr(self, s, val)
+
+    def merge_chars(self, ordered_chars):
+        x0, top, x1, bottom = objects_to_bbox(ordered_chars)
+
+        word = {
+            "text": "".join(map(itemgetter("text"), ordered_chars)),
+            "x0": x0,
+            "x1": x1,
+            "top": top,
+            "bottom": bottom,
+            "upright": ordered_chars[0]["upright"],
+        }
+
+        for key in self.extra_attrs:
+            word[key] = ordered_chars[0][key]
+
+        return word
+
+    def char_begins_new_word(self, current_chars, next_char):
+        upright = current_chars[0]["upright"]
+        intraline_tol = self.x_tolerance if upright else self.y_tolerance
+        interline_tol = self.y_tolerance if upright else self.x_tolerance
+
+        word_x0, word_top, word_x1, word_bottom = objects_to_bbox(current_chars)
+
+        return (
+            (next_char["x0"] > word_x1 + intraline_tol)
+            or (next_char["x1"] < word_x0 - intraline_tol)
+            or (next_char["top"] > word_bottom + interline_tol)
+            or (next_char["bottom"] < word_top - interline_tol)
         )
 
-        sort_asc = (upright and horizontal_ltr) or (not upright and vertical_ttb)
-        min_key, max_key = ("x0", "x1") if upright else ("top", "bottom")
+    def iter_chars_to_words(self, chars):
+        current_word = []
 
-        if not sort_asc:
-            min_key, max_key = max_key, min_key
+        for char in chars:
+            if not self.keep_blank_chars and char["text"].isspace():
+                if current_word:
+                    yield current_word
+                    current_word = []
 
-        for line_chars in clusters:
-            word_clusters = cluster_line_chars(
-                line_chars,
-                # Still  use x-tolerance here, even for vertical words
-                tolerance=x_tolerance,
-                keep_blank_chars=keep_blank_chars,
-                min_key=min_key,
-                max_key=max_key,
-                sort_asc=sort_asc,
+            elif current_word and self.char_begins_new_word(current_word, char):
+                yield current_word
+                current_word = [char]
+
+            else:
+                current_word.append(char)
+
+        if current_word:
+            yield current_word
+
+    def iter_sort_chars(self, chars):
+        def upright_key(x):
+            return -int(x["upright"])
+
+        for upright_cluster in cluster_objects(chars, upright_key, 0):
+            upright = upright_cluster[0]["upright"]
+            cluster_key = "doctop" if upright else "x0"
+
+            # Cluster by line
+            subclusters = cluster_objects(
+                upright_cluster, cluster_key, self.y_tolerance
             )
-            words += [merge_chars(c, extra_attrs) for c in word_clusters]
 
-    return words
+            for sc in subclusters:
+                # Sort within line
+                sort_key = "x0" if upright else "doctop"
+                sc = sorted(sc, key=itemgetter(sort_key))
+
+                # Reverse order if necessary
+                if (upright and not self.horizontal_ltr) or (
+                    not upright and not self.vertical_ttb
+                ):
+                    sc = reversed(sc)
+
+                yield from sc
+
+    def iter_extract(self, chars):
+        if not self.use_text_flow:
+            chars = self.iter_sort_chars(chars)
+
+        grouping_key = itemgetter("upright", *self.extra_attrs)
+        grouped = itertools.groupby(chars, grouping_key)
+
+        for keyvals, char_group in grouped:
+            for word_chars in self.iter_chars_to_words(char_group):
+                yield self.merge_chars(word_chars)
+
+    def extract(self, chars):
+        return list(self.iter_extract(chars))
+
+
+def extract_words(chars, **kwargs):
+    settings = dict(DEFAULT_WORD_EXTRACTION_SETTINGS)
+    settings.update(kwargs)
+    return WordExtractor(**settings).extract(chars)
 
 
 def extract_text(

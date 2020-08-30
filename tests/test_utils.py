@@ -6,6 +6,8 @@ from pdfplumber import utils
 from pdfminer.pdfparser import PDFObjRef
 from pdfminer.psparser import PSLiteral
 from decimal import Decimal
+from itertools import groupby
+from operator import itemgetter
 import sys, os
 
 import logging
@@ -83,6 +85,35 @@ class Test(unittest.TestCase):
         assert vertical[0]["text"] == "Aaaaaabag8"
 
         assert words_rtl[1]["text"] == "baaabaaA/AAA"
+
+    def test_bad_word_extraction_settings(self):
+        with pytest.raises(ValueError):
+            self.pdf.pages[0].extract_words(not_real_param = True)
+
+    def test_text_flow(self):
+        path = os.path.join(HERE, "pdfs/federal-register-2020-17221.pdf")
+
+        def words_to_text(words):
+            grouped = groupby(words, key = itemgetter("top"))
+            lines = [ " ".join(word["text"] for word in grp)
+                for top, grp in grouped ]
+            return "\n".join(lines)
+
+        with pdfplumber.open(path) as pdf:
+            p0 = pdf.pages[0]
+            using_flow = p0.extract_words(use_text_flow = True)
+            not_using_flow = p0.extract_words()
+
+        target_text = (
+            "The FAA proposes to\n"
+            "supersede Airworthiness Directive (AD)\n"
+            "2018–23–51, which applies to all The\n"
+            "Boeing Company Model 737–8 and 737–\n"
+            "9 (737 MAX) airplanes. Since AD 2018–\n"
+        )
+
+        assert target_text in words_to_text(using_flow)
+        assert target_text not in words_to_text(not_using_flow)
 
     def test_extract_text(self):
         text = self.pdf.pages[0].extract_text()
