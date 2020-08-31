@@ -229,6 +229,9 @@ class WordExtractor:
 
     def merge_chars(self, ordered_chars):
         x0, top, x1, bottom = objects_to_bbox(ordered_chars)
+        upright = ordered_chars[0]["upright"]
+
+        direction = 1 if (self.horizontal_ltr if upright else self.vertical_ttb) else -1
 
         word = {
             "text": "".join(map(itemgetter("text"), ordered_chars)),
@@ -236,7 +239,8 @@ class WordExtractor:
             "x1": x1,
             "top": top,
             "bottom": bottom,
-            "upright": ordered_chars[0]["upright"],
+            "upright": upright,
+            "direction": direction,
         }
 
         for key in self.extra_attrs:
@@ -296,9 +300,7 @@ class WordExtractor:
                 sc = sorted(sc, key=itemgetter(sort_key))
 
                 # Reverse order if necessary
-                if (upright and not self.horizontal_ltr) or (
-                    not upright and not self.vertical_ttb
-                ):
+                if not (self.horizontal_ltr if upright else self.vertical_ttb):
                     sc = reversed(sc)
 
                 yield from sc

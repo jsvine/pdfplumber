@@ -75,6 +75,7 @@ class Test(unittest.TestCase):
             words_rtl = p.extract_words(horizontal_ltr=False)
 
         assert words[0]["text"] == "Agaaaaa:"
+        assert words[0]["direction"] == 1
 
         assert "size" not in words[0]
         assert float(words_attr[0]["size"]) == 9.960
@@ -83,8 +84,10 @@ class Test(unittest.TestCase):
 
         vertical = [w for w in words if w["upright"] == 0]
         assert vertical[0]["text"] == "Aaaaaabag8"
+        assert vertical[0]["direction"] == -1
 
         assert words_rtl[1]["text"] == "baaabaaA/AAA"
+        assert words_rtl[1]["direction"] == -1
 
     def test_bad_word_extraction_settings(self):
         with pytest.raises(ValueError):
