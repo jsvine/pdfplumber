@@ -4,76 +4,76 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.5.24] — Unreleased
 ### Added
-- Added `extra_attrs=[...]` parameter to `.extract_text(...)` ([c8b200e](https://github.com/jsvine/pdfplumber/c8b200e)) (#28)
+- Added `extra_attrs=[...]` parameter to `.extract_text(...)` ([c8b200e](https://github.com/jsvine/pdfplumber/commit/c8b200e)) ([#28](https://github.com/jsvine/pdfplumber/issues/28))
 
 ### Changed
-- Change character attribute `upright` from `int` to `bool` (per original `pdfminer.six` representation) ([1f87898](https://github.com/jsvine/pdfplumber/1f87898))
-- Remove access and reference to `Container.figures`, given that they are not fundamental objects ([8e74cb9](https://github.com/jsvine/pdfplumber/8e74cb9))
+- Change character attribute `upright` from `int` to `bool` (per original `pdfminer.six` representation) ([1f87898](https://github.com/jsvine/pdfplumber/commit/1f87898))
+- Remove access and reference to `Container.figures`, given that they are not fundamental objects ([8e74cb9](https://github.com/jsvine/pdfplumber/commit/8e74cb9))
 
 ### Development Changes
 
-- Refactor/simplify `Page.process_objects` ([1f87898](https://github.com/jsvine/pdfplumber/1f87898)), `utils.extract_words` ([c8b200e](https://github.com/jsvine/pdfplumber/c8b200e)), and `convert.serialize` ([a74d3bc](https://github.com/jsvine/pdfplumber/a74d3bc))
-- Remove `test_issues.py:test_pr_77` ([917467a](https://github.com/jsvine/pdfplumber/917467a)) and narrow `test_ca_warn_report:test_objects` ([6233bbd](https://github.com/jsvine/pdfplumber/6233bbd)) to speed up tests
+- Refactor/simplify `Page.process_objects` ([1f87898](https://github.com/jsvine/pdfplumber/commit/1f87898)), `utils.extract_words` ([c8b200e](https://github.com/jsvine/pdfplumber/commit/c8b200e)), and `convert.serialize` ([a74d3bc](https://github.com/jsvine/pdfplumber/commit/a74d3bc))
+- Remove `test_issues.py:test_pr_77` ([917467a](https://github.com/jsvine/pdfplumber/commit/917467a)) and narrow `test_ca_warn_report:test_objects` ([6233bbd](https://github.com/jsvine/pdfplumber/commit/6233bbd)) to speed up tests
 
 ## [0.5.23] — 2020-08-15
 ### Added
-- Add `utils.resolve` (non-recursive .resolve_all) ([7a90630](https://github.com/jsvine/pdfplumber/7a90630))
-- Add `page.annots` and `page.hyperlinks`, replacing non-functional `page.annos`, and mirroring pdfminer's language ("annot" vs. "anno"). ([aa03961](https://github.com/jsvine/pdfplumber/aa03961))
-- Add `page/pdf.to_json` and `page/pdf.to_csv` ([cbc91c6](https://github.com/jsvine/pdfplumber/cbc91c6))
-- Add `relative=True/False` parameter to `.crop` and `.within_bbox`; those methods also now raise exceptions for invalid and out-of-page bounding boxes. ([047ad34](https://github.com/jsvine/pdfplumber/047ad34)) [h/t @samkit-jain]
+- Add `utils.resolve` (non-recursive .resolve_all) ([7a90630](https://github.com/jsvine/pdfplumber/commit/7a90630))
+- Add `page.annots` and `page.hyperlinks`, replacing non-functional `page.annos`, and mirroring pdfminer's language ("annot" vs. "anno"). ([aa03961](https://github.com/jsvine/pdfplumber/commit/aa03961))
+- Add `page/pdf.to_json` and `page/pdf.to_csv` ([cbc91c6](https://github.com/jsvine/pdfplumber/commit/cbc91c6))
+- Add `relative=True/False` parameter to `.crop` and `.within_bbox`; those methods also now raise exceptions for invalid and out-of-page bounding boxes. ([047ad34](https://github.com/jsvine/pdfplumber/commit/047ad34)) [h/t @samkit-jain]
 
 ### Changed
-- Remove `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF. ([00e789b](https://github.com/jsvine/pdfplumber/00e789b))
-- Simplify the logic in "text" table-finding strategies; in edge cases, may result in changes to results. ([d224202](https://github.com/jsvine/pdfplumber/d224202))
-- Drop support for Python 3.5 ([baf1033](https://github.com/jsvine/pdfplumber/baf1033))
+- Remove `pdfminer.from_path` and `pdfminer.load` as deprecated; now `pdfminer.open` is the canonical way to load a PDF. ([00e789b](https://github.com/jsvine/pdfplumber/commit/00e789b))
+- Simplify the logic in "text" table-finding strategies; in edge cases, may result in changes to results. ([d224202](https://github.com/jsvine/pdfplumber/commit/d224202))
+- Drop support for Python 3.5 ([baf1033](https://github.com/jsvine/pdfplumber/commit/baf1033))
 
 ### Fixed
-- Fix `.extract_words`, which had been returning incorrect results when `horizontal_ltr = False` ([d16aa13](https://github.com/jsvine/pdfplumber/d16aa13))
-- Fix `utils.resize_object`, which had been failing in various permutations ([d16aa13](https://github.com/jsvine/pdfplumber/d16aa13))
-- Fix `lines_strict` table-finding strategy, which a typo had prevented from being usable ([f0c9b85](https://github.com/jsvine/pdfplumber/f0c9b85))
-- Fix `utils.resolve_all` to guard against two known sources of infinite recursion ([cbc91c6](https://github.com/jsvine/pdfplumber/cbc91c6))
+- Fix `.extract_words`, which had been returning incorrect results when `horizontal_ltr = False` ([d16aa13](https://github.com/jsvine/pdfplumber/commit/d16aa13))
+- Fix `utils.resize_object`, which had been failing in various permutations ([d16aa13](https://github.com/jsvine/pdfplumber/commit/d16aa13))
+- Fix `lines_strict` table-finding strategy, which a typo had prevented from being usable ([f0c9b85](https://github.com/jsvine/pdfplumber/commit/f0c9b85))
+- Fix `utils.resolve_all` to guard against two known sources of infinite recursion ([cbc91c6](https://github.com/jsvine/pdfplumber/commit/cbc91c6))
 
 ### Development Changes
 
 - Rename default branch to "stable," to clarify its purpose
-- Reformat code with psf/black ([1258e09](https://github.com/jsvine/pdfplumber/1258e09))
-- Add code linting via psf/black and flake8 ([1258e09](https://github.com/jsvine/pdfplumber/1258e09))
-- Switch from nosetests to pytest ([1ac16dd](https://github.com/jsvine/pdfplumber/1ac16dd))
-- Switch from pipenv to standard requirements.txt + python -m venv ([48eaa51](https://github.com/jsvine/pdfplumber/48eaa51))
-- Add GitHub action for tests + codecov ([b148fd1](https://github.com/jsvine/pdfplumber/b148fd1))
-- Add Makefile for building development virtual environment and running tests ([4c69c58](https://github.com/jsvine/pdfplumber/4c69c58))
-- Add badges to README.md ([9e42dc3](https://github.com/jsvine/pdfplumber/9e42dc3))
-- Add Trove classifiers for Python versions to setup.py ([6946e8d](https://github.com/jsvine/pdfplumber/6946e8d))
-- Add MANIFEST.in ([eafc15c](https://github.com/jsvine/pdfplumber/eafc15c))
-- Add GitHub issue templates ([c4156d6](https://github.com/jsvine/pdfplumber/c4156d6))
-- Remove `pandas` from dev requirements and tests ([a5e7d7f](https://github.com/jsvine/pdfplumber/a5e7d7f))
+- Reformat code with psf/black ([1258e09](https://github.com/jsvine/pdfplumber/commit/1258e09))
+- Add code linting via psf/black and flake8 ([1258e09](https://github.com/jsvine/pdfplumber/commit/1258e09))
+- Switch from nosetests to pytest ([1ac16dd](https://github.com/jsvine/pdfplumber/commit/1ac16dd))
+- Switch from pipenv to standard requirements.txt + python -m venv ([48eaa51](https://github.com/jsvine/pdfplumber/commit/48eaa51))
+- Add GitHub action for tests + codecov ([b148fd1](https://github.com/jsvine/pdfplumber/commit/b148fd1))
+- Add Makefile for building development virtual environment and running tests ([4c69c58](https://github.com/jsvine/pdfplumber/commit/4c69c58))
+- Add badges to README.md ([9e42dc3](https://github.com/jsvine/pdfplumber/commit/9e42dc3))
+- Add Trove classifiers for Python versions to setup.py ([6946e8d](https://github.com/jsvine/pdfplumber/commit/6946e8d))
+- Add MANIFEST.in ([eafc15c](https://github.com/jsvine/pdfplumber/commit/eafc15c))
+- Add GitHub issue templates ([c4156d6](https://github.com/jsvine/pdfplumber/commit/c4156d6))
+- Remove `pandas` from dev requirements and tests ([a5e7d7f](https://github.com/jsvine/pdfplumber/commit/a5e7d7f))
 
 ## [0.5.22] — 2020-07-18
 ### Changed
-- Upgraded `pdfminer.six` requirement to `==20200517` ([cddbff7](https://github.com/jsvine/pdfplumber/cddbff7)) [h/t @youngquan]
+- Upgraded `pdfminer.six` requirement to `==20200517` ([cddbff7](https://github.com/jsvine/pdfplumber/commit/cddbff7)) [h/t @youngquan]
 
 ### Added
-- Add support for `non_stroking_color` attribute on `char` objects ([0254da3](https://github.com/jsvine/pdfplumber/0254da3)) [h/t @idan-david]
+- Add support for `non_stroking_color` attribute on `char` objects ([0254da3](https://github.com/jsvine/pdfplumber/commit/0254da3)) [h/t @idan-david]
 
 ## [0.5.21] — 2020-05-27
 ### Fixed
-- Fix `Page.extract_table(...)` to return `None` instead of crashing when no table is found ([d64afa8](https://github.com/jsvine/pdfplumber/d64afa8)) [h/t @stucka]
+- Fix `Page.extract_table(...)` to return `None` instead of crashing when no table is found ([d64afa8](https://github.com/jsvine/pdfplumber/commit/d64afa8)) [h/t @stucka]
 
 ## [0.5.20] — 2020-04-29
 ### Fixed
-- Fix `.get_page_image` to prefer paths over streams, when possible ([ab957de](https://github.com/jsvine/pdfplumber/ab957de)) [h/t @ubmarco]
-- Local-fix pdfminer.six's `.resolve_all` to handle tuples and simplify ([85f422d](https://github.com/jsvine/pdfplumber/85f422d))
+- Fix `.get_page_image` to prefer paths over streams, when possible ([ab957de](https://github.com/jsvine/pdfplumber/commit/ab957de)) [h/t @ubmarco]
+- Local-fix pdfminer.six's `.resolve_all` to handle tuples and simplify ([85f422d](https://github.com/jsvine/pdfplumber/commit/85f422d))
 
 ### Changed
 - Remove support for Python 2 and Python <3.3
 
 ## [0.5.19] — 2020-04-16
 ### Changed
-- Add `utils.decimalize` performance improvement ([830d117](https://github.com/jsvine/pdfplumber/830d117)) [h/t @ubmarco]
+- Add `utils.decimalize` performance improvement ([830d117](https://github.com/jsvine/pdfplumber/commit/830d117)) [h/t @ubmarco]
 
 ### Fixed
-- Fix un-referenced method when using "text" table-finding strategy ([2a0c4a2](https://github.com/jsvine/pdfplumber/2a0c4a2))
-- Add missing object type `rect_edge` to `obj_to_edges()` ([0edc6bf](https://github.com/jsvine/pdfplumber/0edc6bf))
+- Fix un-referenced method when using "text" table-finding strategy ([2a0c4a2](https://github.com/jsvine/pdfplumber/commit/2a0c4a2))
+- Add missing object type `rect_edge` to `obj_to_edges()` ([0edc6bf](https://github.com/jsvine/pdfplumber/commit/0edc6bf))
 
 ## [0.5.18] — 2020-04-01
 ### Changed
@@ -84,14 +84,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.5.17] — 2020-04-01
 ### Fixed
-- Fix and simplify obj-in-bbox logic (see commit 25672961)
-- Improve/fix the way `utils.extract_text` handles vertical text (see commit 8a5d858b) [h/t @dwalton76]
-- Have `Page.to_image` use bytes stream instead of file path (Issue #124 / PR #179) [h/t @cheungpat]
-- Fix issue #176, in which `Page.extract_tables` did not pass kwargs to `Table.extract` [h/t @jsfenfen]
+- Fix and simplify obj-in-bbox logic (see commit [25672961](https://github.com/jsvine/pdfplumber/commit/25672961))
+- Improve/fix the way `utils.extract_text` handles vertical text (see commit [8a5d858b](https://github.com/jsvine/pdfplumber/commit/8a5d858b)) [h/t @dwalton76]
+- Have `Page.to_image` use bytes stream instead of file path (Issue [#124](https://github.com/jsvine/pdfplumber/issues/124) / PR [#179](https://github.com/jsvine/pdfplumber/pull/179)) [h/t @cheungpat]
+- Fix issue [#176](https://github.com/jsvine/pdfplumber/issues/176), in which `Page.extract_tables` did not pass kwargs to `Table.extract` [h/t @jsfenfen]
 
 ## [0.5.16] — 2020-01-12
 ### Fixed
-- Prevent custom LAParams from raising exception (Issue #168 / PR #169) [h/t @frascuchon]
+- Prevent custom LAParams from raising exception (Issue [#168](https://github.com/jsvine/pdfplumber/issues/168) / PR [#169](https://github.com/jsvine/pdfplumber/pull/169)) [h/t @frascuchon]
 - Add `six` as explicit dependency (for now)
 
 ## [0.5.15] — 2020-01-05
@@ -103,11 +103,11 @@ All notable changes to this project will be documented in this file. The format 
 ## [0.5.14] — 2019-10-06
 ### Fixed
 - Fix sorting bug in `page.extract_table()`
-- Fix support for password-protected PDFs (PR #138)
+- Fix support for password-protected PDFs (PR [#138](https://github.com/jsvine/pdfplumber/pull/138))
 
 ## [0.5.13] — 2019-08-29
 ### Fixed
-- Fixed PDF object resolution for rotation (PR #136)
+- Fixed PDF object resolution for rotation (PR [#136](https://github.com/jsvine/pdfplumber/pull/136))
 
 ## [0.5.12] — 2019-04-14
 ### Added
@@ -120,12 +120,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 - Upgrade to `pdfminer.six==20181108`
-- Make whitespace checking more robust (PR #88)
+- Make whitespace checking more robust (PR [#88](https://github.com/jsvine/pdfplumber/pull/88))
 
 ### Fixed
-- Fix issue #75 (`.to_image()` custom arguments)
-- Fix issue raised in PR #77 (PDFObjRef resolution), and general class of problems
-- Fix issue #90, and general class of problems, by explicitly typecasting each kind of PDF Object
+- Fix issue [#75](https://github.com/jsvine/pdfplumber/issues/75) (`.to_image()` custom arguments)
+- Fix issue raised in PR [#77](https://github.com/jsvine/pdfplumber/pull/77) (PDFObjRef resolution), and general class of problems
+- Fix issue [#90](https://github.com/jsvine/pdfplumber/issues/90), and general class of problems, by explicitly typecasting each kind of PDF Object
 
 ## [0.5.10] — 2018-08-03
 ### Fixed
@@ -133,11 +133,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.5.9] — 2018-07-10
 ### Fixed
-- Fix issue #67, in which bool-type metadata were handled incorrectly
+- Fix issue [#67](https://github.com/jsvine/pdfplumber/issues/67), in which bool-type metadata were handled incorrectly
 
 ## [0.5.8] — 2018-03-06
 ### Fixed
-- Fix issue #53, in which non-decimalize-able (non_)stroking_color properties were raising errors.
+- Fix issue [#53](https://github.com/jsvine/pdfplumber/issues/53), in which non-decimalize-able (non_)stroking_color properties were raising errors.
 
 ## [0.5.7] — 2018-01-20
 ### Added
@@ -149,7 +149,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.5.6] — 2017-11-21
 ### Fixed
-- Fix issue #41, in which PDF-object-referenced cropboxes/mediaboxes weren't being fully resolved.
+- Fix issue [#41](https://github.com/jsvine/pdfplumber/issues/41), in which PDF-object-referenced cropboxes/mediaboxes weren't being fully resolved.
 
 ## [0.5.5] — 2017-05-10
 ### Added
