@@ -31,10 +31,10 @@ class Test(unittest.TestCase):
             assert pdf.pages[1].page_number == 3
 
     def test_objects(self):
-        assert len(self.pdf.chars)
-        assert len(self.pdf.rects)
-        assert len(self.pdf.figures)
-        assert len(self.pdf.images)
+        p = self.pdf.pages[0]
+        assert len(p.chars)
+        assert len(p.rects)
+        assert len(p.images)
 
     def test_parse(self):
 

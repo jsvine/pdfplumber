@@ -6,6 +6,42 @@ import re
 
 lt_pat = re.compile(r"^LT")
 
+DECIMAL_ATTRS = set(
+    [
+        "adv",
+        "height",
+        "linewidth",
+        "pts",
+        "size",
+        "srcsize",
+        "width",
+        "x0",
+        "x1",
+        "y0",
+        "y1",
+    ]
+)
+
+ALL_ATTRS = DECIMAL_ATTRS | set(
+    [
+        "bits",
+        "upright",
+        "font",
+        "fontname",
+        "name",
+        "text",
+        "imagemask",
+        "colorspace",
+        "evenodd",
+        "fill",
+        "non_stroking_color",
+        "path",
+        "stream",
+        "stroke",
+        "stroking_color",
+    ]
+)
+
 
 class Page(Container):
     cached_properties = Container.cached_properties + ["_layout"]
@@ -31,11 +67,21 @@ class Page(Container):
 
         if self.rotation in [90, 270]:
             self.bbox = self.decimalize(
-                (min(m[1], m[3]), min(m[0], m[2]), max(m[1], m[3]), max(m[0], m[2]),)
+                (
+                    min(m[1], m[3]),
+                    min(m[0], m[2]),
+                    max(m[1], m[3]),
+                    max(m[0], m[2]),
+                )
             )
         else:
             self.bbox = self.decimalize(
-                (min(m[0], m[2]), min(m[1], m[3]), max(m[0], m[2]), max(m[1], m[3]),)
+                (
+                    min(m[0], m[2]),
+                    min(m[1], m[3]),
+                    max(m[0], m[2]),
+                    max(m[1], m[3]),
+                )
             )
 
     def decimalize(self, x):
@@ -106,98 +152,66 @@ class Page(Container):
         self._objects = self.parse_objects()
         return self._objects
 
-    def parse_objects(self):
-        objects = {}
+    def process_object(self, obj):
+        kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
 
         d = self.decimalize
-        h = self.height
-        idc = self.initial_doctop
-        pno = self.page_number
 
-        def point2coord(pt):
-            x, y = pt
-            return (d(x), h - d(y))
+        def process_attr(item):
+            k, v = item
+            if k in ALL_ATTRS:
+                res = resolve_all(v)
+                if k in DECIMAL_ATTRS:
+                    return (k, d(res))
+                else:
+                    return (k, res)
+            else:
+                return None
 
-        def noop(x):
-            return x
+        attr = dict(filter(None, map(process_attr, obj.__dict__.items())))
 
-        def str_conv(x):
-            return str(x or "")
+        attr["object_type"] = kind
+        attr["page_number"] = self.page_number
 
-        CONVERSIONS = {
-            # Decimals
-            "adv": d,
-            "height": d,
-            "linewidth": d,
-            "pts": d,
-            "size": d,
-            "srcsize": d,
-            "width": d,
-            "x0": d,
-            "x1": d,
-            "y0": d,
-            "y1": d,
-            # Integer
-            "bits": int,
-            "upright": int,
-            # Strings
-            "font": str_conv,
-            "fontname": str_conv,
-            "name": str_conv,
-            "object_type": str_conv,
-            "text": str_conv,
-            # No conversion
-            "imagemask": noop,
-            "colorspace": noop,
-            "evenodd": noop,
-            "fill": noop,
-            "non_stroking_color": noop,
-            "path": noop,
-            "stream": noop,
-            "stroke": noop,
-            "stroking_color": noop,
-        }
+        if hasattr(obj, "graphicstate"):
+            gs = obj.graphicstate
+            attr["stroking_color"] = gs.scolor
+            attr["non_stroking_color"] = gs.ncolor
 
-        CONVERSIONS_KEYS = set(CONVERSIONS.keys())
+        if hasattr(obj, "get_text"):
+            attr["text"] = obj.get_text()
 
-        def process_object(obj):
-            attr = dict(
-                (k, CONVERSIONS[k](resolve_all(v)))
-                for k, v in obj.__dict__.items()
-                if k in CONVERSIONS_KEYS
-            )
+        if kind == "curve":
 
-            kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
-            attr["object_type"] = kind
-            attr["page_number"] = pno
+            def point2coord(pt):
+                x, y = pt
+                return (self.decimalize(x), self.height - self.decimalize(y))
 
-            if hasattr(obj, "graphicstate"):
-                gs = obj.graphicstate
-                attr["stroking_color"] = gs.scolor
-                attr["non_stroking_color"] = gs.ncolor
+            attr["points"] = list(map(point2coord, obj.pts))
 
-            if hasattr(obj, "get_text"):
-                attr["text"] = obj.get_text()
+        if attr.get("y0") is not None:
+            attr["top"] = self.height - attr["y1"]
+            attr["bottom"] = self.height - attr["y0"]
+            attr["doctop"] = self.initial_doctop + attr["top"]
 
-            if kind == "curve":
-                attr["points"] = list(map(point2coord, obj.pts))
+        return attr
 
-            if attr.get("y0") is not None:
-                attr["top"] = h - attr["y1"]
-                attr["bottom"] = h - attr["y0"]
-                attr["doctop"] = idc + attr["top"]
+    def iter_layout_objects(self, layout_objects):
+        for obj in layout_objects:
+            # If object is, like LTFigure, a higher-level object
+            # then iterate through it's children
+            if hasattr(obj, "_objs"):
+                yield from self.iter_layout_objects(obj._objs)
+            else:
+                yield self.process_object(obj)
 
+    def parse_objects(self):
+        objects = {}
+        for obj in self.iter_layout_objects(self.layout._objs):
+            kind = obj["object_type"]
             if objects.get(kind) is None:
                 objects[kind] = []
-            objects[kind].append(attr)
-
-            if hasattr(obj, "_objs"):
-                for child in obj._objs:
-                    process_object(child)
-
-        for obj in self.layout._objs:
-            process_object(obj)
-
+            objects[kind].append(obj)
         return objects
 
     def debug_tablefinder(self, table_settings={}):

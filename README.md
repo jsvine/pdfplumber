@@ -90,7 +90,7 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 |`.page_number`| The sequential page number, starting with `1` for the first page, `2` for the second, and so on.|
 |`.width`| The page's width.|
 |`.height`| The page's height.|
-|`.objects` / `.chars` / `.lines` / `.rects` / `.curves` / `.figures` / `.images`| Each of these properties is a list, and each list contains one dictionary for each such object embedded on the page. For more detail, see "[Objects](#objects)" below.|
+|`.objects` / `.chars` / `.lines` / `.rects` / `.curves` / `.images`| Each of these properties is a list, and each list contains one dictionary for each such object embedded on the page. For more detail, see "[Objects](#objects)" below.|
 
 ... and these main methods:
 
@@ -100,7 +100,7 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 |`.within_bbox(bounding_box, relative=False)`| Similar to `.crop`, but only retains objects that fall *entirely* within the bounding box.|
 |`.filter(test_function)`| Returns a version of the page with only the `.objects` for which `test_function(obj)` returns `True`.|
 |`.extract_text(x_tolerance=3, y_tolerance=3)`| Collates all of the page's character objects into a single string. Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.|
-|`.extract_words(x_tolerance=3, y_tolerance=3, horizontal_ltr=True, vertical_ttb=True)`| Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where (for "upright" characters) the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`. A similar approach is taken for non-upright characters, but instead measuring the vertical, rather than horizontal, distances between them. The parameters `horizontal_ltr` and `vertical_ttb` indicate whether the words should be read from left-to-right (for horizontal words) / top-to-bottom (for vertical words).|
+|`.extract_words(x_tolerance=3, y_tolerance=3, keep_blank_chars=False, use_text_flow=False, horizontal_ltr=True, vertical_ttb=True, extra_attrs=[])`| Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where (for "upright" characters) the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`. A similar approach is taken for non-upright characters, but instead measuring the vertical, rather than horizontal, distances between them. The parameters `horizontal_ltr` and `vertical_ttb` indicate whether the words should be read from left-to-right (for horizontal words) / top-to-bottom (for vertical words). Changing `keep_blank_chars` to `True` will mean that blank characters are treated as part of a word, not as a space between words. Changing `use_text_flow` to `True` will use the PDF's underlying flow of characters as a guide for ordering and segmenting the words, rather than presorting the characters by x/y position. (This mimics how dragging a cursor highlights text in a PDF; as with that, the order does not always appear to be logical.) Passing a list of `extra_attrs`  (e.g., `["fontname", "size"]` will restrict each words to characters that share exactly the same value for each of those [attributes](https://github.com/jsvine/pdfplumber/blob/develop/README.md#char-properties), and the resulting word dicts will indicate those attributes.|
 |`.extract_tables(table_settings)`| Extracts tabular data from the page. For more details see "[Extracting tables](#extracting-tables)" below.|
 |`.to_image(**conversion_kwargs)`| Returns an instance of the `PageImage` class. For more details, see "[Visual debugging](#visual-debugging)" below. For conversion_kwargs, see [here](http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image).|
 
@@ -113,7 +113,6 @@ Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to four 
 - `.rects`, each representing a single 2-dimensional rectangle.
 - `.curves`, each representing a series of connected points.
 - `.images`, each representing an image.
-- `.figures`, each representing a figure.
 - `.annots`, each representing a single PDF annotation (cf. Section 8.4 of the [official PDF specification](https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf) for details)
 - `.hyperlinks`, each representing a single PDF annotation of the subtype `Link` and having an `URI` action attribute
 
@@ -195,10 +194,6 @@ Each object is represented as a simple Python `dict`, with the following propert
 Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to two derived lists of objects: `.rect_edges` (which decomposes each rectangle into its four lines) and `.edges` (which combines `.rect_edges` with `.lines`). 
 
 #### `image` properties
-
-[To be completed.]
-
-#### `figure` properties
 
 [To be completed.]
 

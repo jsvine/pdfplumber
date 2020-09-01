@@ -42,33 +42,45 @@ def to_b64(data_bytes):
     return base64.b64encode(data_bytes).decode("ascii")
 
 
+def try_decode_bytes(obj):
+    for e in ENCODINGS_TO_TRY:
+        try:
+            return obj.decode(e)
+        except UnicodeDecodeError:  # pragma: no cover
+            pass
+    # If none of the decodings work, raise whatever error
+    # decoding with utf-8 causes
+    obj.decode(ENCODINGS_TO_TRY[0])  # pragma: no cover
+
+
+serializers = {
+    Decimal: lambda obj: float(obj.quantize(Decimal(".0001"), rounding=ROUND_HALF_UP)),
+    list: lambda obj: list(serialize(x) for x in obj),
+    tuple: lambda obj: tuple(serialize(x) for x in obj),
+    dict: lambda obj: {k: serialize(v) for k, v in obj.items()},
+    PDFStream: lambda obj: {"rawdata": to_b64(obj.rawdata)},
+    PSLiteral: lambda obj: decode_text(obj.name),
+    bytes: try_decode_bytes,
+    bool: int,
+}
+
+
 def serialize(obj):
-    # Convert int-like
-    t = type(obj)
-    if t is Decimal:
-        return float(obj.quantize(Decimal(".0001"), rounding=ROUND_HALF_UP))
-    # If tuple/list passed, bulk-convert
-    elif t in (list, tuple):
-        return t(serialize(x) for x in obj)
-    elif t is dict:
-        return {k: serialize(v) for k, v in obj.items()}
-    elif t is PDFStream:
-        return {"rawdata": to_b64(obj.rawdata)}
-    elif t is PSLiteral:
-        return decode_text(obj.name)
-    elif t is bytes:
-        for e in ENCODINGS_TO_TRY:
-            try:
-                return obj.decode(e)
-            except UnicodeDecodeError:  # pragma: no cover
-                pass
-        # If none of the decodings work, raise whatever error
-        # decoding with utf-8 causes
-        obj.decode(ENCODINGS_TO_TRY[0])  # pragma: no cover
-    elif obj is None:
+    if obj is None:
         return None
-    elif t in (int, float, str, bool):
+
+    t = type(obj)
+
+    # Basic types don't need to be converted
+    if t in (int, float, str):
         return obj
+
+    # Use one of the custom converters above, if possible
+    fn = serializers.get(t)
+    if fn is not None:
+        return fn(obj)
+
+    # Otherwise, just use the string-representation
     else:
         return str(obj)
 

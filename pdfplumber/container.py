@@ -28,10 +28,6 @@ class Container(object):
         return self.objects.get("image", [])
 
     @property
-    def figures(self):
-        return self.objects.get("figure", [])
-
-    @property
     def chars(self):
         return self.objects.get("char", [])
 
