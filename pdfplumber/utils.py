@@ -168,7 +168,36 @@ def to_list(collection):
         return list(collection)
 
 
-def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
+def drop_duplicates_in_line_chars(line_chars,
+                                  tolerance=DEFAULT_X_TOLERANCE,
+                                  horizontal=True,  # Should words be read left-to-right or top-to-bottom
+                                  ):
+    """drop duplicates of char-pairs with same text and font type
+    """
+    if len(line_chars) < 2:
+        return line_chars
+
+    tolerance = decimalize(tolerance)
+    coll = []
+    last_char = None
+    min_key = 'x0' if horizontal else 'y0'
+
+    def compare_char_style(char_1, char_2):
+        keys = ['text', 'fontname', 'width', 'height', 'size']
+        return all([char_1.get(key) == char_2.get(key) for key in keys])
+
+    for char in sorted(line_chars, key=itemgetter(min_key)):
+        if not coll or not (
+                compare_char_style(last_char, char) and last_char.get(min_key) + tolerance > char.get(min_key)):
+            coll.append(char)
+            last_char = char
+
+    return coll
+
+
+def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE, drop_duplicates=True):
+    if drop_duplicates:
+        line_chars = drop_duplicates_in_line_chars(line_chars, tolerance)
     tolerance = decimalize(tolerance)
     coll = ""
     last_x1 = None
@@ -212,6 +241,7 @@ def extract_words(
     keep_blank_chars=False,
     horizontal_ltr=True,  # Should words be read left-to-right?
     vertical_ttb=True,  # Should vertical words be read top-to-bottom?
+    drop_duplicates=True,  # Should drop duplicates pair in the same line?
 ):
 
     x_tolerance = decimalize(x_tolerance)
@@ -246,6 +276,10 @@ def extract_words(
 
         def sort_key(x):
             return tol_fn(0, x[min_key])
+
+        # remove duplicates
+        if drop_duplicates:
+            chars = drop_duplicates_in_line_chars(chars, tolerance, horizontal_ltr)
 
         sorted_chars = sorted(chars, key=sort_key)
 
@@ -290,8 +324,7 @@ def extract_words(
 
 
 def extract_text(
-    chars, x_tolerance=DEFAULT_X_TOLERANCE, y_tolerance=DEFAULT_Y_TOLERANCE
-):
+        chars, x_tolerance=DEFAULT_X_TOLERANCE, y_tolerance=DEFAULT_Y_TOLERANCE, drop_duplicates=True):
 
     if len(chars) == 0:
         return None
@@ -299,7 +332,7 @@ def extract_text(
     chars = to_list(chars)
     doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
 
-    lines = (collate_line(line_chars, x_tolerance) for line_chars in doctop_clusters)
+    lines = (collate_line(line_chars, x_tolerance, drop_duplicates) for line_chars in doctop_clusters)
 
     coll = "\n".join(lines)
     return coll

@@ -206,7 +206,7 @@ class Page(Container):
     def find_tables(self, table_settings={}):
         return TableFinder(self, table_settings).tables
 
-    def extract_tables(self, table_settings={}):
+    def extract_tables(self, table_settings={}, drop_duplicates=True):
         tables = self.find_tables(table_settings)
 
         extract_kwargs = dict(
@@ -215,9 +215,10 @@ class Page(Container):
             if "text_" + k in table_settings
         )
 
+        extract_kwargs.update({'drop_duplicates': drop_duplicates})
         return [table.extract(**extract_kwargs) for table in tables]
 
-    def extract_table(self, table_settings={}):
+    def extract_table(self, table_settings={}, drop_duplicates=True):
         tables = self.find_tables(table_settings)
 
         if len(tables) == 0:
@@ -228,7 +229,7 @@ class Page(Container):
             return (-len(x.cells), x.bbox[1], x.bbox[0])
 
         largest = list(sorted(tables, key=sorter))[0]
-        return largest.extract()
+        return largest.extract(drop_duplicates=drop_duplicates)
 
     def extract_text(self, **kwargs):
         return utils.extract_text(self.chars, **kwargs)
