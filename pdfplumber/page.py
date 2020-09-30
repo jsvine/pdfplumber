@@ -31,11 +31,21 @@ class Page(Container):
 
         if self.rotation in [90, 270]:
             self.bbox = self.decimalize(
-                (min(m[1], m[3]), min(m[0], m[2]), max(m[1], m[3]), max(m[0], m[2]),)
+                (
+                    min(m[1], m[3]),
+                    min(m[0], m[2]),
+                    max(m[1], m[3]),
+                    max(m[0], m[2]),
+                )
             )
         else:
             self.bbox = self.decimalize(
-                (min(m[0], m[2]), min(m[1], m[3]), max(m[0], m[2]), max(m[1], m[3]),)
+                (
+                    min(m[0], m[2]),
+                    min(m[1], m[3]),
+                    max(m[0], m[2]),
+                    max(m[1], m[3]),
+                )
             )
 
     def decimalize(self, x):
