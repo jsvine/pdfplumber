@@ -1,5 +1,5 @@
 pytest
 pytest-cov
 pytest-parallel
-flake8
-black
+flake8==3.8.3
+black==20.8b0
