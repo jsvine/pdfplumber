@@ -168,6 +168,26 @@ def to_list(collection):
         return list(collection)
 
 
+def dedupe_chars(chars, tolerance=1):
+    """
+    Removes duplicate chars — those sharing the same text, fontname, size,
+    and positioning (within `tolerance`) as other characters in the set.
+    """
+    key = itemgetter("fontname", "size", "upright", "text")
+    pos_key = itemgetter("doctop", "x0")
+    t = decimalize(tolerance)
+
+    def yield_unique_chars(chars):
+        sorted_chars = sorted(chars, key=key)
+        for grp, grp_chars in itertools.groupby(sorted_chars, key=key):
+            for y_cluster in cluster_objects(grp_chars, "doctop", t):
+                for x_cluster in cluster_objects(y_cluster, "x0", t):
+                    yield sorted(x_cluster, key=pos_key)[0]
+
+    deduped = yield_unique_chars(chars)
+    return sorted(deduped, key=chars.index)
+
+
 def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
     tolerance = decimalize(tolerance)
     coll = ""

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## [0.5.24] — Unreleased
 ### Added
 - Added `extra_attrs=[...]` parameter to `.extract_text(...)` ([c8b200e](https://github.com/jsvine/pdfplumber/commit/c8b200e)) ([#28](https://github.com/jsvine/pdfplumber/issues/28))
+- Added `utils/page.dedupe_chars(...)` ([#71](https://github.com/jsvine/pdfplumber/issues/71))
 
 ### Changed
 - Change character attribute `upright` from `int` to `bool` (per original `pdfminer.six` representation) ([1f87898](https://github.com/jsvine/pdfplumber/commit/1f87898))

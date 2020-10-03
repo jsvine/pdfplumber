@@ -264,6 +264,16 @@ class Page(Container):
     def filter(self, test_function):
         return FilteredPage(self, test_function)
 
+    def dedupe_chars(self, **kwargs):
+        """
+        Removes duplicate chars — those sharing the same text, fontname, size,
+        and positioning (within `tolerance`) as other characters on the page.
+        """
+        p = FilteredPage(self, True)
+        p._objects = dict((kind, objs) for kind, objs in self._objects.items())
+        p._objects["char"] = utils.dedupe_chars(self.chars, **kwargs)
+        return p
+
     def to_image(self, **conversion_kwargs):
         """
         For conversion_kwargs, see:
