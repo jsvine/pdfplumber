@@ -2,14 +2,17 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.5.24] — Unreleased
+## [0.5.24] — 2020-10-20
 ### Added
 - Added `extra_attrs=[...]` parameter to `.extract_text(...)` ([c8b200e](https://github.com/jsvine/pdfplumber/commit/c8b200e)) ([#28](https://github.com/jsvine/pdfplumber/issues/28))
-- Added `utils/page.dedupe_chars(...)` ([#71](https://github.com/jsvine/pdfplumber/issues/71))
+- Added `utils/page.dedupe_chars(...)` ([04fd56a](https://github.com/jsvine/pdfplumber/commit/04fd56a) + [b132d45](https://github.com/jsvine/pdfplumber/commit/b132d45)) ([#71](https://github.com/jsvine/pdfplumber/issues/71))
 
 ### Changed
 - Change character attribute `upright` from `int` to `bool` (per original `pdfminer.six` representation) ([1f87898](https://github.com/jsvine/pdfplumber/commit/1f87898))
 - Remove access and reference to `Container.figures`, given that they are not fundamental objects ([8e74cb9](https://github.com/jsvine/pdfplumber/commit/8e74cb9))
+
+### Fixed
+- Decimalize "simple" `explicit_horizontal_lines`/`explicit_vertical_lines` descs passed to `TableFinder` methods ([bc40779](https://github.com/jsvine/pdfplumber/commit/bc40779)) ([#290](https://github.com/jsvine/pdfplumber/issues/290))
 
 ### Development Changes
 
