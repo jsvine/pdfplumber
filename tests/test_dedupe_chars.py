@@ -67,3 +67,10 @@ class Test(unittest.TestCase):
 
         assert last_line_without_drop == '微微软软 培培训训课课程程：：  名名模模意意义义一一些些有有意意义义一一些些'
         assert last_line_with_drop == '微软 培训课程： 名模意义一些有意义一些'
+
+    def test_extract_text2(self):
+        path = os.path.join(HERE, "pdfs/issue-71-duplicate-chars-2.pdf")
+        pdf = pdfplumber.open(path)
+        page = pdf.pages[0]
+
+        assert page.dedupe_chars().extract_text(y_tolerance=6).splitlines()[4] == "UE 8.  Circulation - Métabolismes"

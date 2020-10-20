@@ -270,7 +270,7 @@ class Page(Container):
         and positioning (within `tolerance`) as other characters on the page.
         """
         p = FilteredPage(self, True)
-        p._objects = dict((kind, objs) for kind, objs in self._objects.items())
+        p._objects = dict((kind, objs) for kind, objs in self.objects.items())
         p._objects["char"] = utils.dedupe_chars(self.chars, **kwargs)
         return p
 
