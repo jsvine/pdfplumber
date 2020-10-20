@@ -27,15 +27,15 @@ class Test(unittest.TestCase):
 
     def test_table_settings_errors(self):
         with pytest.raises(ValueError):
-            tf = table.TableFinder(self.pdf, { "strategy": "x" })
+            tf = table.TableFinder(self.pdf.pages[0], { "strategy": "x" })
             td.get_edges()
 
         with pytest.raises(ValueError):
-            tf = table.TableFinder(self.pdf, { "vertical_strategy": "x" })
+            tf = table.TableFinder(self.pdf.pages[0], { "vertical_strategy": "x" })
             td.get_edges()
 
         with pytest.raises(ValueError):
-            tf = table.TableFinder(self.pdf, {
+            tf = table.TableFinder(self.pdf.pages[0], {
                 "vertical_strategy": "explicit",
                 "explicit_vertical_lines": [],
             })
