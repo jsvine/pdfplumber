@@ -60,6 +60,18 @@ class Test(unittest.TestCase):
             ""
         ]
 
+    def test_explicit_desc_decimalization(self):
+        """
+        See issue #290
+        """
+        tf = table.TableFinder(self.pdf.pages[0], {
+            "vertical_strategy": "explicit",
+            "explicit_vertical_lines": [ 100, 200, 300 ],
+            "horizontal_strategy": "explicit",
+            "explicit_horizontal_lines": [ 100, 200, 300 ],
+        })
+        assert tf.tables[0].extract()
+
     def test_text_without_words(self):
         assert table.words_to_edges_h([]) == []
         assert table.words_to_edges_v([]) == []

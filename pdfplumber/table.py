@@ -486,8 +486,8 @@ class TableFinder(object):
             else:
                 v_explicit.append(
                     {
-                        "x0": desc,
-                        "x1": desc,
+                        "x0": utils.decimalize(desc),
+                        "x1": utils.decimalize(desc),
                         "top": self.page.bbox[1],
                         "bottom": self.page.bbox[3],
                         "height": self.page.bbox[3] - self.page.bbox[1],
@@ -520,8 +520,8 @@ class TableFinder(object):
                         "x0": self.page.bbox[0],
                         "x1": self.page.bbox[2],
                         "width": self.page.bbox[2] - self.page.bbox[0],
-                        "top": desc,
-                        "bottom": desc,
+                        "top": utils.decimalize(desc),
+                        "bottom": utils.decimalize(desc),
                         "orientation": "h",
                     }
                 )
