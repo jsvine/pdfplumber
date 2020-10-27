@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.25] — Unreleased
+### Fixed
+- Fix metadata extraction to handle integer/floating-point values ([#297](https://github.com/jsvine/pdfplumber/issues/297))
+
 ## [0.5.24] — 2020-10-20
 ### Added
 - Added `extra_attrs=[...]` parameter to `.extract_text(...)` ([c8b200e](https://github.com/jsvine/pdfplumber/commit/c8b200e)) ([#28](https://github.com/jsvine/pdfplumber/issues/28))
