@@ -160,3 +160,11 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             cropped = pdf.pages[0].crop((0, 0, 1, 1))
             assert cropped.extract_table() is None
+
+    def test_issue_297(self):
+        """
+        Handle integer type metadata
+        """
+        path = os.path.join(HERE, "pdfs/issue-297-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            assert isinstance(pdf.metadata["Copies"], int)
