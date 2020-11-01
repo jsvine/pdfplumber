@@ -224,9 +224,9 @@ class Page(Container):
         tables = self.find_tables(table_settings)
 
         extract_kwargs = dict(
-            (k, table_settings["text_" + k])
-            for k in ["x_tolerance", "y_tolerance"]
-            if "text_" + k in table_settings
+            (k, table_settings[k])
+            for k in ["text_x_tolerance", "text_y_tolerance", "merged_cell_fullfill"]
+            if k in table_settings
         )
 
         return [table.extract(**extract_kwargs) for table in tables]

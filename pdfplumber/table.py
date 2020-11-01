@@ -356,12 +356,14 @@ class Table(object):
 
     def extract(
         self,
-        x_tolerance=utils.DEFAULT_X_TOLERANCE,
-        y_tolerance=utils.DEFAULT_Y_TOLERANCE,
+        text_x_tolerance=utils.DEFAULT_X_TOLERANCE,
+        text_y_tolerance=utils.DEFAULT_Y_TOLERANCE,
+        merged_cell_fullfill=False,
     ):
 
         chars = self.page.chars
         table_arr = []
+        table_cell_arr = []
 
         def char_in_bbox(char, bbox):
             v_mid = (char["top"] + char["bottom"]) / 2
@@ -371,13 +373,37 @@ class Table(object):
                 (h_mid >= x0) and (h_mid < x1) and (v_mid >= top) and (v_mid < bottom)
             )
 
-        for row in self.rows:
+        for row_index, row in enumerate(self.rows):
             arr = []
+            cell_arr = []
             row_chars = [char for char in chars if char_in_bbox(char, row.bbox)]
 
-            for cell in row.cells:
+            for cell_index, cell in enumerate(row.cells):
                 if cell is None:
-                    cell_text = None
+                    if not merged_cell_fullfill:
+                        cell_text = None
+                    elif row_index == 0 and cell_index == 0:
+                        print("Unexpected: row 0 and column 0 is None!!")
+                        cell_text = None
+                    elif row_index == 0:
+                        cell = cell_arr[cell_index-1]
+                        cell_text = arr[cell_index-1]
+                    elif cell_index == 0:
+                        cell = table_cell_arr[row_index-1][cell_index]
+                        cell_text = table_arr[row_index-1][cell_index]
+                    else:
+                        left_cell = cell_arr[cell_index-1]
+                        up_cell = table_cell_arr[row_index-1][cell_index]
+                        # row merge, get from left
+                        if left_cell[2] >= up_cell[2]:
+                            cell = left_cell
+                            cell_text = arr[cell_index-1]
+                        # column merge, get from left
+                        elif up_cell[3] >= left_cell[3]:
+                            cell = up_cell
+                            cell_text = table_arr[row_index-1][cell_index]
+                        else:
+                            cell_text = None
                 else:
                     cell_chars = [
                         char for char in row_chars if char_in_bbox(char, cell)
@@ -385,12 +411,14 @@ class Table(object):
 
                     if len(cell_chars):
                         cell_text = utils.extract_text(
-                            cell_chars, x_tolerance=x_tolerance, y_tolerance=y_tolerance
+                            cell_chars, x_tolerance=text_x_tolerance, y_tolerance=text_y_tolerance
                         ).strip()
                     else:
                         cell_text = ""
                 arr.append(cell_text)
+                cell_arr.append(cell)
             table_arr.append(arr)
+            table_cell_arr.append(cell_arr)
 
         return table_arr
 
@@ -413,6 +441,7 @@ DEFAULT_TABLE_SETTINGS = {
     "intersection_tolerance": 3,
     "intersection_x_tolerance": None,
     "intersection_y_tolerance": None,
+    "merged_cell_fullfill": False,
 }
 
 

@@ -310,6 +310,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
     "intersection_tolerance": 3,
     "intersection_x_tolerance": None,
     "intersection_y_tolerance": None,
+    "merged_cell_fullfill": False,
 }
 ```
 
@@ -327,6 +328,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 |`"keep_blank_chars"`| When using the `text` strategy, consider `" "` chars to be *parts* of words and not word-separators.|
 |`"text_tolerance"`, `"text_x_tolerance"`, `"text_y_tolerance"`| When the `text` strategy searches for words, it will expect the individual letters in each word to be no more than `text_tolerance` pixels apart.|
 |`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges must be within `intersection_tolerance` pixels to be considered intersecting.|
+|`"merged_cell_fullfill"`| When extracting table with merged cells in, all the sub cell belongs to this merged cell will fill the same value. Only fill the left up sub cell if this value is False|
 
 ### Table-extraction strategies
 

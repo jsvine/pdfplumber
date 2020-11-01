@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Unreleased
+### Added
+- Added `merged_cell_fullfill` parameter to `table_settings` of extract_tables() function. It fills all the same value to the cells which belongs to the same merged cell when `merged_cell_fullfill` is True.
+
 ## [0.5.24] — 2020-10-20
 ### Added
 - Added `extra_attrs=[...]` parameter to `.extract_text(...)` ([c8b200e](https://github.com/jsvine/pdfplumber/commit/c8b200e)) ([#28](https://github.com/jsvine/pdfplumber/issues/28))
