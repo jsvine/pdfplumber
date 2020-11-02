@@ -75,3 +75,33 @@ class Test(unittest.TestCase):
     def test_text_without_words(self):
         assert table.words_to_edges_h([]) == []
         assert table.words_to_edges_v([]) == []
+
+    def test_merged_cell_fullfill(self):
+        path = os.path.join(HERE, "pdfs/issue-79-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            t = pdf.pages[0].extract_table({
+                "merged_cell_fullfill": True
+            })
+        assert t == [
+            ['a', 'vTest a', 'vTest a'],
+            ['dfdfdddddddddffljlllllllllllllllllf\nfdfffff', '6', 'b'],
+            ['', '33', '33'],
+            ['4', '8', '9.57'],
+            ['4', '6', '9.57'],
+            ['6', 'happy', 'happy'],
+            ['90', 'happy', 'happy']
+        ]
+
+    def test_merged_cell_default(self):
+        path = os.path.join(HERE, "pdfs/issue-79-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            t = pdf.pages[0].extract_table()
+        assert t == [
+            ['a', 'vTest a', None],
+            ['dfdfdddddddddffljlllllllllllllllllf\nfdfffff', '6', 'b'],
+            ['', '33', None],
+            ['4', '8', '9.57'],
+            [None, '6', None],
+            ['6', 'happy', None],
+            ['90', None, None]
+        ]
