@@ -6,16 +6,21 @@ NAME = "pdfplumber"
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 version_ns = {}
-with open(os.path.join(HERE, NAME, '_version.py')) as f:
+
+def _open(subpath):
+    path = os.path.join(HERE, subpath)
+    return open(path, encoding="utf-8")
+
+with _open(NAME + '/_version.py') as f:
     exec(f.read(), {}, version_ns)
 
-with open(os.path.join(HERE, "requirements.txt")) as f:
+with _open("requirements.txt") as f:
     base_reqs = f.read().strip().split("\n")
 
-with open(os.path.join(HERE, "requirements-dev.txt")) as f:
+with _open("requirements-dev.txt") as f:
     dev_reqs = f.read().strip().split("\n")
 
-with open(os.path.join(HERE, "README.md")) as f:
+with _open("README.md") as f:
     long_description = f.read()
 
 setup(
