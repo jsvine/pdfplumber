@@ -25,6 +25,9 @@ with _open("README.md") as f:
 
 setup(
     name=NAME,
+    url="https://github.com/jsvine/pdfplumber",
+    author="Jeremy Singer-Vine",
+    author_email="jsvine@gmail.com",
     description="Plumb a PDF for detailed information about each char, rectangle, and line.",
     long_description = long_description,
     long_description_content_type = "text/markdown",
