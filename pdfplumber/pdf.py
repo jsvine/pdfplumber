@@ -43,7 +43,10 @@ class PDF(Container):
     @classmethod
     def open(cls, path_or_fp, **kwargs):
         if isinstance(path_or_fp, (str, pathlib.Path)):
-            return cls(open(path_or_fp, "rb"), **kwargs)
+            fp = open(path_or_fp, "rb")
+            inst = cls(fp, **kwargs)
+            inst.close = fp.close
+            return inst
         else:
             return cls(path_or_fp, **kwargs)
 
@@ -69,7 +72,10 @@ class PDF(Container):
         return self._pages
 
     def close(self):
-        self.stream.close()
+        """
+        Override this method to execute code on __exit__.
+        """
+        pass
 
     def __enter__(self):
         return self
