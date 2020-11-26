@@ -2,6 +2,7 @@ from .container import Container
 from .page import Page
 from .utils import decode_text
 
+import logging
 import pathlib
 import itertools
 from pdfminer.pdfparser import PDFParser
@@ -11,6 +12,8 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.layout import LAParams
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.psparser import PSLiteral
+
+logger = logging.getLogger(__name__)
 
 
 class PDF(Container):
@@ -27,16 +30,21 @@ class PDF(Container):
         for info in self.doc.info:
             self.metadata.update(info)
         for k, v in self.metadata.items():
-            if hasattr(v, "resolve"):
-                v = v.resolve()
-            if type(v) == list:
-                self.metadata[k] = list(map(decode_text, v))
-            elif isinstance(v, PSLiteral):
-                self.metadata[k] = decode_text(v.name)
-            elif isinstance(v, (str, bytes)):
-                self.metadata[k] = decode_text(v)
-            else:
-                self.metadata[k] = v
+            try:
+                if hasattr(v, "resolve"):
+                    v = v.resolve()
+                if type(v) == list:
+                    self.metadata[k] = list(map(decode_text, v))
+                elif isinstance(v, PSLiteral):
+                    self.metadata[k] = decode_text(v.name)
+                elif isinstance(v, (str, bytes)):
+                    self.metadata[k] = decode_text(v)
+                else:
+                    self.metadata[k] = v
+            except Exception as e:
+                # This metadata value could not be parsed. Instead of failing the PDF read,
+                # treat it as a warning.
+                logger.warning(f'[WARNING] Metadata key "{k}" could not be parsed due to exception: {str(e)}')
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 

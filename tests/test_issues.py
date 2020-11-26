@@ -168,3 +168,11 @@ class Test(unittest.TestCase):
         path = os.path.join(HERE, "pdfs/issue-297-example.pdf")
         with pdfplumber.open(path) as pdf:
             assert isinstance(pdf.metadata["Copies"], int)
+
+    def test_issue_316(self):
+        """
+        Handle invalid metadata
+        """
+        path = os.path.join(HERE, "pdfs/issue-316-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            assert pdf.metadata
