@@ -1,6 +1,6 @@
 from .container import Container
 from .page import Page
-from .utils import decode_text
+from .utils import resolve_and_decode
 
 import logging
 import pathlib
@@ -31,16 +31,7 @@ class PDF(Container):
             self.metadata.update(info)
         for k, v in self.metadata.items():
             try:
-                if hasattr(v, "resolve"):
-                    v = v.resolve()
-                if type(v) == list:
-                    self.metadata[k] = list(map(decode_text, v))
-                elif isinstance(v, PSLiteral):
-                    self.metadata[k] = decode_text(v.name)
-                elif isinstance(v, (str, bytes)):
-                    self.metadata[k] = decode_text(v)
-                else:
-                    self.metadata[k] = v
+                self.metadata[k] = resolve_and_decode(v)
             except Exception as e:
                 # This metadata value could not be parsed. Instead of failing the PDF read,
                 # treat it as a warning.

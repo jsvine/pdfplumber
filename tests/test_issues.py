@@ -175,4 +175,4 @@ class Test(unittest.TestCase):
         """
         path = os.path.join(HERE, "pdfs/issue-316-example.pdf")
         with pdfplumber.open(path) as pdf:
-            assert pdf.metadata
+            assert pdf.metadata["Changes"][0]["CreationDate"] == "D:20061207105020Z00'00'"
