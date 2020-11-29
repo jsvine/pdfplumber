@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 import unittest
 import pdfplumber
-import sys, os
-import six
+import os
 
 import logging
 logging.disable(logging.ERROR)

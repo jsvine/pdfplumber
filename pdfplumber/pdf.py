@@ -11,7 +11,6 @@ from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.layout import LAParams
 from pdfminer.converter import PDFPageAggregator
-from pdfminer.psparser import PSLiteral
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +32,12 @@ class PDF(Container):
             try:
                 self.metadata[k] = resolve_and_decode(v)
             except Exception as e:
-                # This metadata value could not be parsed. Instead of failing the PDF read,
-                # treat it as a warning.
-                logger.warning(f'[WARNING] Metadata key "{k}" could not be parsed due to exception: {str(e)}')
+                # This metadata value could not be parsed. Instead of failing the PDF
+                # read, treat it as a warning.
+                logger.warning(
+                    f'[WARNING] Metadata key "{k}" could not be parsed due to '
+                    f"exception: {str(e)}"
+                )
         self.device = PDFPageAggregator(rsrcmgr, laparams=self.laparams)
         self.interpreter = PDFPageInterpreter(rsrcmgr, self.device)
 
