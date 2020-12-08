@@ -18,7 +18,15 @@ logger = logging.getLogger(__name__)
 class PDF(Container):
     cached_properties = Container.cached_properties + ["_pages"]
 
-    def __init__(self, stream, pages=None, laparams=None, precision=0.001, password=""):
+    def __init__(
+        self,
+        stream,
+        pages=None,
+        laparams=None,
+        precision=0.001,
+        password="",
+        strict_metadata=False,
+    ):
         self.laparams = None if laparams is None else LAParams(**laparams)
         self.stream = stream
         self.pages_to_parse = pages
@@ -32,8 +40,11 @@ class PDF(Container):
             try:
                 self.metadata[k] = resolve_and_decode(v)
             except Exception as e:
+                if strict_metadata:
+                    # Raise an exception since unable to resolve the metadata value.
+                    raise
                 # This metadata value could not be parsed. Instead of failing the PDF
-                # read, treat it as a warning.
+                # read, treat it as a warning only if ``strict_metadata=False``.
                 logger.warning(
                     f'[WARNING] Metadata key "{k}" could not be parsed due to '
                     f"exception: {str(e)}"
