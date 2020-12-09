@@ -44,7 +44,7 @@ class PDF(Container):
                     # Raise an exception since unable to resolve the metadata value.
                     raise
                 # This metadata value could not be parsed. Instead of failing the PDF
-                # read, treat it as a warning only if ``strict_metadata=False``.
+                # read, treat it as a warning only if `strict_metadata=False`.
                 logger.warning(
                     f'[WARNING] Metadata key "{k}" could not be parsed due to '
                     f"exception: {str(e)}"
