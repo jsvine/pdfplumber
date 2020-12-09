@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 import unittest
 import pdfplumber
-import sys, os
-import six
+import os
 
 import logging
 logging.disable(logging.ERROR)
@@ -168,3 +167,11 @@ class Test(unittest.TestCase):
         path = os.path.join(HERE, "pdfs/issue-297-example.pdf")
         with pdfplumber.open(path) as pdf:
             assert isinstance(pdf.metadata["Copies"], int)
+
+    def test_issue_316(self):
+        """
+        Handle invalid metadata
+        """
+        path = os.path.join(HERE, "pdfs/issue-316-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            assert pdf.metadata["Changes"][0]["CreationDate"] == "D:20061207105020Z00'00'"

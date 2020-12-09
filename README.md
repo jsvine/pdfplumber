@@ -72,6 +72,8 @@ The `open` method returns an instance of the `pdfplumber.PDF` class.
 
 To load a password-protected PDF, pass the `password` keyword argument, e.g., `pdfplumber.open("file.pdf", password = "test")`.
 
+Invalid metadata values are treated as a warning by default. If that is not intended, pass `strict_metadata=True` to the `open` method and `pdfplumber.open` will raise an exception if it is unable to parse the metadata.
+
 ### The `pdfplumber.PDF` class
 
 The top-level `pdfplumber.PDF` class represents a single PDF and has two main properties:

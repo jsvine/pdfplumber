@@ -78,6 +78,24 @@ def decode_text(s):
         return "".join(PDFDocEncoding[o] for o in ords)
 
 
+def resolve_and_decode(obj):
+    """Recursively resolve the metadata values."""
+    if hasattr(obj, "resolve"):
+        obj = obj.resolve()
+    if isinstance(obj, list):
+        return list(map(resolve_and_decode, obj))
+    elif isinstance(obj, PSLiteral):
+        return decode_text(obj.name)
+    elif isinstance(obj, (str, bytes)):
+        return decode_text(obj)
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            obj[k] = resolve_and_decode(v)
+        return obj
+
+    return obj
+
+
 def decode_psl_list(_list):
     return [
         decode_text(value.name) if isinstance(value, PSLiteral) else value
