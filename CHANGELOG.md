@@ -2,17 +2,16 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.5.25] — Unreleased
+## [0.5.25] — 2020-12-09
 ## Added
-- Add new boolean argument `strict_metadata` (default `False`) to `pdfplumber.open(...)` method for handling metadata resolve failures ([#320](https://github.com/jsvine/pdfplumber/pull/320))
+- Add new boolean argument `strict_metadata` (default `False`) to `pdfplumber.open(...)` method for handling metadata resolution failures ([f2c510d](https://github.com/jsvine/pdfplumber/commit/f2c510d))
 
 ### Fixed
-- Fix metadata extraction to handle integer/floating-point values ([#297](https://github.com/jsvine/pdfplumber/issues/297))
-- Explicitly load text as utf-8 in `setup.py` ([#304](https://github.com/jsvine/pdfplumber/issues/304))
-- Fix `pdfplumber.open(...)` so that it does not close file objects passed to it ([#312](https://github.com/jsvine/pdfplumber/issues/312))
+- Fix metadata extraction to handle integer/floating-point values ([cb32478](https://github.com/jsvine/pdfplumber/commit/cb32478)) ([#297](https://github.com/jsvine/pdfplumber/issues/297))
+- Fix metadata extraction to handle nested metadata values ([2d9415](https://github.com/jsvine/pdfplumber/commit/2d9415)) ([#316](https://github.com/jsvine/pdfplumber/issues/316))
+- Explicitly load text as utf-8 in `setup.py` ([7854328](https://github.com/jsvine/pdfplumber/commit/7854328)) ([#304](https://github.com/jsvine/pdfplumber/issues/304))
+- Fix `pdfplumber.open(...)` so that it does not close file objects passed to it ([408605f](https://github.com/jsvine/pdfplumber/commit/408605f)) ([#312](https://github.com/jsvine/pdfplumber/issues/312))
 
-### Changed
-- Extend metadata resolver to handle more data types ([#320](https://github.com/jsvine/pdfplumber/pull/320))
 
 ## [0.5.24] — 2020-10-20
 ### Added
