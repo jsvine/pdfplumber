@@ -14,12 +14,12 @@ tests:
 	${PYTHON} -m coverage html
 
 check-black:
-	${PYTHON} -m black pdfplumber --check
+	${PYTHON} -m black --check pdfplumber tests
 
 check-flake:
-	${PYTHON} -m flake8 pdfplumber
+	${PYTHON} -m flake8 pdfplumber tests
 
 lint: check-flake check-black
 
 format:
-	${PYTHON} -m black pdfplumber
+	${PYTHON} -m black pdfplumber tests

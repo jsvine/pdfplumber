@@ -27,10 +27,10 @@ jobs:
         pip install -r requirements-dev.txt
 
     - name: Validate against psf/black
-      run: python -m black --check pdfplumber
+      run: python -m black --check pdfplumber tests
 
     - name: Validate against flake8
-      run: python -m flake8 pdfplumber
+      run: python -m flake8 pdfplumber tests
 
   test:
     needs: lint
