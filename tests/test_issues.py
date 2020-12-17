@@ -13,7 +13,8 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 class Test(unittest.TestCase):
     def test_issue_13(self):
         """
-        Test slightly simplified from gist here: https://github.com/jsvine/pdfplumber/issues/13
+        Test slightly simplified from gist here:
+        https://github.com/jsvine/pdfplumber/issues/13
         """
         pdf = pdfplumber.open(
             os.path.join(HERE, "pdfs/issue-13-151201DSP-Fond-581-90D.pdf")
@@ -25,7 +26,7 @@ class Test(unittest.TestCase):
         RECT_TOLERANCE = 2
 
         def filter_rects(rects):
-            ## Just get the rects that are the right size to be checkboxes
+            # Just get the rects that are the right size to be checkboxes
             rects_found = []
             for rect in rects:
                 if (
@@ -38,13 +39,15 @@ class Test(unittest.TestCase):
             return rects_found
 
         def determine_if_checked(checkbox, curve_list):
-            # This figures out if the bounding box of (either) line used to make
-            # one half of the 'x' is the right size and overlaps with a rectangle.
-            # This isn't foolproof, but works for this case.
-            # It's not totally clear (to me) how common this style of checkboxes
-            # are used, and whether this is useful approach to them.
-            # Also note there should be *two* matching LTCurves for each checkbox.
-            # But here we only test there's at least one.
+            """
+            This figures out if the bounding box of (either) line used to make
+            one half of the 'x' is the right size and overlaps with a rectangle.
+            This isn't foolproof, but works for this case.
+            It's not totally clear (to me) how common this style of checkboxes
+            are used, and whether this is useful approach to them.
+            Also note there should be *two* matching LTCurves for each checkbox.
+            But here we only test there's at least one.
+            """
 
             for curve in curve_list:
 
@@ -117,13 +120,13 @@ class Test(unittest.TestCase):
         path = os.path.join(HERE, "pdfs/issue-90-example.pdf")
         with pdfplumber.open(path) as pdf:
             page = pdf.pages[0]
-            words = page.extract_words()
+            page.extract_words()
 
     def test_pr_136(self):
         path = os.path.join(HERE, "pdfs/pr-136-example.pdf")
         with pdfplumber.open(path) as pdf:
             page = pdf.pages[0]
-            words = page.extract_words()
+            page.extract_words()
 
     def test_pr_138(self):
         path = os.path.join(HERE, "pdfs/pr-138-example.pdf")

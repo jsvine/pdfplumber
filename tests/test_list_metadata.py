@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import unittest
 import pdfplumber
-import sys, os
+import os
 
 import logging
 

@@ -8,7 +8,7 @@ from pdfminer.psparser import PSLiteral
 from decimal import Decimal
 from itertools import groupby
 from operator import itemgetter
-import sys, os
+import os
 
 import logging
 
@@ -120,27 +120,26 @@ class Test(unittest.TestCase):
 
     def test_extract_text(self):
         text = self.pdf.pages[0].extract_text()
-        goal = "\n".join(
-            [
-                "First Page Previous Page Next Page Last Page",
-                "Print",
-                "PDFill: PDF Drawing",
-                "You can open a PDF or create a blank PDF by PDFill.",
-                "Online Help",
-                "Here are the PDF drawings created by PDFill",
-                "Please save into a new PDF to see the effect!",
-                "Goto Page 2: Line Tool",
-                "Goto Page 3: Arrow Tool",
-                "Goto Page 4: Tool for Rectangle, Square and Rounded Corner",
-                "Goto Page 5: Tool for Circle, Ellipse, Arc, Pie",
-                "Goto Page 6: Tool for Basic Shapes",
-                "Goto Page 7: Tool for Curves",
-                "Here are the tools to change line width, style, arrow style and colors",
-            ]
-        )
+        goal_lines = [
+            "First Page Previous Page Next Page Last Page",
+            "Print",
+            "PDFill: PDF Drawing",
+            "You can open a PDF or create a blank PDF by PDFill.",
+            "Online Help",
+            "Here are the PDF drawings created by PDFill",
+            "Please save into a new PDF to see the effect!",
+            "Goto Page 2: Line Tool",
+            "Goto Page 3: Arrow Tool",
+            "Goto Page 4: Tool for Rectangle, Square and Rounded Corner",
+            "Goto Page 5: Tool for Circle, Ellipse, Arc, Pie",
+            "Goto Page 6: Tool for Basic Shapes",
+            "Goto Page 7: Tool for Curves",
+            "Here are the tools to change line width, style, arrow style and colors",
+        ]
+        goal = "\n".join(goal_lines)
 
         assert text == goal
-        assert self.pdf.pages[0].crop((0, 0, 1, 1)).extract_text() == None
+        assert self.pdf.pages[0].crop((0, 0, 1, 1)).extract_text() is None
 
     def test_intersects_bbox(self):
         objs = [

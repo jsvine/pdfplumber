@@ -3,7 +3,7 @@ import unittest
 import pdfplumber
 from pdfplumber import utils
 from pdfplumber import table
-import sys, os
+import os
 
 import logging
 

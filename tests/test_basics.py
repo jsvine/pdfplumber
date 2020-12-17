@@ -2,7 +2,7 @@
 import unittest
 import pytest
 import pdfplumber
-import sys, os
+import os
 
 import logging
 
@@ -86,10 +86,8 @@ class Test(unittest.TestCase):
 
         # via issue #245, should not throw error when using `relative=True`
         bottom = page.crop((0, 0.8 * float(page.height), page.width, page.height))
-        bottom_left = bottom.crop(
-            (0, 0, 0.5 * float(bottom.width), bottom.height), relative=True
-        )
-        bottom_right = bottom.crop(
+        bottom.crop((0, 0, 0.5 * float(bottom.width), bottom.height), relative=True)
+        bottom.crop(
             (0.5 * float(bottom.width), 0, bottom.width, bottom.height), relative=True
         )
 
@@ -113,11 +111,9 @@ class Test(unittest.TestCase):
         # via issue #245
         bottom = page.crop((0, 0.8 * float(page.height), page.width, page.height))
         with pytest.raises(ValueError):
-            bottom_left = bottom.crop((0, 0, 0.5 * float(bottom.width), bottom.height))
+            bottom.crop((0, 0, 0.5 * float(bottom.width), bottom.height))
         with pytest.raises(ValueError):
-            bottom_right = bottom.crop(
-                (0.5 * float(bottom.width), 0, bottom.width, bottom.height)
-            )
+            bottom.crop((0.5 * float(bottom.width), 0, bottom.width, bottom.height))
 
     def test_rotation(self):
         assert self.pdf.pages[0].width == 1008

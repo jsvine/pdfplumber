@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import unittest
-import pytest
 import pdfplumber
 from subprocess import Popen, PIPE
 from io import StringIO

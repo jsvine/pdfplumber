@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import unittest
 import pdfplumber
-import sys, os, io
+import os
+import io
 
 import logging
 
@@ -37,7 +38,7 @@ class Test(unittest.TestCase):
     def test_bytes_stream_to_image(self):
         path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
         page = pdfplumber.PDF(io.BytesIO(open(path, "rb").read())).pages[0]
-        im = page.to_image()
+        page.to_image()
 
     def test_curves(self):
         path = os.path.join(HERE, "../examples/pdfs/ag-energy-round-up-2017-02-24.pdf")

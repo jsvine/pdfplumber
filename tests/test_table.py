@@ -3,7 +3,7 @@ import unittest
 import pytest
 import pdfplumber
 from pdfplumber import table
-import sys, os
+import os
 
 import logging
 
@@ -29,11 +29,11 @@ class Test(unittest.TestCase):
     def test_table_settings_errors(self):
         with pytest.raises(ValueError):
             tf = table.TableFinder(self.pdf.pages[0], {"strategy": "x"})
-            td.get_edges()
+            tf.get_edges()
 
         with pytest.raises(ValueError):
             tf = table.TableFinder(self.pdf.pages[0], {"vertical_strategy": "x"})
-            td.get_edges()
+            tf.get_edges()
 
         with pytest.raises(ValueError):
             tf = table.TableFinder(

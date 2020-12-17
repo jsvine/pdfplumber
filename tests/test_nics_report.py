@@ -3,7 +3,7 @@ import unittest
 import pdfplumber
 from operator import itemgetter
 from pdfplumber.utils import within_bbox, collate_chars
-import sys, os
+import os
 
 import logging
 

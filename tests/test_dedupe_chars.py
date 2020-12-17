@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 import unittest
-import pytest
-import sys, os
+import os
 import logging
 
 import pdfplumber
-from pdfplumber import table
 from pdfplumber.utils import Decimal
 
 
