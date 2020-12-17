@@ -4,12 +4,13 @@ import pdfplumber
 import os
 
 import logging
+
 logging.disable(logging.ERROR)
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-class Test(unittest.TestCase):
 
+class Test(unittest.TestCase):
     def test_issue_13(self):
         """
         Test slightly simplified from gist here: https://github.com/jsvine/pdfplumber/issues/13
@@ -27,35 +28,43 @@ class Test(unittest.TestCase):
             ## Just get the rects that are the right size to be checkboxes
             rects_found = []
             for rect in rects:
-                if ( rect['height'] > ( RECT_HEIGHT - RECT_TOLERANCE )   
-                    and ( rect['height'] < RECT_HEIGHT + RECT_TOLERANCE) 
-                    and ( rect['width'] < RECT_WIDTH + RECT_TOLERANCE) 
-                    and ( rect['width'] < RECT_WIDTH + RECT_TOLERANCE) ):
+                if (
+                    rect["height"] > (RECT_HEIGHT - RECT_TOLERANCE)
+                    and (rect["height"] < RECT_HEIGHT + RECT_TOLERANCE)
+                    and (rect["width"] < RECT_WIDTH + RECT_TOLERANCE)
+                    and (rect["width"] < RECT_WIDTH + RECT_TOLERANCE)
+                ):
                     rects_found.append(rect)
             return rects_found
 
         def determine_if_checked(checkbox, curve_list):
             # This figures out if the bounding box of (either) line used to make
             # one half of the 'x' is the right size and overlaps with a rectangle.
-            # This isn't foolproof, but works for this case. 
+            # This isn't foolproof, but works for this case.
             # It's not totally clear (to me) how common this style of checkboxes
             # are used, and whether this is useful approach to them.
             # Also note there should be *two* matching LTCurves for each checkbox.
-            # But here we only test there's at least one. 
+            # But here we only test there's at least one.
 
             for curve in curve_list:
 
-                if ( checkbox['height'] > ( RECT_HEIGHT - RECT_TOLERANCE )   
-                    and ( checkbox['height'] < RECT_HEIGHT + RECT_TOLERANCE) 
-                    and ( checkbox['width'] < RECT_WIDTH + RECT_TOLERANCE) 
-                    and ( checkbox['width'] < RECT_WIDTH + RECT_TOLERANCE) ):
+                if (
+                    checkbox["height"] > (RECT_HEIGHT - RECT_TOLERANCE)
+                    and (checkbox["height"] < RECT_HEIGHT + RECT_TOLERANCE)
+                    and (checkbox["width"] < RECT_WIDTH + RECT_TOLERANCE)
+                    and (checkbox["width"] < RECT_WIDTH + RECT_TOLERANCE)
+                ):
 
                     xmatch = False
                     ymatch = False
 
-                    if ( max(checkbox['x0'], curve['x0']) <= min(checkbox['x1'], curve['x1']) ):
+                    if max(checkbox["x0"], curve["x0"]) <= min(
+                        checkbox["x1"], curve["x1"]
+                    ):
                         xmatch = True
-                    if ( max(checkbox['y0'], curve['y0']) <= min(checkbox['y1'], curve['y1']) ):
+                    if max(checkbox["y0"], curve["y0"]) <= min(
+                        checkbox["y1"], curve["y1"]
+                    ):
                         ymatch = True
                     if xmatch and ymatch:
                         return True
@@ -66,44 +75,33 @@ class Test(unittest.TestCase):
         curves = p0.objects["curve"]
         rects = filter_rects(p0.objects["rect"])
 
-        n_checked = sum([ determine_if_checked(rect, curves)
-            for rect in rects ])
+        n_checked = sum([determine_if_checked(rect, curves) for rect in rects])
 
-        assert(n_checked == 5)
+        assert n_checked == 5
         pdf.close()
 
     def test_issue_14(self):
-        pdf = pdfplumber.open(
-            os.path.join(HERE, "pdfs/cupertino_usd_4-6-16.pdf")
-        )
+        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/cupertino_usd_4-6-16.pdf"))
         assert len(pdf.objects)
         pdf.close()
 
     def test_issue_21(self):
-        pdf = pdfplumber.open(
-            os.path.join(HERE, "pdfs/150109DSP-Milw-505-90D.pdf")
-        )
+        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/150109DSP-Milw-505-90D.pdf"))
         assert len(pdf.objects)
         pdf.close()
 
     def test_issue_33(self):
-        pdf = pdfplumber.open(
-            os.path.join(HERE, "pdfs/issue-33-lorem-ipsum.pdf")
-        )
+        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/issue-33-lorem-ipsum.pdf"))
         assert len(pdf.metadata.keys())
         pdf.close()
-        
+
     def test_issue_53(self):
-        pdf = pdfplumber.open(
-            os.path.join(HERE, "pdfs/issue-53-example.pdf")
-        )
+        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/issue-53-example.pdf"))
         assert len(pdf.objects)
         pdf.close()
 
     def test_issue_67(self):
-        pdf = pdfplumber.open(
-            os.path.join(HERE, "pdfs/issue-67-example.pdf")
-        )
+        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/issue-67-example.pdf"))
         assert len(pdf.metadata.keys())
         pdf.close()
 
@@ -132,11 +130,13 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             page = pdf.pages[0]
             assert len(page.chars) == 5140
-            page.extract_tables({
-                "vertical_strategy": "explicit",
-                "horizontal_strategy": "lines",
-                "explicit_vertical_lines": page.curves + page.edges,
-            })
+            page.extract_tables(
+                {
+                    "vertical_strategy": "explicit",
+                    "horizontal_strategy": "lines",
+                    "explicit_vertical_lines": page.curves + page.edges,
+                }
+            )
 
     def test_issue_140(self):
         path = os.path.join(HERE, "pdfs/issue-140-example.pdf")
@@ -174,4 +174,6 @@ class Test(unittest.TestCase):
         """
         path = os.path.join(HERE, "pdfs/issue-316-example.pdf")
         with pdfplumber.open(path) as pdf:
-            assert pdf.metadata["Changes"][0]["CreationDate"] == "D:20061207105020Z00'00'"
+            assert (
+                pdf.metadata["Changes"][0]["CreationDate"] == "D:20061207105020Z00'00'"
+            )

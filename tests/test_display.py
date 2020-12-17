@@ -4,12 +4,13 @@ import pdfplumber
 import sys, os, io
 
 import logging
+
 logging.disable(logging.ERROR)
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-class Test(unittest.TestCase):
 
+class Test(unittest.TestCase):
     @classmethod
     def setup_class(self):
         path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
@@ -30,22 +31,16 @@ class Test(unittest.TestCase):
 
     def test_debug_tablefinder(self):
         self.im.reset()
-        settings = {
-            "horizontal_strategy": "text",
-            "intersection_tolerance": 5
-        }
+        settings = {"horizontal_strategy": "text", "intersection_tolerance": 5}
         self.im.debug_tablefinder(settings)
 
     def test_bytes_stream_to_image(self):
         path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
-        page = pdfplumber.PDF(io.BytesIO(open(path, 'rb').read())).pages[0]
+        page = pdfplumber.PDF(io.BytesIO(open(path, "rb").read())).pages[0]
         im = page.to_image()
 
     def test_curves(self):
-        path = os.path.join(
-            HERE,
-            "../examples/pdfs/ag-energy-round-up-2017-02-24.pdf"
-        )
+        path = os.path.join(HERE, "../examples/pdfs/ag-energy-round-up-2017-02-24.pdf")
         page = pdfplumber.open(path).pages[0]
         im = page.to_image()
         im.draw_lines(page.curves)

@@ -11,12 +11,13 @@ from operator import itemgetter
 import sys, os
 
 import logging
+
 logging.disable(logging.ERROR)
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-class Test(unittest.TestCase):
 
+class Test(unittest.TestCase):
     @classmethod
     def setup_class(self):
         path = os.path.join(HERE, "pdfs/pdffill-demo.pdf")
@@ -47,14 +48,14 @@ class Test(unittest.TestCase):
     def test_resolve_all(self):
         info = self.pdf.doc.xrefs[0].trailer["Info"]
         assert type(info) == PDFObjRef
-        a = [ { "info": info } ]
+        a = [{"info": info}]
         a_res = utils.resolve_all(a)
         assert a_res[0]["info"]["Producer"] == self.pdf.doc.info[0]["Producer"]
 
     def test_decimalize(self):
         d = Decimal("1.011")
         assert utils.decimalize(1.011) == d
-        assert [ utils.decimalize(1.011) ] == [ d ]
+        assert [utils.decimalize(1.011)] == [d]
         assert utils.decimalize(d) == d
         assert id(utils.decimalize(d)) == id(d)
         assert utils.decimalize(1) == Decimal("1")
@@ -62,7 +63,7 @@ class Test(unittest.TestCase):
             utils.decimalize("1")
 
     def test_decode_psl_list(self):
-        a = [ PSLiteral("test"), "test_2" ]
+        a = [PSLiteral("test"), "test_2"]
         assert utils.decode_psl_list(a) == ["test", "test_2"]
 
     def test_extract_words(self):
@@ -70,7 +71,7 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             p = pdf.pages[0]
             words = p.extract_words(vertical_ttb=False)
-            words_attr = p.extract_words(vertical_ttb=False, extra_attrs = [ "size" ])
+            words_attr = p.extract_words(vertical_ttb=False, extra_attrs=["size"])
             words_w_spaces = p.extract_words(vertical_ttb=False, keep_blank_chars=True)
             words_rtl = p.extract_words(horizontal_ltr=False)
 
@@ -91,20 +92,19 @@ class Test(unittest.TestCase):
 
     def test_bad_word_extraction_settings(self):
         with pytest.raises(ValueError):
-            self.pdf.pages[0].extract_words(not_real_param = True)
+            self.pdf.pages[0].extract_words(not_real_param=True)
 
     def test_text_flow(self):
         path = os.path.join(HERE, "pdfs/federal-register-2020-17221.pdf")
 
         def words_to_text(words):
-            grouped = groupby(words, key = itemgetter("top"))
-            lines = [ " ".join(word["text"] for word in grp)
-                for top, grp in grouped ]
+            grouped = groupby(words, key=itemgetter("top"))
+            lines = [" ".join(word["text"] for word in grp) for top, grp in grouped]
             return "\n".join(lines)
 
         with pdfplumber.open(path) as pdf:
             p0 = pdf.pages[0]
-            using_flow = p0.extract_words(use_text_flow = True)
+            using_flow = p0.extract_words(use_text_flow=True)
             not_using_flow = p0.extract_words()
 
         target_text = (
@@ -120,22 +120,24 @@ class Test(unittest.TestCase):
 
     def test_extract_text(self):
         text = self.pdf.pages[0].extract_text()
-        goal = "\n".join([
-            "First Page Previous Page Next Page Last Page",
-            "Print",
-            "PDFill: PDF Drawing",
-            "You can open a PDF or create a blank PDF by PDFill.",
-            "Online Help",
-            "Here are the PDF drawings created by PDFill",
-            "Please save into a new PDF to see the effect!",
-            "Goto Page 2: Line Tool",
-            "Goto Page 3: Arrow Tool",
-            "Goto Page 4: Tool for Rectangle, Square and Rounded Corner",
-            "Goto Page 5: Tool for Circle, Ellipse, Arc, Pie",
-            "Goto Page 6: Tool for Basic Shapes",
-            "Goto Page 7: Tool for Curves",
-            "Here are the tools to change line width, style, arrow style and colors",
-        ])
+        goal = "\n".join(
+            [
+                "First Page Previous Page Next Page Last Page",
+                "Print",
+                "PDFill: PDF Drawing",
+                "You can open a PDF or create a blank PDF by PDFill.",
+                "Online Help",
+                "Here are the PDF drawings created by PDFill",
+                "Please save into a new PDF to see the effect!",
+                "Goto Page 2: Line Tool",
+                "Goto Page 3: Arrow Tool",
+                "Goto Page 4: Tool for Rectangle, Square and Rounded Corner",
+                "Goto Page 5: Tool for Circle, Ellipse, Arc, Pie",
+                "Goto Page 6: Tool for Basic Shapes",
+                "Goto Page 7: Tool for Curves",
+                "Here are the tools to change line width, style, arrow style and colors",
+            ]
+        )
 
         assert text == goal
         assert self.pdf.pages[0].crop((0, 0, 1, 1)).extract_text() == None
@@ -143,7 +145,7 @@ class Test(unittest.TestCase):
     def test_intersects_bbox(self):
         objs = [
             # Is same as bbox
-            { 
+            {
                 "x0": 0,
                 "top": 0,
                 "x1": 20,
@@ -287,7 +289,7 @@ class Test(unittest.TestCase):
         c["x0"] = 7
         c["x1"] = 12
 
-        a_new, b_new, c_new = utils.snap_objects([ a, b, c ], "x0", 1)
+        a_new, b_new, c_new = utils.snap_objects([a, b, c], "x0", 1)
         assert a_new == b_new == c_new
 
     def test_filter_edges(self):

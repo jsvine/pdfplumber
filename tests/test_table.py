@@ -6,12 +6,13 @@ from pdfplumber import table
 import sys, os
 
 import logging
+
 logging.disable(logging.ERROR)
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-class Test(unittest.TestCase):
 
+class Test(unittest.TestCase):
     @classmethod
     def setup_class(self):
         path = os.path.join(HERE, "pdfs/pdffill-demo.pdf")
@@ -27,26 +28,31 @@ class Test(unittest.TestCase):
 
     def test_table_settings_errors(self):
         with pytest.raises(ValueError):
-            tf = table.TableFinder(self.pdf.pages[0], { "strategy": "x" })
+            tf = table.TableFinder(self.pdf.pages[0], {"strategy": "x"})
             td.get_edges()
 
         with pytest.raises(ValueError):
-            tf = table.TableFinder(self.pdf.pages[0], { "vertical_strategy": "x" })
+            tf = table.TableFinder(self.pdf.pages[0], {"vertical_strategy": "x"})
             td.get_edges()
 
         with pytest.raises(ValueError):
-            tf = table.TableFinder(self.pdf.pages[0], {
-                "vertical_strategy": "explicit",
-                "explicit_vertical_lines": [],
-            })
+            tf = table.TableFinder(
+                self.pdf.pages[0],
+                {
+                    "vertical_strategy": "explicit",
+                    "explicit_vertical_lines": [],
+                },
+            )
 
     def test_edges_strict(self):
         path = os.path.join(HERE, "pdfs/issue-140-example.pdf")
         with pdfplumber.open(path) as pdf:
-            t = pdf.pages[0].extract_table({
-                "vertical_strategy": "lines_strict",
-                "horizontal_strategy": "lines_strict"
-            })
+            t = pdf.pages[0].extract_table(
+                {
+                    "vertical_strategy": "lines_strict",
+                    "horizontal_strategy": "lines_strict",
+                }
+            )
 
         assert t[-1] == [
             "",
@@ -57,19 +63,22 @@ class Test(unittest.TestCase):
             "$ 0.61",
             "$ 253.15",
             "0.0000",
-            ""
+            "",
         ]
 
     def test_explicit_desc_decimalization(self):
         """
         See issue #290
         """
-        tf = table.TableFinder(self.pdf.pages[0], {
-            "vertical_strategy": "explicit",
-            "explicit_vertical_lines": [ 100, 200, 300 ],
-            "horizontal_strategy": "explicit",
-            "explicit_horizontal_lines": [ 100, 200, 300 ],
-        })
+        tf = table.TableFinder(
+            self.pdf.pages[0],
+            {
+                "vertical_strategy": "explicit",
+                "explicit_vertical_lines": [100, 200, 300],
+                "horizontal_strategy": "explicit",
+                "explicit_horizontal_lines": [100, 200, 300],
+            },
+        )
         assert tf.tables[0].extract()
 
     def test_text_without_words(self):
