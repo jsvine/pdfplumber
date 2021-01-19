@@ -84,3 +84,15 @@ class Test(unittest.TestCase):
     def test_text_without_words(self):
         assert table.words_to_edges_h([]) == []
         assert table.words_to_edges_v([]) == []
+
+    def test_order(self):
+        """
+        See issue #336
+        """
+        path = os.path.join(HERE, "pdfs/issue-336-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            tables = pdf.pages[0].extract_tables()
+            assert len(tables) == 3
+            assert len(tables[0]) == 8
+            assert len(tables[1]) == 11
+            assert len(tables[2]) == 2

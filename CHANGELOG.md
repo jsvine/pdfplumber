@@ -2,8 +2,13 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.26] — TBD
+### Changed
+- Change `TableFinder` to return tables in order of topmost-and-then-leftmost, rather than leftmost-and-then-topmost ([#336](https://github.com/jsvine/pdfplumber/issues/336))
+
+
 ## [0.5.25] — 2020-12-09
-## Added
+### Added
 - Add new boolean argument `strict_metadata` (default `False`) to `pdfplumber.open(...)` method for handling metadata resolution failures ([f2c510d](https://github.com/jsvine/pdfplumber/commit/f2c510d))
 
 ### Fixed
