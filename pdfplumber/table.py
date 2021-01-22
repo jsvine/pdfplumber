@@ -312,7 +312,11 @@ def cells_to_tables(cells):
     if len(current_table["cells"]):
         tables.append(current_table)
 
-    _sorted = sorted(tables, key=lambda t: min(t["corners"]))
+    # Sort the tables top-to-bottom-left-to-right based on the value of the
+    # topmost-and-then-leftmost coordinate of a table. The topmost-and-then-leftmost
+    # coordinate is found by reversing the coordinates of the corners to (Y, X) from
+    # (X, Y) and then finding the smallest.
+    _sorted = sorted(tables, key=lambda t: min(corner[::-1] for corner in t["corners"]))
     filtered = [t["cells"] for t in _sorted if len(t["cells"]) > 1]
     return filtered
 
