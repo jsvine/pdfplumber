@@ -21,10 +21,6 @@ DEFAULT_RESOLUTION = 72
 
 
 def get_page_image(stream, page_no, resolution):
-    """
-    For kwargs, see http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image
-    """
-
     # If we are working with a file object saved to disk
     if hasattr(stream, "name"):
         spec = dict(filename=f"{stream.name}[{page_no}]")
@@ -44,14 +40,10 @@ def get_page_image(stream, page_no, resolution):
         img = postprocess(img_init)
         if img.alpha_channel:
             img.background_color = wand.image.Color("white")
-            img.alpha_channel = "background"
+            img.alpha_channel = "remove"
         with img.convert("png") as png:
             im = PIL.Image.open(BytesIO(png.make_blob()))
-            if "transparency" in im.info:
-                converted = im.convert("RGBA").convert("RGB")
-            else:
-                converted = im.convert("RGB")
-            return converted
+            return im.convert("RGB")
 
 
 class PageImage(object):
