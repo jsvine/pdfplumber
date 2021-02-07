@@ -5,9 +5,11 @@ All notable changes to this project will be documented in this file. The format 
 ## [0.6.0] - [unreleased]
 ### Added
 - Add `utils.merge_bboxes(bboxes)`, which returns the smallest bounding box that contains all bounding boxes in the `bboxes` argument.
+- Add `--precision` argument to CLI
 
 ## Changed
 - Upgrade `pdfminer.six` from `20200517` to `20211012`; see [that library's changelog](https://github.com/pdfminer/pdfminer.six/blob/develop/CHANGELOG.md) for details, but a key difference is an improvement in how it assigns `line`, `rect`, and `curve` objects. (Diagonal two-point lines, for instance, are now `line` objects instead of `curve` objects.)
+- Remove Decimal-ization of parsed object attributes, which are now represented with as much precision as is returned by `pdfminer.six` [#346](https://github.com/jsvine/pdfplumber/discussions/346)
 - Change behavior of horizontal `text_strategy`, so that it uses the top and bottom of *every* word, not just the top of every word and the bottom of the last. ([#467](https://github.com/jsvine/pdfplumber/pull/467) + [#466](https://github.com/jsvine/pdfplumber/issues/466) + [#265](https://github.com/jsvine/pdfplumber/issues/265)) [h/t @bobluda + @samkit-jain]
 
 ### Fixed
@@ -42,6 +44,7 @@ All notable changes to this project will be documented in this file. The format 
 - Add `Page.close/__enter__/__exit__` methods, by generalizing that behavior through the `Container` class ([b1849f4](https://github.com/jsvine/pdfplumber/commit/b1849f4))
 
 ### Changed
+- Change handling of floating point numbers; no longer convert them to `Decimal` objects and do not round them
 - Change `TableFinder` to return tables in order of topmost-and-then-leftmost, rather than leftmost-and-then-topmost ([#336](https://github.com/jsvine/pdfplumber/issues/336))
 - Change `Page.to_image()`'s handling of alpha layer, to remove aliasing artifacts ([#340](https://github.com/jsvine/pdfplumber/pull/340)) [h/t @arlyon]
 

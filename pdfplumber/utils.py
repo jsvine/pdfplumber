@@ -1,19 +1,15 @@
 from pdfminer.utils import PDFDocEncoding
 from pdfminer.psparser import PSLiteral
 from pdfminer.pdftypes import PDFObjRef
-from decimal import Decimal, ROUND_HALF_UP
-import numbers
 from operator import itemgetter
 import itertools
-from functools import lru_cache as cache
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
 
 
 def cluster_list(xs, tolerance=0):
-    tolerance = decimalize(tolerance)
-    if tolerance == Decimal(0):
+    if tolerance == 0:
         return [[x] for x in sorted(xs)]
     if len(xs) < 2:
         return [[x] for x in sorted(xs)]
@@ -33,7 +29,6 @@ def cluster_list(xs, tolerance=0):
 
 
 def make_cluster_dict(values, tolerance):
-    tolerance = decimalize(tolerance)
     clusters = cluster_list(set(values), tolerance)
 
     nested_tuples = [
@@ -145,34 +140,6 @@ def resolve_all(x):
         return x
 
 
-@cache(maxsize=int(10e4))
-def _decimalize(v, q=None):
-    # Convert int-like
-    if isinstance(v, numbers.Integral):
-        return Decimal(int(v))
-
-    # Convert float-like
-    elif isinstance(v, numbers.Real):
-        if q is not None:
-            return Decimal(repr(v)).quantize(Decimal(repr(q)), rounding=ROUND_HALF_UP)
-        else:
-            return Decimal(repr(v))
-    else:
-        raise ValueError(f"Cannot convert {v} to Decimal.")
-
-
-def decimalize(v, q=None):
-    # If already a decimal, just return itself
-    if type(v) == Decimal:
-        return v
-
-    # If tuple/list passed, bulk-convert
-    if isinstance(v, (tuple, list)):
-        return type(v)(decimalize(x, q) for x in v)
-    else:
-        return _decimalize(v, q)
-
-
 def is_dataframe(collection):
     cls = collection.__class__
     name = ".".join([cls.__module__, cls.__name__])
@@ -193,13 +160,12 @@ def dedupe_chars(chars, tolerance=1):
     """
     key = itemgetter("fontname", "size", "upright", "text")
     pos_key = itemgetter("doctop", "x0")
-    t = decimalize(tolerance)
 
     def yield_unique_chars(chars):
         sorted_chars = sorted(chars, key=key)
         for grp, grp_chars in itertools.groupby(sorted_chars, key=key):
-            for y_cluster in cluster_objects(grp_chars, "doctop", t):
-                for x_cluster in cluster_objects(y_cluster, "x0", t):
+            for y_cluster in cluster_objects(grp_chars, "doctop", tolerance):
+                for x_cluster in cluster_objects(y_cluster, "x0", tolerance):
                     yield sorted(x_cluster, key=pos_key)[0]
 
     deduped = yield_unique_chars(chars)
@@ -207,7 +173,6 @@ def dedupe_chars(chars, tolerance=1):
 
 
 def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
-    tolerance = decimalize(tolerance)
     coll = ""
     last_x1 = None
     for char in sorted(line_chars, key=itemgetter("x0")):
@@ -272,9 +237,6 @@ class WordExtractor:
         for s, val in settings.items():
             if s not in DEFAULT_WORD_EXTRACTION_SETTINGS:
                 raise ValueError(f"{s} is not a valid WordExtractor parameter")
-
-            if s in ["x_tolerance", "y_tolerance"]:
-                val = decimalize(val)
 
             setattr(self, s, val)
 
@@ -418,8 +380,8 @@ def filter_objects(objs, fn):
 
 
 def get_bbox_overlap(a, b):
-    a_left, a_top, a_right, a_bottom = decimalize(a)
-    b_left, b_top, b_right, b_bottom = decimalize(b)
+    a_left, a_top, a_right, a_bottom = a
+    b_left, b_top, b_right, b_bottom = b
     o_left = max(a_left, b_left)
     o_right = min(a_right, b_right)
     o_bottom = min(a_bottom, b_bottom)
@@ -440,7 +402,6 @@ def calculate_area(bbox):
 
 
 def clip_obj(obj, bbox):
-    bbox = decimalize(bbox)
 
     overlap = get_bbox_overlap(obj_to_bbox(obj), bbox)
     if overlap is None:
@@ -587,7 +548,7 @@ def rect_to_edges(rect):
     top.update(
         {
             "object_type": "rect_edge",
-            "height": decimalize(0),
+            "height": 0,
             "y0": rect["y1"],
             "bottom": rect["top"],
             "orientation": "h",
@@ -596,7 +557,7 @@ def rect_to_edges(rect):
     bottom.update(
         {
             "object_type": "rect_edge",
-            "height": decimalize(0),
+            "height": 0,
             "y1": rect["y0"],
             "top": rect["top"] + rect["height"],
             "doctop": rect["doctop"] + rect["height"],
@@ -606,7 +567,7 @@ def rect_to_edges(rect):
     left.update(
         {
             "object_type": "rect_edge",
-            "width": decimalize(0),
+            "width": 0,
             "x1": rect["x0"],
             "orientation": "v",
         }
@@ -614,7 +575,7 @@ def rect_to_edges(rect):
     right.update(
         {
             "object_type": "rect_edge",
-            "width": decimalize(0),
+            "width": 0,
             "x0": rect["x1"],
             "orientation": "v",
         }

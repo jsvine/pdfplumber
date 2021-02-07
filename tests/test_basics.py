@@ -78,7 +78,7 @@ class Test(unittest.TestCase):
         page = self.pdf.pages[0]
         cropped = page.crop((10, 10, 40, 40))
         recropped = cropped.crop((10, 15, 20, 25), relative=True)
-        target_bbox = pdfplumber.utils.decimalize((20, 25, 30, 35))
+        target_bbox = (20, 25, 30, 35)
         assert recropped.bbox == target_bbox
 
         recropped_wi = cropped.within_bbox((10, 15, 20, 25), relative=True)
@@ -148,7 +148,7 @@ class Test(unittest.TestCase):
         path = os.path.join(HERE, "pdfs/cupertino_usd_4-6-16.pdf")
         laparams = dict(line_margin=0.2)
         with pdfplumber.open(path, laparams=laparams) as pdf:
-            assert float(pdf.pages[0].chars[0]["top"]) == 66.384
+            assert round(pdf.pages[0].chars[0]["top"], 3) == 66.384
 
     def test_loading_pathobj(self):
         from pathlib import Path

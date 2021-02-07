@@ -72,7 +72,9 @@ class Test(unittest.TestCase):
 
         p0 = pdf.pages[0]
         checklines = [
-            line for line in p0.lines if line["height"] == line["width"]
+            line
+            for line in p0.lines
+            if round(line["height"], 2) == round(line["width"], 2)
         ]  # These are diagonals
         rects = filter_rects(p0.objects["rect"])
 

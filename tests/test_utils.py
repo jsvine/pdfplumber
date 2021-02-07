@@ -5,7 +5,6 @@ import pdfplumber
 from pdfplumber import utils
 from pdfminer.pdfparser import PDFObjRef
 from pdfminer.psparser import PSLiteral
-from decimal import Decimal
 from itertools import groupby
 from operator import itemgetter
 import os
@@ -52,16 +51,6 @@ class Test(unittest.TestCase):
         a_res = utils.resolve_all(a)
         assert a_res[0]["info"]["Producer"] == self.pdf.doc.info[0]["Producer"]
 
-    def test_decimalize(self):
-        d = Decimal("1.011")
-        assert utils.decimalize(1.011) == d
-        assert [utils.decimalize(1.011)] == [d]
-        assert utils.decimalize(d) == d
-        assert id(utils.decimalize(d)) == id(d)
-        assert utils.decimalize(1) == Decimal("1")
-        with pytest.raises(ValueError):
-            utils.decimalize("1")
-
     def test_decode_psl_list(self):
         a = [PSLiteral("test"), "test_2"]
         assert utils.decode_psl_list(a) == ["test", "test_2"]
@@ -79,7 +68,7 @@ class Test(unittest.TestCase):
         assert words[0]["direction"] == 1
 
         assert "size" not in words[0]
-        assert float(words_attr[0]["size"]) == 9.960
+        assert round(words_attr[0]["size"], 2) == 9.96
 
         assert words_w_spaces[0]["text"] == "Agaaaaa: AAAA"
 
