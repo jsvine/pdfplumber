@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file. The format 
 ### Changed
 - Change `TableFinder` to return tables in order of topmost-and-then-leftmost, rather than leftmost-and-then-topmost ([#336](https://github.com/jsvine/pdfplumber/issues/336))
 
+### Added
+- Add `Page.close/__enter__/__exit__` methods, by generalizing that behavior through the `Container` class
+
 
 ## [0.5.25] — 2020-12-09
 ### Added

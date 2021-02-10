@@ -83,19 +83,6 @@ class PDF(Container):
             doctop += p.height
         return self._pages
 
-    def close(self):
-        """
-        Override this method to execute code on __exit__.
-        """
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.flush_cache()
-        self.close()
-
     @property
     def objects(self):
         if hasattr(self, "_objects"):

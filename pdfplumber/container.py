@@ -11,6 +11,15 @@ class Container(object):
             if hasattr(self, p):
                 delattr(self, p)
 
+    def close(self):
+        self.flush_cache()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
     @property
     def rects(self):
         return self.objects.get("rect", [])
