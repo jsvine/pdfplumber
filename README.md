@@ -110,12 +110,12 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 
 ### Objects
 
-Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to four types of PDF objects. The following properties each return a Python list of the matching objects:
+Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to several types of PDF objects, all derived from [`pdfminer.six`](https://github.com/pdfminer/pdfminer.six/) PDF parsing. The following properties each return a Python list of the matching objects:
 
 - `.chars`, each representing a single text character.
 - `.lines`, each representing a single 1-dimensional line.
 - `.rects`, each representing a single 2-dimensional rectangle.
-- `.curves`, each representing any series of connected points.
+- `.curves`, each representing any series of connected points that `pdfminer.six` does not recognize as a line or rectangle.
 - `.images`, each representing an image.
 - `.annots`, each representing a single PDF annotation (cf. Section 8.4 of the [official PDF specification](https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf) for details)
 - `.hyperlinks`, each representing a single PDF annotation of the subtype `Link` and having an `URI` action attribute
