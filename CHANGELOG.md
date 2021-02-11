@@ -2,14 +2,17 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.5.26] — TBD
+## [0.5.26] — 2021-01-10
+### Added
+- Add `Page.close/__enter__/__exit__` methods, by generalizing that behavior through the `Container` class ([b1849f4](https://github.com/jsvine/pdfplumber/commit/f2c510d))
+
 ### Changed
 - Change `TableFinder` to return tables in order of topmost-and-then-leftmost, rather than leftmost-and-then-topmost ([#336](https://github.com/jsvine/pdfplumber/issues/336))
 - Change `Page.to_image()`'s handling of alpha layer, to remove aliasing artifacts ([#340](https://github.com/jsvine/pdfplumber/pull/340)) [h/t @arlyon]
 
-### Added
-- Add `Page.close/__enter__/__exit__` methods, by generalizing that behavior through the `Container` class
+### Development Changes
 
+- Enforce `psf/black` and `flake8` on `tests/` ([#327](https://github.com/jsvine/pdfplumber/pull/327)
 
 ## [0.5.25] — 2020-12-09
 ### Added
