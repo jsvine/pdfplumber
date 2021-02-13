@@ -2,6 +2,8 @@ from . import utils
 from .utils import resolve_all
 from .table import TableFinder
 from .container import Container
+from pdfminer.pdfinterp import PDFPageInterpreter
+from pdfminer.converter import PDFPageAggregator
 import re
 
 lt_pat = re.compile(r"^LT")
@@ -99,7 +101,14 @@ class Page(Container):
     def layout(self):
         if hasattr(self, "_layout"):
             return self._layout
-        self._layout = self.pdf.process_page(self.page_obj)
+        device = PDFPageAggregator(
+            self.pdf.rsrcmgr,
+            pageno=self.page_number,
+            laparams=self.pdf.laparams,
+        )
+        interpreter = PDFPageInterpreter(self.pdf.rsrcmgr, device)
+        interpreter.process_page(self.page_obj)
+        self._layout = device.get_result()
         return self._layout
 
     @property
