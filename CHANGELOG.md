@@ -2,9 +2,13 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.27] — [Unreleased]
+### Fixed
+- Fix regression (introduced in `0.5.26`/[b1849f4](https://github.com/jsvine/pdfplumber/commit/b1849f4)) in closing files opened by `PDF.open`
+
 ## [0.5.26] — 2021-02-10
 ### Added
-- Add `Page.close/__enter__/__exit__` methods, by generalizing that behavior through the `Container` class ([b1849f4](https://github.com/jsvine/pdfplumber/commit/f2c510d))
+- Add `Page.close/__enter__/__exit__` methods, by generalizing that behavior through the `Container` class ([b1849f4](https://github.com/jsvine/pdfplumber/commit/b1849f4))
 
 ### Changed
 - Change `TableFinder` to return tables in order of topmost-and-then-leftmost, rather than leftmost-and-then-topmost ([#336](https://github.com/jsvine/pdfplumber/issues/336))

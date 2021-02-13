@@ -57,7 +57,7 @@ class PDF(Container):
         if isinstance(path_or_fp, (str, pathlib.Path)):
             fp = open(path_or_fp, "rb")
             inst = cls(fp, **kwargs)
-            inst.close = fp.close
+            inst.close_file = fp.close
             return inst
         else:
             return cls(path_or_fp, **kwargs)

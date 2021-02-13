@@ -11,8 +11,15 @@ class Container(object):
             if hasattr(self, p):
                 delattr(self, p)
 
+    def close_file(self):
+        """
+        A placeholder, to be overridden when necessary (as in PDF.open)
+        """
+        pass
+
     def close(self):
         self.flush_cache()
+        self.close_file()
 
     def __enter__(self):
         return self
