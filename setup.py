@@ -1,17 +1,19 @@
-import sys, os
+import os
+
 from setuptools import setup, find_packages
-import subprocess
 
 NAME = "pdfplumber"
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 version_ns = {}
 
+
 def _open(subpath):
     path = os.path.join(HERE, subpath)
     return open(path, encoding="utf-8")
 
-with _open(NAME + '/_version.py') as f:
+
+with _open(NAME + "/_version.py") as f:
     exec(f.read(), {}, version_ns)
 
 with _open("requirements.txt") as f:
@@ -29,15 +31,18 @@ setup(
     author="Jeremy Singer-Vine",
     author_email="jsvine@gmail.com",
     description="Plumb a PDF for detailed information about each char, rectangle, and line.",
-    long_description = long_description,
-    long_description_content_type = "text/markdown",
-    version=version_ns['__version__'],
-    packages=find_packages(exclude=["test",]),
-    tests_require = base_reqs + dev_reqs,
-    install_requires = base_reqs,
-    entry_points={
-        "console_scripts": [ "pdfplumber = pdfplumber.cli:main" ] 
-    },
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    version=version_ns["__version__"],
+    packages=find_packages(
+        exclude=[
+            "test",
+        ]
+    ),
+    tests_require=base_reqs + dev_reqs,
+    python_requires=">=3.6",
+    install_requires=base_reqs,
+    entry_points={"console_scripts": ["pdfplumber = pdfplumber.cli:main"]},
     classifiers=[
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
