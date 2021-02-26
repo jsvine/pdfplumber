@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## [0.5.27] — [Unreleased]
 ### Fixed
 - Fix regression (introduced in `0.5.26`/[b1849f4](https://github.com/jsvine/pdfplumber/commit/b1849f4)) in closing files opened by `PDF.open`
+- Reinstate access to higher-level layout objects (such as `textboxhorizontal`) when `laparams` is passed to `pdfplumber.open(...)`. Had been removed in `0.5.24` via [1f87898](https://github.com/jsvine/pdfplumber/commit/1f878988576017b64f5cd77e1eb21b401124c699). ([#359](https://github.com/jsvine/pdfplumber/issues/359))
 
 ## [0.5.26] — 2021-02-10
 ### Added

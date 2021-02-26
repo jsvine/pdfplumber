@@ -207,9 +207,12 @@ class Page(Container):
 
     def iter_layout_objects(self, layout_objects):
         for obj in layout_objects:
-            # If object is, like LTFigure, a higher-level object
-            # then iterate through it's children
+            # If object is, like LTFigure, a higher-level object ...
             if hasattr(obj, "_objs"):
+                # and LAParams is passed, process the object itself.
+                if self.pdf.laparams is not None:
+                    yield self.process_object(obj)
+                # Regardless, iterate through its children
                 yield from self.iter_layout_objects(obj._objs)
             else:
                 yield self.process_object(obj)
