@@ -362,6 +362,7 @@ class Table(object):
         self,
         x_tolerance=utils.DEFAULT_X_TOLERANCE,
         y_tolerance=utils.DEFAULT_Y_TOLERANCE,
+        strip_whitespaces=True
     ):
 
         chars = self.page.chars
@@ -390,7 +391,9 @@ class Table(object):
                     if len(cell_chars):
                         cell_text = utils.extract_text(
                             cell_chars, x_tolerance=x_tolerance, y_tolerance=y_tolerance
-                        ).strip()
+                        )
+                        if strip_whitespaces:
+                            cell_text = cell_text.strip()
                     else:
                         cell_text = ""
                 arr.append(cell_text)
@@ -417,6 +420,7 @@ DEFAULT_TABLE_SETTINGS = {
     "intersection_tolerance": 3,
     "intersection_x_tolerance": None,
     "intersection_y_tolerance": None,
+    "strip_whitespaces": True,
 }
 
 

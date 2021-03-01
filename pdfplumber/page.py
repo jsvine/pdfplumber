@@ -240,6 +240,10 @@ class Page(Container):
             for k in ["x_tolerance", "y_tolerance"]
             if "text_" + k in table_settings
         )
+        if "strip_whitespaces" in table_settings:
+            extract_kwargs.update(
+                {"strip_whitespaces": table_settings["strip_whitespaces"]}
+            )
 
         return [table.extract(**extract_kwargs) for table in tables]
 
