@@ -26,3 +26,11 @@ class Test(unittest.TestCase):
             objs = pdf.pages[0].objects
             assert len(objs["textboxhorizontal"]) == 21
             assert len(objs["char"]) == 4408
+            assert "anno" not in objs.keys()
+
+    def test_issue_383(self):
+        with pdfplumber.open(self.path, laparams={}) as pdf:
+            p0 = pdf.pages[0]
+            assert "anno" not in p0.objects.keys()
+            cropped = p0.crop((0, 0, 100, 100))
+            assert len(cropped.objects)

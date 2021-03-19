@@ -221,6 +221,8 @@ class Page(Container):
         objects = {}
         for obj in self.iter_layout_objects(self.layout._objs):
             kind = obj["object_type"]
+            if kind in ["anno"]:
+                continue
             if objects.get(kind) is None:
                 objects[kind] = []
             objects[kind].append(obj)
