@@ -180,3 +180,12 @@ class Test(unittest.TestCase):
             assert (
                 pdf.metadata["Changes"][0]["CreationDate"] == "D:20061207105020Z00'00'"
             )
+
+    def test_issue_386(self):
+        """
+        util.extract_text() should not raise exception if given pure iterator
+        """
+        path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
+        with pdfplumber.open(path) as pdf:
+            chars = (char for char in pdf.chars)
+            pdfplumber.utils.extract_text(chars)
