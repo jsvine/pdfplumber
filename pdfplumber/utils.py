@@ -365,13 +365,14 @@ def extract_words(chars, **kwargs):
 
 
 def extract_text(
-    chars, x_tolerance=DEFAULT_X_TOLERANCE, y_tolerance=DEFAULT_Y_TOLERANCE
+    chars,
+    x_tolerance=DEFAULT_X_TOLERANCE,
+    y_tolerance=DEFAULT_Y_TOLERANCE,
 ):
-
+    chars = to_list(chars)
     if len(chars) == 0:
         return None
 
-    chars = to_list(chars)
     doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
 
     lines = (collate_line(line_chars, x_tolerance) for line_chars in doctop_clusters)

@@ -389,7 +389,9 @@ class Table(object):
 
                     if len(cell_chars):
                         cell_text = utils.extract_text(
-                            cell_chars, x_tolerance=x_tolerance, y_tolerance=y_tolerance
+                            cell_chars,
+                            x_tolerance=x_tolerance,
+                            y_tolerance=y_tolerance,
                         ).strip()
                     else:
                         cell_text = ""
