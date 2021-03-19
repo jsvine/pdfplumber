@@ -428,6 +428,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Marco](https://github.com/ubmarco)
 - [Idan David](https://github.com/idan-david)
 - [xv44586](https://github.com/xv44586)
+- [Alexander Regueiro](https://github.com/alexreg)
 
 ## Contributing
 

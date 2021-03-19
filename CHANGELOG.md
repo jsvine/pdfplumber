@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.28] — Unreleased
+### Fixed
+- Fix `.extract_text(...)` so that it can accept generator objects as its main parameter. ([#385](https://github.com/jsvine/pdfplumber/pull/385)) [h/t @alexreg]
+
 ## [0.5.27] — 2021-02-28
 ### Fixed
 - Fix regression (introduced in `0.5.26`/[b1849f4](https://github.com/jsvine/pdfplumber/commit/b1849f4)) in closing files opened by `PDF.open`
