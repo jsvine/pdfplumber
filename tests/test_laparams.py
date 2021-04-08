@@ -23,10 +23,21 @@ class Test(unittest.TestCase):
 
     def test_with_laparams(self):
         with pdfplumber.open(self.path, laparams={}) as pdf:
-            objs = pdf.pages[0].objects
-            assert len(objs["textboxhorizontal"]) == 21
-            assert len(objs["char"]) == 4408
-            assert "anno" not in objs.keys()
+            page = pdf.pages[0]
+            assert len(page.textboxhorizontals) == 21
+            assert len(page.textlinehorizontals) == 79
+            assert len(page.chars) == 4408
+            assert "anno" not in page.objects.keys()
+
+    def test_vertical_texts(self):
+        path = os.path.join(HERE, "pdfs/issue-192-example.pdf")
+        laparams = {"detect_vertical": True}
+        with pdfplumber.open(path, laparams=laparams) as pdf:
+            page = pdf.pages[0]
+            assert len(page.textlinehorizontals) == 142
+            assert len(page.textboxhorizontals) == 74
+            assert len(page.textlineverticals) == 11
+            assert len(page.textboxverticals) == 6
 
     def test_issue_383(self):
         with pdfplumber.open(self.path, laparams={}) as pdf:

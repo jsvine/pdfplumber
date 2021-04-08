@@ -3,6 +3,7 @@ from . import convert
 from .pdf import PDF
 import argparse
 from itertools import chain
+import json
 import sys
 
 
@@ -23,12 +24,15 @@ def parse_args(args_raw):
 
     parser.add_argument("--format", choices=["csv", "json"], default="csv")
 
+    parser.add_argument("--types", nargs="+")
+
     parser.add_argument(
-        "--types",
-        nargs="+",
-        default=convert.DEFAULT_TYPES,
-        choices=convert.DEFAULT_TYPES,
+        "--all-types",
+        action="store_true",
+        help="Return all types of objects. Overrides --types.",
     )
+
+    parser.add_argument("--laparams", type=json.loads)
 
     parser.add_argument("--pages", nargs="+", type=parse_page_spec)
 
@@ -46,7 +50,7 @@ def main(args_raw=sys.argv[1:]):
     args = parse_args(args_raw)
     converter = {"csv": convert.to_csv, "json": convert.to_json}[args.format]
     kwargs = {"csv": {}, "json": {"indent": args.indent}}[args.format]
-    with PDF.open(args.infile, pages=args.pages) as pdf:
+    with PDF.open(args.infile, pages=args.pages, laparams=args.laparams) as pdf:
         converter(pdf, sys.stdout, args.types, **kwargs)
 
 

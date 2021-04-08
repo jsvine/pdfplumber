@@ -46,7 +46,8 @@ The output will be a CSV containing info about every character, line, and rectan
 |----------|-------------|
 |`--format [format]`| `csv` or `json`. The `json` format returns more information; it includes PDF-level and page-level metadata, plus dictionary-nested attributes.|
 |`--pages [list of pages]`| A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.|
-|`--types [list of object types to extract]`| Choices are `char`, `rect`, `line`, `curve`, `image`, `annot`. Defaults to all.|
+|`--types [list of object types to extract]`| Choices are `char`, `rect`, `line`, `curve`, `image`, `annot`, et cetera. Defaults to all available.|
+|`--laparams`| A JSON-formatted string (e.g., `'{"detect_vertical": true}'`) to pass to `pdfplumber.open(..., laparams=...)`.|
 
 ## Python library
 
