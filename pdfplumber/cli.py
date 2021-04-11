@@ -26,12 +26,6 @@ def parse_args(args_raw):
 
     parser.add_argument("--types", nargs="+")
 
-    parser.add_argument(
-        "--all-types",
-        action="store_true",
-        help="Return all types of objects. Overrides --types.",
-    )
-
     parser.add_argument("--laparams", type=json.loads)
 
     parser.add_argument("--pages", nargs="+", type=parse_page_spec)
