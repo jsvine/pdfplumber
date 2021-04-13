@@ -7,15 +7,6 @@ import csv
 import base64
 from io import StringIO
 
-DEFAULT_TYPES = [
-    "char",
-    "rect",
-    "line",
-    "curve",
-    "image",
-    "annot",
-]
-
 COLS_TO_PREPEND = [
     "object_type",
     "page_number",
@@ -85,7 +76,10 @@ def serialize(obj):
         return str(obj)
 
 
-def to_json(container, stream=None, types=DEFAULT_TYPES, indent=None):
+def to_json(container, stream=None, types=None, indent=None):
+    if types is None:
+        types = list(container.objects.keys()) + ["annot"]
+
     def page_to_dict(page):
         d = {
             "page_number": page.page_number,
@@ -117,23 +111,27 @@ def to_json(container, stream=None, types=DEFAULT_TYPES, indent=None):
         return json.dump(serialized, stream, indent=indent)
 
 
-def to_csv(container, stream=None, types=DEFAULT_TYPES):
+def to_csv(container, stream=None, types=None):
     if stream is None:
         stream = StringIO()
         to_string = True
     else:
         to_string = False
 
-    objs = []
+    if types is None:
+        types = list(container.objects.keys()) + ["annot"]
 
-    # Determine set of fields for all objects
+    objs = []
     fields = set()
-    for t in types:
-        new_objs = getattr(container, t + "s")
-        if len(new_objs):
-            objs += new_objs
-            new_keys = [k for k, v in new_objs[0].items() if type(v) is not dict]
-            fields = fields.union(set(new_keys))
+
+    pages = container.pages if hasattr(container, "pages") else [container]
+    for page in pages:
+        for t in types:
+            new_objs = getattr(page, t + "s")
+            if len(new_objs):
+                objs += new_objs
+                new_keys = [k for k, v in new_objs[0].items() if type(v) is not dict]
+                fields = fields.union(set(new_keys))
 
     cols = COLS_TO_PREPEND + list(sorted(set(fields) - set(COLS_TO_PREPEND)))
 

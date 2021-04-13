@@ -34,6 +34,15 @@ class Test(unittest.TestCase):
             self.pdf.pages[0].rects[0]["bottom"]
         )
 
+    def test_json_all_types(self):
+        c = json.loads(self.pdf.to_json(types=None))
+        found_types = c["pages"][0].keys()
+        assert "curves" in found_types
+        assert "chars" in found_types
+        assert "lines" in found_types
+        assert "rects" in found_types
+        assert "images" in found_types
+
     def test_single_pages(self):
         c = json.loads(self.pdf.pages[0].to_json())
         assert c["rects"][0]["bottom"] == float(self.pdf.pages[0].rects[0]["bottom"])
@@ -46,7 +55,7 @@ class Test(unittest.TestCase):
 
     def test_csv(self):
         c = self.pdf.to_csv()
-        assert c.split("\r\n")[1] == (
+        assert c.split("\r\n")[2] == (
             "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
             '18.0,12.996,,,,,,TimesNewRomanPSMT,,,,"(0, 0, 0)",,,18.0,,,,,Y,,1,'
         )
@@ -56,6 +65,10 @@ class Test(unittest.TestCase):
         io.seek(0)
         c_from_io = io.read()
         assert c == c_from_io
+
+    def test_csv_all_types(self):
+        c = self.pdf.to_csv(types=None)
+        assert c.split("\r\n")[1].split(",")[0] == "curve"
 
     def test_cli(self):
         res = run(

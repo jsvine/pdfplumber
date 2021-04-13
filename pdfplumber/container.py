@@ -48,6 +48,22 @@ class Container(object):
         return self.objects.get("char", [])
 
     @property
+    def textboxverticals(self):
+        return self.objects.get("textboxvertical", [])
+
+    @property
+    def textboxhorizontals(self):
+        return self.objects.get("textboxhorizontal", [])
+
+    @property
+    def textlineverticals(self):
+        return self.objects.get("textlinevertical", [])
+
+    @property
+    def textlinehorizontals(self):
+        return self.objects.get("textlinehorizontal", [])
+
+    @property
     def rect_edges(self):
         if hasattr(self, "_rect_edges"):
             return self._rect_edges
