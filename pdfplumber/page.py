@@ -256,7 +256,14 @@ class Page(Container):
             return (-len(x.cells), x.bbox[1], x.bbox[0])
 
         largest = list(sorted(tables, key=sorter))[0]
-        return largest.extract()
+
+        extract_kwargs = dict(
+            (k, table_settings["text_" + k])
+            for k in ["x_tolerance", "y_tolerance"]
+            if "text_" + k in table_settings
+        )
+
+        return largest.extract(**extract_kwargs)
 
     def extract_text(self, **kwargs):
         return utils.extract_text(self.chars, **kwargs)
