@@ -357,12 +357,14 @@ class Table(object):
                 yield (vertices[index - 1] + vertices[index]) / 2
 
         def get_cell_by_centroid(centroid_x, centroid_y):
-            return next(
+            cells = list(
                 filter(
                     lambda c: c[0] < centroid_x < c[2] and c[1] < centroid_y < c[3],
                     self.cells,
                 )
             )
+            if cells:
+                return cells[0]
 
         x_centroids = list(get_centroids((0, 2)))
         y_centroids = list(get_centroids((1, 3)))
