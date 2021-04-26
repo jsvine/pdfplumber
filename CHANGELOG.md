@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Changed
 - Change `.convert_csv(...)` to order objects first by page number, rather than object type. ([#407](https://github.com/jsvine/pdfplumber/pull/407))
 - Change `.convert_csv(...)`, `.convert_json(...)`, and CLI so that, by default, they returning all available object types, rather than those in a predefined default list. ([#407](https://github.com/jsvine/pdfplumber/pull/407))
+- Change `.extract_tables()` to duplicate value for merged cell instead of `None`([#422](https://github.com/jsvine/pdfplumber/pull/422))
 
 ### Fixed
 - Fix `.extract_text(...)` so that it can accept generator objects as its main parameter. ([#385](https://github.com/jsvine/pdfplumber/pull/385)) [h/t @alexreg]
