@@ -96,3 +96,36 @@ class Test(unittest.TestCase):
             assert len(tables[0]) == 8
             assert len(tables[1]) == 11
             assert len(tables[2]) == 2
+
+    def test_merge_cell(self):
+        """
+        See issue #420
+        """
+        path = os.path.join(HERE, "pdfs/issue-420-example.pdf")
+        TABLE_0_0 = [
+            ["Header 1", "Header 2", "Header 3", "Header 4"],
+            ["Merged cell 1", "Merged cell 2", "Cell 3-1", "Cell 4-1"],
+            ["Merged cell 1", "Merged cell 2", "Cell 3-2", "Cell 4-2"],
+            ["Merged cell 1", "Merged cell 2", "Cell 3-2", "Cell 4-3"],
+        ]
+        TABLE_0_1 = [
+            ["1-1", "1-1", "1-3", "1-4", "1-5", "1-6"],
+            ["2-1", "2-2", "2-3", "2-4", "1-5", "1-6"],
+            ["3-1", "3-2", "3-3", "3-4", "1-5", "1-6"],
+            ["3-1", "4-2", "4-3", "4-3", "1-5", "1-6"],
+            ["3-1", "4-2", "5-3", "5-4", "1-5", "1-6"],
+            ["6-1", "4-2", "6-3", "6-4", "1-5", "1-6"],
+            ["7-1", "7-1", "7-1", "7-1", "1-5", "1-6"],
+            ["7-1", "7-1", "7-1", "7-1", "7-5", "1-6"],
+        ]
+        TABLE_1_0 = [["1", "2"], [None, "4"]]
+
+        with pdfplumber.open(path) as pdf:
+            tables = pdf.pages[0].extract_tables()
+            assert len(tables) == 2
+            assert TABLE_0_0 == tables[0]
+            assert TABLE_0_1 == tables[1]
+
+            tables_missing_edges = pdf.pages[1].extract_tables()
+            assert len(tables_missing_edges) == 1
+            assert TABLE_1_0 == tables_missing_edges[0]

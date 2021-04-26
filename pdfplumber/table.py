@@ -349,13 +349,30 @@ class Table(object):
 
     @property
     def rows(self):
-        _sorted = sorted(self.cells, key=itemgetter(1, 0))
-        xs = list(sorted(set(map(itemgetter(0), self.cells))))
+        def get_centroids(indices):
+            vertices = list(
+                sorted(set(itertools.chain(*map(itemgetter(*indices), self.cells))))
+            )
+            for index in range(1, len(vertices)):
+                yield (vertices[index - 1] + vertices[index]) / 2
+
+        def get_cell_by_centroid(centroid_x, centroid_y):
+            cells = list(
+                filter(
+                    lambda c: c[0] < centroid_x < c[2] and c[1] < centroid_y < c[3],
+                    self.cells,
+                )
+            )
+            if cells:
+                return cells[0]
+
+        x_centroids = list(get_centroids((0, 2)))
+        y_centroids = list(get_centroids((1, 3)))
+
         rows = []
-        for y, row_cells in itertools.groupby(_sorted, itemgetter(1)):
-            xdict = dict((cell[0], cell) for cell in row_cells)
-            row = Row([xdict.get(x) for x in xs])
-            rows.append(row)
+        for y in y_centroids:
+            rows.append(Row([get_cell_by_centroid(x, y) for x in x_centroids]))
+
         return rows
 
     def extract(
