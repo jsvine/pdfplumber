@@ -81,6 +81,51 @@ class Test(unittest.TestCase):
         )
         assert tf.tables[0].extract()
 
+    def test_text_tolerance(self):
+        path = os.path.join(HERE, "pdfs/senate-expenditures.pdf")
+        with pdfplumber.open(path) as pdf:
+            bbox = (70.332, 130.986, 420, 509.106)
+            cropped = pdf.pages[0].crop(bbox)
+            t = cropped.extract_table(
+                {
+                    "horizontal_strategy": "text",
+                    "vertical_strategy": "text",
+                    "min_words_vertical": 20,
+                }
+            )
+            t_tol = cropped.extract_table(
+                {
+                    "horizontal_strategy": "text",
+                    "vertical_strategy": "text",
+                    "min_words_vertical": 20,
+                    "text_x_tolerance": 1,
+                }
+            )
+            t_tol_from_tables = cropped.extract_tables(
+                {
+                    "horizontal_strategy": "text",
+                    "vertical_strategy": "text",
+                    "min_words_vertical": 20,
+                    "text_x_tolerance": 1,
+                }
+            )[0]
+
+        assert t[-1] == [
+            "DHAW20190070",
+            "09/09/2019",
+            "CITIBANK-TRAVELCBACARD",
+            "08/12/2019",
+            "08/14/2019",
+        ]
+        assert t_tol[-1] == [
+            "DHAW20190070",
+            "09/09/2019",
+            "CITIBANK - TRAVEL CBA CARD",
+            "08/12/2019",
+            "08/14/2019",
+        ]
+        assert t_tol[-1] == t_tol_from_tables[-1]
+
     def test_text_without_words(self):
         assert table.words_to_edges_h([]) == []
         assert table.words_to_edges_v([]) == []
