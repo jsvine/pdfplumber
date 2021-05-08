@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 - Fix `.extract_text(...)` so that it can accept generator objects as its main parameter. ([#385](https://github.com/jsvine/pdfplumber/pull/385)) [h/t @alexreg]
 - Fix page-parsing so that `LTAnno` objects (which have no bounding-box coordinates) are not extracted. (Was only an issue when setting `laparams`.) ([#388](https://github.com/jsvine/pdfplumber/issues/383))
+- Fix `Page.extract_table(...)` so that it honors text tolerance settings ([#415](https://github.com/jsvine/pdfplumber/issues/415)) [h/t @trifling]
 
 ## [0.5.27] — 2021-02-28
 ### Fixed
