@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.5.29] - [unreleased]
+### Development Changes
+- Add `CONTRIBUTING.md` ([#428](https://github.com/jsvine/pdfplumber/pull/428))
+
 ## [0.5.28] — 2021-05-08
 ### Added
 - Add `--laparams` flag to CLI. ([#407](https://github.com/jsvine/pdfplumber/pull/407))
