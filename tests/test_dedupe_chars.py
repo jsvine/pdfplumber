@@ -74,3 +74,10 @@ class Test(unittest.TestCase):
             page.dedupe_chars().extract_text(y_tolerance=6).splitlines()[4]
             == "UE 8.  Circulation - Métabolismes"
         )
+
+    def test_extract_text3(self):
+        path = os.path.join(HERE, "pdfs/issue-461-bytes-str.pdf")
+        pdf = pdfplumber.open(path)
+        page = pdf.pages[0]
+
+        assert page.dedupe_chars()

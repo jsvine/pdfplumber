@@ -45,7 +45,21 @@ class Container(object):
 
     @property
     def chars(self):
-        return self.objects.get("char", [])
+        char_list = self.objects.get("char", [])
+
+        # See issue #461
+        # Convert keys like fontname and text that are required to be string, to string
+        # in case certain values are of type bytes.
+        str_keys = (  # List of keys to be type casted to string.
+            "fontname",
+            "text",
+        )
+
+        for char in char_list:
+            for str_key in str_keys:
+                char[str_key] = str(char[str_key])
+
+        return char_list
 
     @property
     def textboxverticals(self):

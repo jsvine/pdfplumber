@@ -6,7 +6,10 @@ All notable changes to this project will be documented in this file. The format 
 ### Development Changes
 - Add `CONTRIBUTING.md` ([#428](https://github.com/jsvine/pdfplumber/pull/428))
 
-## [0.5.28] — 2021-05-08
+### Fixed
+- Fix bug in which `.dedupe_chars(...)` will throw an error when a character's font name is of type `bytes` instead of `str`. ([#462](https://github.com/jsvine/pdfplumber/pull/462))
+
+## [0.5.28] — 2021-05-08
 ### Added
 - Add `--laparams` flag to CLI. ([#407](https://github.com/jsvine/pdfplumber/pull/407))
 
