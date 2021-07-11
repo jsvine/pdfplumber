@@ -84,7 +84,7 @@ def words_to_edges_h(words, word_threshold=DEFAULT_MIN_WORDS_HORIZONTAL):
         return []
     min_x0 = min(map(itemgetter("x0"), rects))
     max_x1 = max(map(itemgetter("x1"), rects))
-    max_bottom = max(map(itemgetter("bottom"), rects))
+
     edges = [
         {
             "x0": min_x0,
@@ -95,16 +95,22 @@ def words_to_edges_h(words, word_threshold=DEFAULT_MIN_WORDS_HORIZONTAL):
             "orientation": "h",
         }
         for r in rects
-    ] + [
-        {
-            "x0": min_x0,
-            "x1": max_x1,
-            "top": max_bottom,
-            "bottom": max_bottom,
-            "width": max_x1 - min_x0,
-            "orientation": "h",
-        }
     ]
+
+    # For each detected row, we also add the 'bottom' line.
+    # This will generate extra edges, (some will be redundant with the next row
+    # 'top' line), but this catches the last row of every table.
+    for r in rects:
+        edges.append(
+            {
+                "x0": min_x0,
+                "x1": max_x1,
+                "top": r["bottom"],
+                "bottom": r["bottom"],
+                "width": max_x1 - min_x0,
+                "orientation": "h",
+            }
+        )
 
     return edges
 
