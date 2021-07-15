@@ -141,3 +141,32 @@ class Test(unittest.TestCase):
             assert len(tables[0]) == 8
             assert len(tables[1]) == 11
             assert len(tables[2]) == 2
+
+    def test_issue_466_mixed_strategy(self):
+        """
+        See issue #466
+        """
+        path = os.path.join(HERE, "pdfs/issue-466-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            tables = pdf.pages[0].extract_tables(
+                {
+                    "vertical_strategy": "lines",
+                    "horizontal_strategy": "text",
+                    "snap_tolerance": 8,
+                    "intersection_tolerance": 4,
+                }
+            )
+
+            # The engine only extracts the tables which have drawn horizontal
+            # lines.
+            # For the 3 extracted tables, some common properties are expected:
+            # - 4 rows
+            # - 3 columns
+            # - Data in last row contains the string 'last'
+            for t in tables:
+                assert len(t) == 4
+                assert len(t[0]) == 3
+
+                # Verify that all cell contain real data
+                for cell in t[3]:
+                    assert "last" in cell
