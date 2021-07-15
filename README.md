@@ -431,6 +431,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [xv44586](https://github.com/xv44586)
 - [Alexander Regueiro](https://github.com/alexreg)
 - [Daniel Peña](https://github.com/trifling)
+- [bobluda](https://github.com/bobluda)
 
 ## Contributing
 

@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [0.5.29] - [unreleased]
+## Changed
+- Change behavior of horizontal `text_strategy`, so that it uses the top and bottom of *every* word, not just the top of every word and the bottom of the last. ([#467](https://github.com/jsvine/pdfplumber/pull/467) + [#466](https://github.com/jsvine/pdfplumber/issues/466) + [#265](https://github.com/jsvine/pdfplumber/issues/265)) [h/t @bobluda + @samkit-jain]
+
 ### Development Changes
 - Add `CONTRIBUTING.md` ([#428](https://github.com/jsvine/pdfplumber/pull/428))
 
