@@ -3,8 +3,14 @@
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [0.5.29] - [unreleased]
+### Added
+- Add `utils.merge_bboxes(bboxes)`, which returns the smallest bounding box that contains all bounding boxes in the `bboxes` argument.
+
 ## Changed
 - Change behavior of horizontal `text_strategy`, so that it uses the top and bottom of *every* word, not just the top of every word and the bottom of the last. ([#467](https://github.com/jsvine/pdfplumber/pull/467) + [#466](https://github.com/jsvine/pdfplumber/issues/466) + [#265](https://github.com/jsvine/pdfplumber/issues/265)) [h/t @bobluda + @samkit-jain]
+
+### Fixed
+- Fix slowdown in `.extract_words(...)`/`WordExtractor.iter_chars_to_words(...)` on very long words, caused by repeatedly re-calculating bounding box. ([#483](https://github.com/jsvine/pdfplumber/discussions/483))
 
 ### Development Changes
 - Add `CONTRIBUTING.md` ([#428](https://github.com/jsvine/pdfplumber/pull/428))
