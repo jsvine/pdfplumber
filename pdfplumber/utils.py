@@ -200,7 +200,9 @@ def dedupe_chars(chars, tolerance=1):
         for grp, grp_chars in itertools.groupby(sorted_chars, key=key):
             for y_cluster in cluster_objects(grp_chars, "doctop", t):
                 for x_cluster in cluster_objects(y_cluster, "x0", t):
-                    yield sorted(x_cluster, key=pos_key)[0]
+                    # to not remove 'properly' duplicated characters like "otto" or '112'
+                    # always yield every second letter of the cluster
+                    yield from iter(sorted(x_cluster, key=pos_key)[::2])
 
     deduped = yield_unique_chars(chars)
     return sorted(deduped, key=chars.index)
