@@ -124,7 +124,10 @@ class Page(Container):
             }
             for k, v in extras.items():
                 if v is not None:
-                    extras[k] = v.decode("utf-8")
+                    try:
+                        extras[k] = v.decode("utf-8")
+                    except UnicodeDecodeError:
+                        extras[k] = v.decode("utf-16")
 
             parsed = {
                 "page_number": self.page_number,

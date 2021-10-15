@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 - Fix slowdown in `.extract_words(...)`/`WordExtractor.iter_chars_to_words(...)` on very long words, caused by repeatedly re-calculating bounding box. ([#483](https://github.com/jsvine/pdfplumber/discussions/483))
+- Handle `UnicodeDecodeError` when trying to decode utf-16-encoded annotations ([#463](https://github.com/jsvine/pdfplumber/issues/463)) [h/t @tungph]
 
 ### Development Changes
 - Add `CONTRIBUTING.md` ([#428](https://github.com/jsvine/pdfplumber/pull/428))

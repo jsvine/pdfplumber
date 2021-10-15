@@ -187,3 +187,12 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             chars = (char for char in pdf.chars)
             pdfplumber.utils.extract_text(chars)
+
+    def test_issue_463(self):
+        """
+        Extracting annotations should not raise UnicodeDecodeError on utf-16 text
+        """
+        path = os.path.join(HERE, "pdfs/issue-463-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            annots = pdf.annots
+            annots[0]["contents"] == "日本語"
