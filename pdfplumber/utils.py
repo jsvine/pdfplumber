@@ -243,6 +243,19 @@ def bbox_to_rect(bbox):
     return {"x0": bbox[0], "top": bbox[1], "x1": bbox[2], "bottom": bbox[3]}
 
 
+def merge_bboxes(bboxes):
+    """
+    Given a set of bounding boxes, return the smallest bounding box that
+    contains them all.
+    """
+    return (
+        min(map(itemgetter(0), bboxes)),
+        min(map(itemgetter(1), bboxes)),
+        max(map(itemgetter(2), bboxes)),
+        max(map(itemgetter(3), bboxes)),
+    )
+
+
 DEFAULT_WORD_EXTRACTION_SETTINGS = dict(
     x_tolerance=DEFAULT_X_TOLERANCE,
     y_tolerance=DEFAULT_Y_TOLERANCE,
@@ -286,12 +299,12 @@ class WordExtractor:
 
         return word
 
-    def char_begins_new_word(self, current_chars, next_char):
+    def char_begins_new_word(self, current_chars, current_bbox, next_char):
         upright = current_chars[0]["upright"]
         intraline_tol = self.x_tolerance if upright else self.y_tolerance
         interline_tol = self.y_tolerance if upright else self.x_tolerance
 
-        word_x0, word_top, word_x1, word_bottom = objects_to_bbox(current_chars)
+        word_x0, word_top, word_x1, word_bottom = current_bbox
 
         return (
             (next_char["x0"] > word_x1 + intraline_tol)
@@ -302,19 +315,28 @@ class WordExtractor:
 
     def iter_chars_to_words(self, chars):
         current_word = []
+        current_bbox = None
 
         for char in chars:
             if not self.keep_blank_chars and char["text"].isspace():
                 if current_word:
                     yield current_word
                     current_word = []
+                    current_bbox = None
 
-            elif current_word and self.char_begins_new_word(current_word, char):
+            elif current_word and self.char_begins_new_word(
+                current_word, current_bbox, char
+            ):
                 yield current_word
                 current_word = [char]
+                current_bbox = obj_to_bbox(char)
 
             else:
                 current_word.append(char)
+                if current_bbox is None:
+                    current_bbox = obj_to_bbox(char)
+                else:
+                    current_bbox = merge_bboxes([current_bbox, obj_to_bbox(char)])
 
         if current_word:
             yield current_word
