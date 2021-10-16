@@ -172,17 +172,6 @@ def dedupe_chars(chars, tolerance=1):
     return sorted(deduped, key=chars.index)
 
 
-def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
-    coll = ""
-    last_x1 = None
-    for char in sorted(line_chars, key=itemgetter("x0")):
-        if (last_x1 is not None) and (char["x0"] > (last_x1 + tolerance)):
-            coll += " "
-        last_x1 = char["x1"]
-        coll += char["text"]
-    return coll
-
-
 def objects_to_rect(objects):
     return {
         "x0": min(map(itemgetter("x0"), objects)),
@@ -346,6 +335,17 @@ def extract_words(chars, **kwargs):
     settings = dict(DEFAULT_WORD_EXTRACTION_SETTINGS)
     settings.update(kwargs)
     return WordExtractor(**settings).extract(chars)
+
+
+def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE):
+    coll = ""
+    last_x1 = None
+    for char in sorted(line_chars, key=itemgetter("x0")):
+        if (last_x1 is not None) and (char["x0"] > (last_x1 + tolerance)):
+            coll += " "
+        last_x1 = char["x1"]
+        coll += char["text"]
+    return coll
 
 
 def extract_text(
