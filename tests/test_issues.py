@@ -38,7 +38,7 @@ class Test(unittest.TestCase):
                     rects_found.append(rect)
             return rects_found
 
-        def determine_if_checked(checkbox, curve_list):
+        def determine_if_checked(checkbox, checklines):
             """
             This figures out if the bounding box of (either) line used to make
             one half of the 'x' is the right size and overlaps with a rectangle.
@@ -49,7 +49,7 @@ class Test(unittest.TestCase):
             But here we only test there's at least one.
             """
 
-            for curve in curve_list:
+            for cl in checklines:
 
                 if (
                     checkbox["height"] > (RECT_HEIGHT - RECT_TOLERANCE)
@@ -61,13 +61,9 @@ class Test(unittest.TestCase):
                     xmatch = False
                     ymatch = False
 
-                    if max(checkbox["x0"], curve["x0"]) <= min(
-                        checkbox["x1"], curve["x1"]
-                    ):
+                    if max(checkbox["x0"], cl["x0"]) <= min(checkbox["x1"], cl["x1"]):
                         xmatch = True
-                    if max(checkbox["y0"], curve["y0"]) <= min(
-                        checkbox["y1"], curve["y1"]
-                    ):
+                    if max(checkbox["y0"], cl["y0"]) <= min(checkbox["y1"], cl["y1"]):
                         ymatch = True
                     if xmatch and ymatch:
                         return True
@@ -75,10 +71,12 @@ class Test(unittest.TestCase):
             return False
 
         p0 = pdf.pages[0]
-        curves = p0.objects["curve"]
+        checklines = [
+            line for line in p0.lines if line["height"] == line["width"]
+        ]  # These are diagonals
         rects = filter_rects(p0.objects["rect"])
 
-        n_checked = sum([determine_if_checked(rect, curves) for rect in rects])
+        n_checked = sum([determine_if_checked(rect, checklines) for rect in rects])
 
         assert n_checked == 5
         pdf.close()

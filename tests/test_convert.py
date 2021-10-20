@@ -55,7 +55,7 @@ class Test(unittest.TestCase):
 
     def test_csv(self):
         c = self.pdf.to_csv()
-        assert c.split("\r\n")[2] == (
+        assert c.split("\r\n")[9] == (
             "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
             '18.0,12.996,,,,,,TimesNewRomanPSMT,,,,"(0, 0, 0)",,,18.0,,,,,Y,,1,'
         )
@@ -68,7 +68,7 @@ class Test(unittest.TestCase):
 
     def test_csv_all_types(self):
         c = self.pdf.to_csv(types=None)
-        assert c.split("\r\n")[1].split(",")[0] == "curve"
+        assert c.split("\r\n")[1].split(",")[0] == "line"
 
     def test_cli(self):
         res = run(
