@@ -231,6 +231,7 @@ class WordExtractor:
 
     def merge_chars(self, ordered_chars):
         x0, top, x1, bottom = objects_to_bbox(ordered_chars)
+        doctop_adj = ordered_chars[0]["doctop"] - ordered_chars[0]["top"]
         upright = ordered_chars[0]["upright"]
 
         direction = 1 if (self.horizontal_ltr if upright else self.vertical_ttb) else -1
@@ -240,6 +241,7 @@ class WordExtractor:
             "x0": x0,
             "x1": x1,
             "top": top,
+            "doctop": top + doctop_adj,
             "bottom": bottom,
             "upright": upright,
             "direction": direction,
