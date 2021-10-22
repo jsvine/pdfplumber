@@ -128,7 +128,23 @@ class Test(unittest.TestCase):
         goal = "\n".join(goal_lines)
 
         assert text == goal
-        assert self.pdf.pages[0].crop((0, 0, 1, 1)).extract_text() is None
+        assert self.pdf.pages[0].crop((0, 0, 1, 1)).extract_text() == ""
+
+    def test_extract_text_layout(self):
+        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/scotus-transcript-p1.pdf"))
+        target = open(os.path.join(HERE, "comparisons/scotus-transcript-p1.txt")).read()
+        text = pdf.pages[0].extract_text(layout=True)
+        assert text == target
+
+    def test_extract_text_layout_cropped(self):
+        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/scotus-transcript-p1.pdf"))
+        target = open(
+            os.path.join(HERE, "comparisons/scotus-transcript-p1-cropped.txt")
+        ).read()
+        p = pdf.pages[0]
+        cropped = p.crop((90, 70, p.width, 300))
+        text = cropped.extract_text(layout=True)
+        assert text == target
 
     def test_intersects_bbox(self):
         objs = [

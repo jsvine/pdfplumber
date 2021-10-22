@@ -250,7 +250,9 @@ class Page(Container):
         return largest.extract(**extract_kwargs)
 
     def extract_text(self, **kwargs):
-        return utils.extract_text(self.chars, **kwargs)
+        return utils.extract_text(
+            self.chars, x_shift=self.bbox[0], y_shift=self.bbox[1], **kwargs
+        )
 
     def extract_words(self, **kwargs):
         return utils.extract_words(self.chars, **kwargs)
