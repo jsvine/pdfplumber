@@ -357,7 +357,7 @@ def extract_text(
 ):
     chars = to_list(chars)
     if len(chars) == 0:
-        return None
+        return ""
 
     doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
 
