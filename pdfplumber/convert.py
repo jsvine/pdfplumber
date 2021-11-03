@@ -1,7 +1,4 @@
 from .utils import decode_text
-from decimal import Decimal, ROUND_HALF_UP
-from pdfminer.pdftypes import PDFStream
-from pdfminer.psparser import PSLiteral
 import json
 import csv
 import base64
@@ -33,50 +30,62 @@ def to_b64(data_bytes):
     return base64.b64encode(data_bytes).decode("ascii")
 
 
-def try_decode_bytes(obj):
-    for e in ENCODINGS_TO_TRY:
-        try:
-            return obj.decode(e)
-        except UnicodeDecodeError:  # pragma: no cover
-            pass
-    # If none of the decodings work, raise whatever error
-    # decoding with utf-8 causes
-    obj.decode(ENCODINGS_TO_TRY[0])  # pragma: no cover
+class Serializer:
+    def __init__(self, precision=None):
+        self.precision = precision
+
+    def serialize(self, obj):
+        if obj is None:
+            return None
+
+        t = type(obj)
+
+        # Basic types don't need to be converted
+        if t in (int, str):
+            return obj
+
+        # Use one of the custom converters, if possible
+        fn = getattr(self, f"do_{t.__name__}", None)
+        if fn is not None:
+            return fn(obj)
+
+        # Otherwise, just use the string-representation
+        else:
+            return str(obj)
+
+    def do_float(self, x):
+        return x if self.precision is None else round(x, self.precision)
+
+    def do_bool(self, x):
+        return int(x)
+
+    def do_list(self, obj):
+        return list(self.serialize(x) for x in obj)
+
+    def do_tuple(self, obj):
+        return tuple(self.serialize(x) for x in obj)
+
+    def do_dict(self, obj):
+        return {k: self.serialize(v) for k, v in obj.items()}
+
+    def do_PDFStream(self, obj):
+        return {"rawdata": to_b64(obj.rawdata)}
+
+    def do_PSLiteral(self, obj):
+        return decode_text(obj.name)
+
+    def do_bytes(self, obj):
+        for e in ENCODINGS_TO_TRY:
+            try:
+                return obj.decode(e)
+            except UnicodeDecodeError:  # pragma: no cover
+                pass
+        # If none of the decodings work, raise whatever error
+        # decoding with utf-8 causes
+        obj.decode(ENCODINGS_TO_TRY[0])  # pragma: no cover
 
 
-serializers = {
-    Decimal: lambda obj: float(obj.quantize(Decimal(".0001"), rounding=ROUND_HALF_UP)),
-    list: lambda obj: list(serialize(x) for x in obj),
-    tuple: lambda obj: tuple(serialize(x) for x in obj),
-    dict: lambda obj: {k: serialize(v) for k, v in obj.items()},
-    PDFStream: lambda obj: {"rawdata": to_b64(obj.rawdata)},
-    PSLiteral: lambda obj: decode_text(obj.name),
-    bytes: try_decode_bytes,
-    bool: int,
-}
-
-
-def serialize(obj):
-    if obj is None:
-        return None
-
-    t = type(obj)
-
-    # Basic types don't need to be converted
-    if t in (int, float, str):
-        return obj
-
-    # Use one of the custom converters above, if possible
-    fn = serializers.get(t)
-    if fn is not None:
-        return fn(obj)
-
-    # Otherwise, just use the string-representation
-    else:
-        return str(obj)
-
-
-def to_json(container, stream=None, types=None, indent=None):
+def to_json(container, stream=None, types=None, precision=None, indent=None):
     if types is None:
         types = list(container.objects.keys()) + ["annot"]
 
@@ -103,7 +112,7 @@ def to_json(container, stream=None, types=None, indent=None):
     else:
         data = page_to_dict(container)
 
-    serialized = serialize(data)
+    serialized = Serializer(precision=precision).serialize(data)
 
     if stream is None:
         return json.dumps(serialized, indent=indent)
@@ -111,7 +120,7 @@ def to_json(container, stream=None, types=None, indent=None):
         return json.dump(serialized, stream, indent=indent)
 
 
-def to_csv(container, stream=None, types=None):
+def to_csv(container, stream=None, types=None, precision=None):
     if stream is None:
         stream = StringIO()
         to_string = True
@@ -133,11 +142,14 @@ def to_csv(container, stream=None, types=None):
                 new_keys = [k for k, v in new_objs[0].items() if type(v) is not dict]
                 fields = fields.union(set(new_keys))
 
+    serialized = Serializer(precision=precision).serialize(objs)
+
     cols = COLS_TO_PREPEND + list(sorted(set(fields) - set(COLS_TO_PREPEND)))
 
     w = csv.DictWriter(stream, fieldnames=cols, extrasaction="ignore")
     w.writeheader()
-    w.writerows(serialize(objs))
+    w.writerows(serialized)
+
     if to_string:
         stream.seek(0)
         return stream.read()

@@ -8,7 +8,7 @@ import re
 
 lt_pat = re.compile(r"^LT")
 
-DECIMAL_ATTRS = set(
+ALL_ATTRS = set(
     [
         "adv",
         "height",
@@ -21,11 +21,6 @@ DECIMAL_ATTRS = set(
         "x1",
         "y0",
         "y1",
-    ]
-)
-
-ALL_ATTRS = DECIMAL_ATTRS | set(
-    [
         "bits",
         "upright",
         "font",
@@ -53,41 +48,32 @@ class Page(Container):
         self.pdf = pdf
         self.page_obj = page_obj
         self.page_number = page_number
-        _rotation = self.decimalize(resolve_all(self.page_obj.attrs.get("Rotate", 0)))
+        _rotation = resolve_all(self.page_obj.attrs.get("Rotate", 0))
         self.rotation = _rotation % 360
         self.page_obj.rotate = self.rotation
-        self.initial_doctop = self.decimalize(initial_doctop)
+        self.initial_doctop = initial_doctop
 
         cropbox = page_obj.attrs.get("CropBox")
         mediabox = page_obj.attrs.get("MediaBox")
 
-        self.cropbox = (
-            self.decimalize(resolve_all(cropbox)) if cropbox is not None else None
-        )
-        self.mediabox = self.decimalize(resolve_all(mediabox) or self.cropbox)
+        self.cropbox = resolve_all(cropbox) if cropbox is not None else None
+        self.mediabox = resolve_all(mediabox) or self.cropbox
         m = self.mediabox
 
         if self.rotation in [90, 270]:
-            self.bbox = self.decimalize(
-                (
-                    min(m[1], m[3]),
-                    min(m[0], m[2]),
-                    max(m[1], m[3]),
-                    max(m[0], m[2]),
-                )
+            self.bbox = (
+                min(m[1], m[3]),
+                min(m[0], m[2]),
+                max(m[1], m[3]),
+                max(m[0], m[2]),
             )
         else:
-            self.bbox = self.decimalize(
-                (
-                    min(m[0], m[2]),
-                    min(m[1], m[3]),
-                    max(m[0], m[2]),
-                    max(m[1], m[3]),
-                )
+            self.bbox = (
+                min(m[0], m[2]),
+                min(m[1], m[3]),
+                max(m[0], m[2]),
+                max(m[1], m[3]),
             )
-
-    def decimalize(self, x):
-        return utils.decimalize(x, self.pdf.precision)
 
     @property
     def width(self):
@@ -114,7 +100,7 @@ class Page(Container):
     @property
     def annots(self):
         def parse(annot):
-            rect = self.decimalize(annot["Rect"])
+            rect = annot["Rect"]
 
             a = annot.get("A", {})
             extras = {
@@ -167,16 +153,11 @@ class Page(Container):
     def process_object(self, obj):
         kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
 
-        d = self.decimalize
-
         def process_attr(item):
             k, v = item
             if k in ALL_ATTRS:
                 res = resolve_all(v)
-                if k in DECIMAL_ATTRS:
-                    return (k, d(res))
-                else:
-                    return (k, res)
+                return (k, res)
             else:
                 return None
 
@@ -197,7 +178,7 @@ class Page(Container):
 
             def point2coord(pt):
                 x, y = pt
-                return (self.decimalize(x), self.height - self.decimalize(y))
+                return (x, self.height - y)
 
             attr["points"] = list(map(point2coord, obj.pts))
 
@@ -275,15 +256,13 @@ class Page(Container):
         return utils.extract_words(self.chars, **kwargs)
 
     def crop(self, bbox, relative=False):
-        return CroppedPage(self, self.decimalize(bbox), relative=relative)
+        return CroppedPage(self, bbox, relative=relative)
 
     def within_bbox(self, bbox, relative=False):
         """
         Same as .crop, except only includes objects fully within the bbox
         """
-        return CroppedPage(
-            self, self.decimalize(bbox), relative=relative, crop_fn=utils.within_bbox
-        )
+        return CroppedPage(self, bbox, relative=relative, crop_fn=utils.within_bbox)
 
     def filter(self, test_function):
         return FilteredPage(self, test_function)

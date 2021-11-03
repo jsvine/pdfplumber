@@ -48,6 +48,7 @@ The output will be a CSV containing info about every character, line, and rectan
 |`--pages [list of pages]`| A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.|
 |`--types [list of object types to extract]`| Choices are `char`, `rect`, `line`, `curve`, `image`, `annot`, et cetera. Defaults to all available.|
 |`--laparams`| A JSON-formatted string (e.g., `'{"detect_vertical": true}'`) to pass to `pdfplumber.open(..., laparams=...)`.|
+|`--precision [integer]`| The number of decimal places to round floating-point numbers. Defaults to no rounding.|
 
 ## Python library
 
@@ -432,6 +433,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Alexander Regueiro](https://github.com/alexreg)
 - [Daniel Peña](https://github.com/trifling)
 - [bobluda](https://github.com/bobluda)
+- [@ramcdona](https://github.com/ramcdona)
 
 ## Contributing
 

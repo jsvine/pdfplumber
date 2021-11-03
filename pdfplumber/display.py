@@ -56,15 +56,13 @@ class PageImage(object):
         else:
             self.original = original
 
-        d = self.page.decimalize
-        self.decimalize = d
         if page.is_original:
             self.root = page
             cropped = False
         else:
             self.root = page.root_page
             cropped = page.root_page.bbox != page.bbox
-        self.scale = d(self.original.size[0]) / d(self.root.width)
+        self.scale = self.original.size[0] / self.root.width
         if cropped:
             cropbox = (
                 (page.bbox[0] - page.root_page.bbox[0]) * self.scale,
@@ -160,7 +158,7 @@ class PageImage(object):
             bbox = (obj["x0"], obj["top"], obj["x1"], obj["bottom"])
 
         x0, top, x1, bottom = bbox
-        half = self.decimalize(stroke_width / 2)
+        half = stroke_width / 2
         x0 += half
         top += half
         x1 -= half
@@ -194,7 +192,7 @@ class PageImage(object):
             obj = center_or_obj
             center = ((obj["x0"] + obj["x1"]) / 2, (obj["top"] + obj["bottom"]) / 2)
         cx, cy = center
-        bbox = self.decimalize((cx - radius, cy - radius, cx + radius, cy + radius))
+        bbox = (cx - radius, cy - radius, cx + radius, cy + radius)
         self.draw.ellipse(self._reproject_bbox(bbox), fill, stroke)
         return self
 

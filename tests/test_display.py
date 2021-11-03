@@ -45,3 +45,10 @@ class Test(unittest.TestCase):
         page = pdfplumber.open(path).pages[0]
         im = page.to_image()
         im.draw_lines(page.curves)
+
+    def test_cropped(self):
+        im = self.pdf.pages[0].crop((10, 20, 30, 50)).to_image()
+        assert im.original.size == (20, 30)
+
+    def test_copy(self):
+        assert self.im.copy().original == self.im.original

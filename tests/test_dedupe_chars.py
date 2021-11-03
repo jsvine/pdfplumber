@@ -4,7 +4,6 @@ import os
 import logging
 
 import pdfplumber
-from pdfplumber.utils import Decimal
 
 
 logging.disable(logging.ERROR)
@@ -34,26 +33,26 @@ class Test(unittest.TestCase):
 
     def test_extract_words(self):
         page = self.pdf.pages[0]
-        x0 = Decimal("440.143")
-        x1_without_drop = Decimal("534.992")
-        x1_with_drop = Decimal("534.719")
-        top_windows = Decimal("791.849")
-        top_linux = Decimal("794.357")
-        bottom = Decimal("802.961")
+        x0 = 440.143
+        x1_without_drop = 534.992
+        x1_with_drop = 534.719
+        top_windows = 791.849
+        top_linux = 794.357
+        bottom = 802.961
         last_words_without_drop = page.extract_words()[-1]
         last_words_with_drop = page.dedupe_chars().extract_words()[-1]
 
-        assert last_words_without_drop["x0"] == x0
-        assert last_words_without_drop["x1"] == x1_without_drop
-        assert last_words_without_drop["top"] in (top_windows, top_linux)
-        assert last_words_without_drop["bottom"] == bottom
+        assert round(last_words_without_drop["x0"], 3) == x0
+        assert round(last_words_without_drop["x1"], 3) == x1_without_drop
+        assert round(last_words_without_drop["top"], 3) in (top_windows, top_linux)
+        assert round(last_words_without_drop["bottom"], 3) == bottom
         assert last_words_without_drop["upright"] == 1
         assert last_words_without_drop["text"] == "名名模模意意义义一一些些有有意意义义一一些些"
 
-        assert last_words_with_drop["x0"] == x0
-        assert last_words_with_drop["x1"] == x1_with_drop
-        assert last_words_with_drop["top"] in (top_windows, top_linux)
-        assert last_words_with_drop["bottom"] == bottom
+        assert round(last_words_with_drop["x0"], 3) == x0
+        assert round(last_words_with_drop["x1"], 3) == x1_with_drop
+        assert round(last_words_with_drop["top"], 3) in (top_windows, top_linux)
+        assert round(last_words_with_drop["bottom"], 3) == bottom
         assert last_words_with_drop["upright"] == 1
         assert last_words_with_drop["text"] == "名模意义一些有意义一些"
 
