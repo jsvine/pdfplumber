@@ -170,3 +170,31 @@ class Test(unittest.TestCase):
                 # Verify that all cell contain real data
                 for cell in t[3]:
                     assert "last" in cell
+
+    def test_discussion_539_null_value(self):
+        """
+        See discussion #539
+        """
+        path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            table_settings = {
+                "vertical_strategy": "lines",
+                "horizontal_strategy": "lines",
+                "explicit_vertical_lines": [],
+                "explicit_horizontal_lines": [],
+                "snap_tolerance": 3,
+                "join_tolerance": 3,
+                "edge_min_length": 3,
+                "min_words_vertical": 3,
+                "min_words_horizontal": 1,
+                "keep_blank_chars": False,
+                "text_tolerance": 3,
+                "text_x_tolerance": None,
+                "text_y_tolerance": None,
+                "intersection_tolerance": 3,
+                "intersection_x_tolerance": None,
+                "intersection_y_tolerance": None,
+            }
+            assert page.extract_table(table_settings)
+            assert page.extract_tables(table_settings)

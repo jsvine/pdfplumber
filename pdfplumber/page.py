@@ -219,6 +219,7 @@ class Page(Container):
         return TableFinder(self, table_settings).tables
 
     def extract_tables(self, table_settings={}):
+        table_settings = TableFinder.resolve_table_settings(table_settings)
         tables = self.find_tables(table_settings)
 
         extract_kwargs = dict(
@@ -230,6 +231,7 @@ class Page(Container):
         return [table.extract(**extract_kwargs) for table in tables]
 
     def extract_table(self, table_settings={}):
+        table_settings = TableFinder.resolve_table_settings(table_settings)
         tables = self.find_tables(table_settings)
 
         if len(tables) == 0:

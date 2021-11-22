@@ -438,20 +438,8 @@ class TableFinder(object):
     """
 
     def __init__(self, page, settings={}):
-        for k in settings.keys():
-            if k not in DEFAULT_TABLE_SETTINGS:
-                raise ValueError(f"Unrecognized table setting: '{k}'")
         self.page = page
-        self.settings = dict(DEFAULT_TABLE_SETTINGS)
-        self.settings.update(settings)
-        for var, fallback in [
-            ("text_x_tolerance", "text_tolerance"),
-            ("text_y_tolerance", "text_tolerance"),
-            ("intersection_x_tolerance", "intersection_tolerance"),
-            ("intersection_y_tolerance", "intersection_tolerance"),
-        ]:
-            if self.settings[var] is None:
-                self.settings.update({var: self.settings[fallback]})
+        self.settings = self.resolve_table_settings(settings)
         self.edges = self.get_edges()
         self.intersections = edges_to_intersections(
             self.edges,
@@ -460,6 +448,40 @@ class TableFinder(object):
         )
         self.cells = intersections_to_cells(self.intersections)
         self.tables = [Table(self.page, t) for t in cells_to_tables(self.cells)]
+
+    @staticmethod
+    def resolve_table_settings(table_settings={}):
+        """Clean up user-provided table settings.
+
+        Validates that the table settings provided consists of acceptable keys and
+        returns a cleaned up version. The cleaned up version fills out the missing
+        values with the default values in the provided settings.
+
+        TODO: Can be further used to validate that the values are of the correct
+            type. For example, raising a value error when a non-boolean input is
+            provided for the key ``keep_blank_chars``.
+
+        :param table_settings: User-provided table settings.
+        :returns: A cleaned up version of the user-provided table settings.
+        :raises ValueError: When an unrecognised key is provided.
+        """
+        for k in table_settings.keys():
+            if k not in DEFAULT_TABLE_SETTINGS:
+                raise ValueError(f"Unrecognized table setting: '{k}'")
+
+        resolved_table_settings = dict(DEFAULT_TABLE_SETTINGS)
+        resolved_table_settings.update(table_settings)
+
+        for var, fallback in [
+            ("text_x_tolerance", "text_tolerance"),
+            ("text_y_tolerance", "text_tolerance"),
+            ("intersection_x_tolerance", "intersection_tolerance"),
+            ("intersection_y_tolerance", "intersection_tolerance"),
+        ]:
+            if resolved_table_settings[var] is None:
+                resolved_table_settings.update({var: resolved_table_settings[fallback]})
+
+        return resolved_table_settings
 
     def get_edges(self):
         settings = self.settings
