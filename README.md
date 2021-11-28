@@ -316,11 +316,11 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
     "min_words_horizontal": 1,
     "keep_blank_chars": False,
     "text_tolerance": 3,
-    "text_x_tolerance": None,
-    "text_y_tolerance": None,
+    "text_x_tolerance": 3,
+    "text_y_tolerance": 3,
     "intersection_tolerance": 3,
-    "intersection_x_tolerance": None,
-    "intersection_y_tolerance": None,
+    "intersection_x_tolerance": 3,
+    "intersection_y_tolerance": 3,
 }
 ```
 
