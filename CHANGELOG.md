@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 - Add `.extract_text(layout=True)`, an *experimental feature* which attempts to mimic the structural layout of the text on the page. ([#10](https://github.com/jsvine/pdfplumber/issues/10))
 - Add `utils.merge_bboxes(bboxes)`, which returns the smallest bounding box that contains all bounding boxes in the `bboxes` argument. ([f8d5e70](https://github.com/jsvine/pdfplumber/commit/f8d5e70a509aa9ed3ee565d7d3f97bb5ec67f5a5))
 - Add `--precision` argument to CLI ([#520](https://github.com/jsvine/pdfplumber/pull/520))
+- Add `snap_x_tolerance` and `snap_y_tolerance` to table extraction settings. ([#51](https://github.com/jsvine/pdfplumber/pull/51) + [#475](https://github.com/jsvine/pdfplumber/issues/475)) [h/t @dustindall]
 
 ## Changed
 - Upgrade `pdfminer.six` from `20200517` to `20211012`; see [that library's changelog](https://github.com/pdfminer/pdfminer.six/blob/develop/CHANGELOG.md) for details, but a key difference is an improvement in how it assigns `line`, `rect`, and `curve` objects. (Diagonal two-point lines, for instance, are now `line` objects instead of `curve` objects.) ([#515](https://github.com/jsvine/pdfplumber/pull/515))

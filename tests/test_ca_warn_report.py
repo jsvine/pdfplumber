@@ -81,11 +81,34 @@ class Test(unittest.TestCase):
         p0 = self.pdf.pages[0]
         assert len(p0.edges) == 364
         assert (
-            len(table.merge_edges(p0.edges, snap_tolerance=3, join_tolerance=3)) == 46
+            len(
+                table.merge_edges(
+                    p0.edges, snap_x_tolerance=3, snap_y_tolerance=3, join_tolerance=3
+                )
+            )
+            == 46
+        )
+        assert (
+            len(
+                table.merge_edges(
+                    p0.edges, snap_x_tolerance=0, snap_y_tolerance=3, join_tolerance=3
+                )
+            )
+            == 94
+        )
+        assert (
+            len(
+                table.merge_edges(
+                    p0.edges, snap_x_tolerance=3, snap_y_tolerance=0, join_tolerance=3
+                )
+            )
+            == 174
         )
 
     def test_vertices(self):
         p0 = self.pdf.pages[0]
-        edges = table.merge_edges(p0.edges, snap_tolerance=3, join_tolerance=3)
+        edges = table.merge_edges(
+            p0.edges, snap_x_tolerance=3, snap_y_tolerance=3, join_tolerance=3
+        )
         ixs = table.edges_to_intersections(edges)
         assert len(ixs.keys()) == 304  # 38x8
