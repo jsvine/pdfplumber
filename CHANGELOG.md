@@ -4,15 +4,15 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.6.0] - [unreleased]
 ### Added
-- Add `.extract_text(layout=True)`, an *experimental feature* which attempts to mimic the structural layout of the text on the page. [#10](https://github.com/jsvine/pdfplumber/issues/10)
-- Add `utils.merge_bboxes(bboxes)`, which returns the smallest bounding box that contains all bounding boxes in the `bboxes` argument.
-- Add `--precision` argument to CLI
+- Add `.extract_text(layout=True)`, an *experimental feature* which attempts to mimic the structural layout of the text on the page. ([#10](https://github.com/jsvine/pdfplumber/issues/10))
+- Add `utils.merge_bboxes(bboxes)`, which returns the smallest bounding box that contains all bounding boxes in the `bboxes` argument. ([f8d5e70](https://github.com/jsvine/pdfplumber/commit/f8d5e70a509aa9ed3ee565d7d3f97bb5ec67f5a5))
+- Add `--precision` argument to CLI ([#520](https://github.com/jsvine/pdfplumber/pull/520))
 
 ## Changed
-- Upgrade `pdfminer.six` from `20200517` to `20211012`; see [that library's changelog](https://github.com/pdfminer/pdfminer.six/blob/develop/CHANGELOG.md) for details, but a key difference is an improvement in how it assigns `line`, `rect`, and `curve` objects. (Diagonal two-point lines, for instance, are now `line` objects instead of `curve` objects.)
-- Remove Decimal-ization of parsed object attributes, which are now represented with as much precision as is returned by `pdfminer.six` [#346](https://github.com/jsvine/pdfplumber/discussions/346)
-- `.extract_text(...)` returns `""` instead of `None` when character list is empty.
-- `.extract_words(...)` now includes `doctop` among the attributes it returns for each word.
+- Upgrade `pdfminer.six` from `20200517` to `20211012`; see [that library's changelog](https://github.com/pdfminer/pdfminer.six/blob/develop/CHANGELOG.md) for details, but a key difference is an improvement in how it assigns `line`, `rect`, and `curve` objects. (Diagonal two-point lines, for instance, are now `line` objects instead of `curve` objects.) ([#515](https://github.com/jsvine/pdfplumber/pull/515))
+- Remove Decimal-ization of parsed object attributes, which are now represented with as much precision as is returned by `pdfminer.six` ([#346](https://github.com/jsvine/pdfplumber/discussions/346) + [#520](https://github.com/jsvine/pdfplumber/pull/520))
+- `.extract_text(...)` returns `""` instead of `None` when character list is empty. ([#482](https://github.com/jsvine/pdfplumber/issues/482) + [cb9900b](https://github.com/jsvine/pdfplumber/commit/cb9900b49706e96df520dbd1067c2a57a4cdb20d)) [h/t @tungph]
+- `.extract_words(...)` now includes `doctop` among the attributes it returns for each word. ([66fef89](https://github.com/jsvine/pdfplumber/commit/66fef89b670cf95d13a5e23040c7bf9339944c01))
 - Change behavior of horizontal `text_strategy`, so that it uses the top and bottom of *every* word, not just the top of every word and the bottom of the last. ([#467](https://github.com/jsvine/pdfplumber/pull/467) + [#466](https://github.com/jsvine/pdfplumber/issues/466) + [#265](https://github.com/jsvine/pdfplumber/issues/265)) [h/t @bobluda + @samkit-jain]
 
 ### Fixed
