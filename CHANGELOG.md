@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 - Add `utils.merge_bboxes(bboxes)`, which returns the smallest bounding box that contains all bounding boxes in the `bboxes` argument. ([f8d5e70](https://github.com/jsvine/pdfplumber/commit/f8d5e70a509aa9ed3ee565d7d3f97bb5ec67f5a5))
 - Add `--precision` argument to CLI ([#520](https://github.com/jsvine/pdfplumber/pull/520))
 - Add `snap_x_tolerance` and `snap_y_tolerance` to table extraction settings. ([#51](https://github.com/jsvine/pdfplumber/pull/51) + [#475](https://github.com/jsvine/pdfplumber/issues/475)) [h/t @dustindall]
+- Add `join_x_tolerance` and `join_y_tolerance` to table extraction settings.
 
 ## Changed
 - Upgrade `pdfminer.six` from `20200517` to `20211012`; see [that library's changelog](https://github.com/pdfminer/pdfminer.six/blob/develop/CHANGELOG.md) for details, but a key difference is an improvement in how it assigns `line`, `rect`, and `curve` objects. (Diagonal two-point lines, for instance, are now `line` objects instead of `curve` objects.) ([#515](https://github.com/jsvine/pdfplumber/pull/515))
@@ -15,6 +16,7 @@ All notable changes to this project will be documented in this file. The format 
 - `.extract_text(...)` returns `""` instead of `None` when character list is empty. ([#482](https://github.com/jsvine/pdfplumber/issues/482) + [cb9900b](https://github.com/jsvine/pdfplumber/commit/cb9900b49706e96df520dbd1067c2a57a4cdb20d)) [h/t @tungph]
 - `.extract_words(...)` now includes `doctop` among the attributes it returns for each word. ([66fef89](https://github.com/jsvine/pdfplumber/commit/66fef89b670cf95d13a5e23040c7bf9339944c01))
 - Change behavior of horizontal `text_strategy`, so that it uses the top and bottom of *every* word, not just the top of every word and the bottom of the last. ([#467](https://github.com/jsvine/pdfplumber/pull/467) + [#466](https://github.com/jsvine/pdfplumber/issues/466) + [#265](https://github.com/jsvine/pdfplumber/issues/265)) [h/t @bobluda + @samkit-jain]
+- Change `table.merge_edges(...)` behavior when `join_tolerance` (and `x`/`y` variants) `<= 0`, so that joining is attempted regardless, to handle cases of overlapping lines.
 
 ### Fixed
 - Fix slowdown in `.extract_words(...)`/`WordExtractor.iter_chars_to_words(...)` on very long words, caused by repeatedly re-calculating bounding box. ([#483](https://github.com/jsvine/pdfplumber/discussions/483))

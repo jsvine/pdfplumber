@@ -83,7 +83,11 @@ class Test(unittest.TestCase):
         assert (
             len(
                 table.merge_edges(
-                    p0.edges, snap_x_tolerance=3, snap_y_tolerance=3, join_tolerance=3
+                    p0.edges,
+                    snap_x_tolerance=3,
+                    snap_y_tolerance=3,
+                    join_x_tolerance=3,
+                    join_y_tolerance=3,
                 )
             )
             == 46
@@ -91,7 +95,23 @@ class Test(unittest.TestCase):
         assert (
             len(
                 table.merge_edges(
-                    p0.edges, snap_x_tolerance=0, snap_y_tolerance=3, join_tolerance=3
+                    p0.edges,
+                    snap_x_tolerance=3,
+                    snap_y_tolerance=3,
+                    join_x_tolerance=3,
+                    join_y_tolerance=0,
+                )
+            )
+            == 52
+        )
+        assert (
+            len(
+                table.merge_edges(
+                    p0.edges,
+                    snap_x_tolerance=0,
+                    snap_y_tolerance=3,
+                    join_x_tolerance=3,
+                    join_y_tolerance=3,
                 )
             )
             == 94
@@ -99,7 +119,11 @@ class Test(unittest.TestCase):
         assert (
             len(
                 table.merge_edges(
-                    p0.edges, snap_x_tolerance=3, snap_y_tolerance=0, join_tolerance=3
+                    p0.edges,
+                    snap_x_tolerance=3,
+                    snap_y_tolerance=0,
+                    join_x_tolerance=3,
+                    join_y_tolerance=3,
                 )
             )
             == 174
@@ -108,7 +132,11 @@ class Test(unittest.TestCase):
     def test_vertices(self):
         p0 = self.pdf.pages[0]
         edges = table.merge_edges(
-            p0.edges, snap_x_tolerance=3, snap_y_tolerance=3, join_tolerance=3
+            p0.edges,
+            snap_x_tolerance=3,
+            snap_y_tolerance=3,
+            join_x_tolerance=3,
+            join_y_tolerance=3,
         )
         ixs = table.edges_to_intersections(edges)
         assert len(ixs.keys()) == 304  # 38x8

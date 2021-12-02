@@ -51,7 +51,9 @@ def join_edge_group(edges, orientation, tolerance=DEFAULT_JOIN_TOLERANCE):
     return joined
 
 
-def merge_edges(edges, snap_x_tolerance, snap_y_tolerance, join_tolerance):
+def merge_edges(
+    edges, snap_x_tolerance, snap_y_tolerance, join_x_tolerance, join_y_tolerance
+):
     """
     Using the `snap_edges` and `join_edge_group` methods above,
     merge a list of edges into a more "seamless" list.
@@ -66,13 +68,15 @@ def merge_edges(edges, snap_x_tolerance, snap_y_tolerance, join_tolerance):
     if snap_x_tolerance > 0 or snap_y_tolerance > 0:
         edges = snap_edges(edges, snap_x_tolerance, snap_y_tolerance)
 
-    if join_tolerance > 0:
-        _sorted = sorted(edges, key=get_group)
-        edge_groups = itertools.groupby(_sorted, key=get_group)
-        edge_gen = (
-            join_edge_group(items, k[0], join_tolerance) for k, items in edge_groups
+    _sorted = sorted(edges, key=get_group)
+    edge_groups = itertools.groupby(_sorted, key=get_group)
+    edge_gen = (
+        join_edge_group(
+            items, k[0], (join_x_tolerance if k[0] == "h" else join_y_tolerance)
         )
-        edges = list(itertools.chain(*edge_gen))
+        for k, items in edge_groups
+    )
+    edges = list(itertools.chain(*edge_gen))
     return edges
 
 
@@ -419,6 +423,8 @@ DEFAULT_TABLE_SETTINGS = {
     "snap_x_tolerance": None,
     "snap_y_tolerance": None,
     "join_tolerance": DEFAULT_JOIN_TOLERANCE,
+    "join_x_tolerance": None,
+    "join_y_tolerance": None,
     "edge_min_length": 3,
     "min_words_vertical": DEFAULT_MIN_WORDS_VERTICAL,
     "min_words_horizontal": DEFAULT_MIN_WORDS_HORIZONTAL,
@@ -483,6 +489,8 @@ class TableFinder(object):
             ("text_y_tolerance", "text_tolerance"),
             ("snap_x_tolerance", "snap_tolerance"),
             ("snap_y_tolerance", "snap_tolerance"),
+            ("join_x_tolerance", "join_tolerance"),
+            ("join_y_tolerance", "join_tolerance"),
             ("intersection_x_tolerance", "intersection_tolerance"),
             ("intersection_y_tolerance", "intersection_tolerance"),
         ]:
@@ -581,15 +589,12 @@ class TableFinder(object):
 
         edges = list(v) + list(h)
 
-        if (
-            settings["snap_x_tolerance"] > 0
-            or settings["snap_y_tolerance"] > 0
-            or settings["join_tolerance"] > 0
-        ):
-            edges = merge_edges(
-                edges,
-                snap_x_tolerance=settings["snap_x_tolerance"],
-                snap_y_tolerance=settings["snap_y_tolerance"],
-                join_tolerance=settings["join_tolerance"],
-            )
+        edges = merge_edges(
+            edges,
+            snap_x_tolerance=settings["snap_x_tolerance"],
+            snap_y_tolerance=settings["snap_y_tolerance"],
+            join_x_tolerance=settings["join_x_tolerance"],
+            join_y_tolerance=settings["join_y_tolerance"],
+        )
+
         return utils.filter_edges(edges, min_length=settings["edge_min_length"])
