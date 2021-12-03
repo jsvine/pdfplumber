@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file. The format 
 - `.extract_words(...)` now includes `doctop` among the attributes it returns for each word. ([66fef89](https://github.com/jsvine/pdfplumber/commit/66fef89b670cf95d13a5e23040c7bf9339944c01))
 - Change behavior of horizontal `text_strategy`, so that it uses the top and bottom of *every* word, not just the top of every word and the bottom of the last. ([#467](https://github.com/jsvine/pdfplumber/pull/467) + [#466](https://github.com/jsvine/pdfplumber/issues/466) + [#265](https://github.com/jsvine/pdfplumber/issues/265)) [h/t @bobluda + @samkit-jain]
 - Change `table.merge_edges(...)` behavior when `join_tolerance` (and `x`/`y` variants) `<= 0`, so that joining is attempted regardless, to handle cases of overlapping lines.
+- Raise error if certain table-extraction settings are negative.
 
 ### Fixed
 - Fix slowdown in `.extract_words(...)`/`WordExtractor.iter_chars_to_words(...)` on very long words, caused by repeatedly re-calculating bounding box. ([#483](https://github.com/jsvine/pdfplumber/discussions/483))

@@ -437,6 +437,24 @@ DEFAULT_TABLE_SETTINGS = {
     "intersection_y_tolerance": None,
 }
 
+NON_NEGATIVE_SETTINGS = [
+    "snap_tolerance",
+    "snap_x_tolerance",
+    "snap_y_tolerance",
+    "join_tolerance",
+    "join_x_tolerance",
+    "join_y_tolerance",
+    "edge_min_length",
+    "min_words_vertical",
+    "min_words_horizontal",
+    "text_tolerance",
+    "text_x_tolerance",
+    "text_y_tolerance",
+    "intersection_tolerance",
+    "intersection_x_tolerance",
+    "intersection_y_tolerance",
+]
+
 
 class TableFinder(object):
     """
@@ -480,6 +498,10 @@ class TableFinder(object):
         for k in table_settings.keys():
             if k not in DEFAULT_TABLE_SETTINGS:
                 raise ValueError(f"Unrecognized table setting: '{k}'")
+
+        for setting in NON_NEGATIVE_SETTINGS:
+            if (table_settings.get(setting) or 0) < 0:
+                raise ValueError(f"Table setting '{setting}' cannot be negative")
 
         resolved_table_settings = dict(DEFAULT_TABLE_SETTINGS)
         resolved_table_settings.update(table_settings)
