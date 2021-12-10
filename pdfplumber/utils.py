@@ -1,8 +1,9 @@
-from pdfminer.utils import PDFDocEncoding
-from pdfminer.psparser import PSLiteral
-from pdfminer.pdftypes import PDFObjRef
-from operator import itemgetter
 import itertools
+from operator import itemgetter
+
+from pdfminer.pdftypes import PDFObjRef
+from pdfminer.psparser import PSLiteral
+from pdfminer.utils import PDFDocEncoding
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3

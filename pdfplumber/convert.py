@@ -1,8 +1,9 @@
-from .utils import decode_text
-import json
-import csv
 import base64
+import csv
+import json
 from io import StringIO
+
+from .utils import decode_text
 
 COLS_TO_PREPEND = [
     "object_type",

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-import unittest
-import pytest
-import pdfplumber
-import os
-
 import logging
+import os
+import unittest
+
+import pytest
+
+import pdfplumber
 
 logging.disable(logging.ERROR)
 

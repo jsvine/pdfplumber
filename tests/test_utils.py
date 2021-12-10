@@ -1,15 +1,16 @@
 #!/usr/bin/env python
+import logging
+import os
 import unittest
-import pytest
-import pdfplumber
-from pdfplumber import utils
-from pdfminer.pdfparser import PDFObjRef
-from pdfminer.psparser import PSLiteral
 from itertools import groupby
 from operator import itemgetter
-import os
 
-import logging
+import pytest
+from pdfminer.pdfparser import PDFObjRef
+from pdfminer.psparser import PSLiteral
+
+import pdfplumber
+from pdfplumber import utils
 
 logging.disable(logging.ERROR)
 

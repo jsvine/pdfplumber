@@ -6,12 +6,14 @@ __all__ = [
     "set_debug",
 ]
 
-from ._version import __version__
-from .pdf import PDF
-from . import utils
+import sys
+
 import pdfminer
 import pdfminer.pdftypes
-import sys
+
+from . import utils
+from ._version import __version__
+from .pdf import PDF
 
 pdfminer.pdftypes.STRICT = False
 pdfminer.pdfinterp.STRICT = False

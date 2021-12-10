@@ -1,5 +1,6 @@
 from itertools import chain
-from . import utils, convert
+
+from . import convert, utils
 
 
 class Container(object):

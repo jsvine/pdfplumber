@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-import unittest
-import pdfplumber
-from subprocess import Popen, PIPE
-from io import StringIO
 import json
-import sys
-import os
-
 import logging
+import os
+import sys
+import unittest
+from io import StringIO
+from subprocess import PIPE, Popen
+
+import pdfplumber
 
 logging.disable(logging.ERROR)
 
