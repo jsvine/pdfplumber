@@ -30,7 +30,7 @@ jobs:
       run: python -m black --check pdfplumber tests
 
     - name: Validate against isort
-      run: python isort --check-only pdfplumber tests
+      run: python -m isort --check-only pdfplumber tests
 
     - name: Validate against flake8
       run: python -m flake8 pdfplumber tests
