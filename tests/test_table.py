@@ -44,6 +44,10 @@ class Test(unittest.TestCase):
                 },
             )
 
+        with pytest.raises(ValueError):
+            tf = table.TableFinder(self.pdf.pages[0], {"join_tolerance": -1})
+            tf.get_edges()
+
     def test_edges_strict(self):
         path = os.path.join(HERE, "pdfs/issue-140-example.pdf")
         with pdfplumber.open(path) as pdf:
