@@ -14,6 +14,6 @@ Thank you for your interest in `pdfplumber`! Before submitting an issue or filin
 - If you would like to propose a change that is more __complex__ than a simple bug-fix, please [first open a discussion](https://github.com/jsvine/pdfplumber/discussions). If you are submitting a __simple__ bugfix, typo correction, et cetera, feel free to open a pull request directly.
 - PRs should be submitted against the __`develop` branch__ only.
 - PRs should contain one or more __tests__ that support the changes. The tests should pass with the new code but fail on the commits prior. For guidance, see the existing tests in the `tests/` directory. To execute the tests, run `make tests` or `python -m pytest`.
-- Python code in PRs should conform to [`psf/black`](https://black.readthedocs.io/en/stable/) and [`flake8`](https://pypi.org/project/flake8/) __formatting__ guidelines. To test this, run `make lint`. To reformat your code, run `make format`.
+- Python code in PRs should conform to [`psf/black`](https://black.readthedocs.io/en/stable/), [`isort`](https://pycqa.github.io/isort/index.html), and [`flake8`](https://pypi.org/project/flake8/) __formatting__ guidelines. To automatically reformat your code accordingly, run `make format`. To test the formatting and `flake8` compliance, run `make lint`.
 - Please add yourself to the [list of contributors](https://github.com/jsvine/pdfplumber#acknowledgments--contributors).
 - Please also update the [CHANGELOG.md](https://github.com/jsvine/pdfplumber/blob/develop/CHANGELOG.md).

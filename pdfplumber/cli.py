@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-from . import convert
-from .pdf import PDF
 import argparse
-from itertools import chain
 import json
 import sys
+from itertools import chain
+
+from . import convert
+from .pdf import PDF
 
 
 def parse_page_spec(p_str):

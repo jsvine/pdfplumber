@@ -1,15 +1,16 @@
+import itertools
+import logging
+import pathlib
+
+from pdfminer.layout import LAParams
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfinterp import PDFResourceManager
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfparser import PDFParser
+
 from .container import Container
 from .page import Page
 from .utils import resolve_and_decode
-
-import logging
-import pathlib
-import itertools
-from pdfminer.pdfparser import PDFParser
-from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfpage import PDFPage
-from pdfminer.pdfinterp import PDFResourceManager
-from pdfminer.layout import LAParams
 
 logger = logging.getLogger(__name__)
 

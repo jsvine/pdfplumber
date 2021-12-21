@@ -1,6 +1,7 @@
-from . import utils
-from operator import itemgetter
 import itertools
+from operator import itemgetter
+
+from . import utils
 
 DEFAULT_SNAP_TOLERANCE = 3
 DEFAULT_JOIN_TOLERANCE = 3

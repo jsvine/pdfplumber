@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-import unittest
-import pytest
-import pdfplumber
-import os
-
 import logging
+import os
+import unittest
+
+import pytest
+
+import pdfplumber
 
 logging.disable(logging.ERROR)
 
@@ -164,8 +165,3 @@ class Test(unittest.TestCase):
             with pdfplumber.open(f) as pdf:
                 assert len(pdf.metadata)
             assert not f.closed
-
-        # Will be removed from library soon
-        with open(path, "rb") as f:
-            with pdfplumber.load(f) as pdf:
-                assert len(pdf.metadata)

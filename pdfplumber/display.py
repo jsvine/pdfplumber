@@ -1,10 +1,11 @@
-from . import utils
-from .table import TableFinder
+from io import BytesIO
 
 import PIL.Image
 import PIL.ImageDraw
 import wand.image
-from io import BytesIO
+
+from . import utils
+from .table import TableFinder
 
 
 class COLORS(object):

@@ -16,10 +16,14 @@ tests:
 check-black:
 	${PYTHON} -m black --check pdfplumber tests
 
+check-isort:
+	${PYTHON} -m isort --check-only pdfplumber tests
+
 check-flake:
 	${PYTHON} -m flake8 pdfplumber tests
 
-lint: check-flake check-black
+lint: check-flake check-black check-isort
 
 format:
 	${PYTHON} -m black pdfplumber tests
+	${PYTHON} -m isort pdfplumber tests

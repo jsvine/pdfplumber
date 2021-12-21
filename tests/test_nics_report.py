@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import unittest
-import pdfplumber
-from operator import itemgetter
-from pdfplumber.utils import within_bbox, collate_chars
-import os
-
 import logging
+import os
+import unittest
+from operator import itemgetter
+
+import pdfplumber
+from pdfplumber.utils import collate_chars, within_bbox
 
 logging.disable(logging.ERROR)
 

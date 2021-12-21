@@ -1,10 +1,12 @@
-from . import utils
-from .utils import resolve_all
-from .table import TableFinder
-from .container import Container
-from pdfminer.pdfinterp import PDFPageInterpreter
-from pdfminer.converter import PDFPageAggregator
 import re
+
+from pdfminer.converter import PDFPageAggregator
+from pdfminer.pdfinterp import PDFPageInterpreter
+
+from . import utils
+from .container import Container
+from .table import TableFinder
+from .utils import resolve_all
 
 lt_pat = re.compile(r"^LT")
 
@@ -286,7 +288,7 @@ class Page(Container):
         For conversion_kwargs, see:
         http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image
         """
-        from .display import PageImage, DEFAULT_RESOLUTION
+        from .display import DEFAULT_RESOLUTION, PageImage
 
         kwargs = dict(conversion_kwargs)
         if "resolution" not in conversion_kwargs:

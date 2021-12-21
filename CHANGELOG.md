@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 - Add `utils.merge_bboxes(bboxes)`, which returns the smallest bounding box that contains all bounding boxes in the `bboxes` argument. ([f8d5e70](https://github.com/jsvine/pdfplumber/commit/f8d5e70a509aa9ed3ee565d7d3f97bb5ec67f5a5))
 - Add `--precision` argument to CLI ([#520](https://github.com/jsvine/pdfplumber/pull/520))
 - Add `snap_x_tolerance` and `snap_y_tolerance` to table extraction settings. ([#51](https://github.com/jsvine/pdfplumber/pull/51) + [#475](https://github.com/jsvine/pdfplumber/issues/475)) [h/t @dustindall]
-- Add `join_x_tolerance` and `join_y_tolerance` to table extraction settings.
+- Add `join_x_tolerance` and `join_y_tolerance` to table extraction settings. ([cbb34ce](https://github.com/jsvine/pdfplumber/commit/cbb34ce28b9b66d8d709304bbd0de267d82d75f3))
 
 ## Changed
 - Upgrade `pdfminer.six` from `20200517` to `20211012`; see [that library's changelog](https://github.com/pdfminer/pdfminer.six/blob/develop/CHANGELOG.md) for details, but a key difference is an improvement in how it assigns `line`, `rect`, and `curve` objects. (Diagonal two-point lines, for instance, are now `line` objects instead of `curve` objects.) ([#515](https://github.com/jsvine/pdfplumber/pull/515))
@@ -16,16 +16,22 @@ All notable changes to this project will be documented in this file. The format 
 - `.extract_text(...)` returns `""` instead of `None` when character list is empty. ([#482](https://github.com/jsvine/pdfplumber/issues/482) + [cb9900b](https://github.com/jsvine/pdfplumber/commit/cb9900b49706e96df520dbd1067c2a57a4cdb20d)) [h/t @tungph]
 - `.extract_words(...)` now includes `doctop` among the attributes it returns for each word. ([66fef89](https://github.com/jsvine/pdfplumber/commit/66fef89b670cf95d13a5e23040c7bf9339944c01))
 - Change behavior of horizontal `text_strategy`, so that it uses the top and bottom of *every* word, not just the top of every word and the bottom of the last. ([#467](https://github.com/jsvine/pdfplumber/pull/467) + [#466](https://github.com/jsvine/pdfplumber/issues/466) + [#265](https://github.com/jsvine/pdfplumber/issues/265)) [h/t @bobluda + @samkit-jain]
-- Change `table.merge_edges(...)` behavior when `join_tolerance` (and `x`/`y` variants) `<= 0`, so that joining is attempted regardless, to handle cases of overlapping lines.
-- Raise error if certain table-extraction settings are negative.
+- Change `table.merge_edges(...)` behavior when `join_tolerance` (and `x`/`y` variants) `<= 0`, so that joining is attempted regardless, to handle cases of overlapping lines. ([cbb34ce](https://github.com/jsvine/pdfplumber/commit/cbb34ce28b9b66d8d709304bbd0de267d82d75f3))
+- Raise error if certain table-extraction settings are negative. ([aa2d594](https://github.com/jsvine/pdfplumber/commit/aa2d594d3b3352dbcef503e4df2e045d69fc2511))
 
 ### Fixed
 - Fix slowdown in `.extract_words(...)`/`WordExtractor.iter_chars_to_words(...)` on very long words, caused by repeatedly re-calculating bounding box. ([#483](https://github.com/jsvine/pdfplumber/discussions/483))
 - Handle `UnicodeDecodeError` when trying to decode utf-16-encoded annotations ([#463](https://github.com/jsvine/pdfplumber/issues/463)) [h/t @tungph]
 - Fix crash when extracting tables with null values in `(text|intersection)_(x|y)_tolerance` settings. ([#539](https://github.com/jsvine/pdfplumber/discussions/539)) [h/t @yoavxyoav]
 
+### Removed
+- Remove `pdfplumber.load(...)` method, which has been deprecated since `0.5.23` ([54cbbc5](https://github.com/jsvine/pdfplumber/commit/54cbbc5321b42f3976b2ac750c25b7b2ec6045d7))
+
 ### Development Changes
 - Add `CONTRIBUTING.md` ([#428](https://github.com/jsvine/pdfplumber/pull/428))
+- Enforce import order via [`isort`](https://pycqa.github.io/isort/index.html) ([d72b879](https://github.com/jsvine/pdfplumber/commit/d72b879665b410bd0f9c436d54ae60b3989489d5))
+- Update Pillow and Wand versions in `requirements.txt` ([cae6924](https://github.com/jsvine/pdfplumber/commit/cae69246c53e49f95c1adbb5dffb3d49e726c5df))
+- Update all dependency versions in `requirements-dev.txt` ([2f7e7ee](https://github.com/jsvine/pdfplumber/commit/2f7e7ee49172d681f34269a0db0276dffefa6386))
 
 ## [0.5.28] — 2021-05-08
 ### Added
