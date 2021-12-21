@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file. The format 
 - Add `snap_x_tolerance` and `snap_y_tolerance` to table extraction settings. ([#51](https://github.com/jsvine/pdfplumber/pull/51) + [#475](https://github.com/jsvine/pdfplumber/issues/475)) [h/t @dustindall]
 - Add `join_x_tolerance` and `join_y_tolerance` to table extraction settings. ([cbb34ce](https://github.com/jsvine/pdfplumber/commit/cbb34ce28b9b66d8d709304bbd0de267d82d75f3))
 
-## Changed
+### Changed
 - Upgrade `pdfminer.six` from `20200517` to `20211012`; see [that library's changelog](https://github.com/pdfminer/pdfminer.six/blob/develop/CHANGELOG.md) for details, but a key difference is an improvement in how it assigns `line`, `rect`, and `curve` objects. (Diagonal two-point lines, for instance, are now `line` objects instead of `curve` objects.) ([#515](https://github.com/jsvine/pdfplumber/pull/515))
 - Remove Decimal-ization of parsed object attributes, which are now represented with as much precision as is returned by `pdfminer.six` ([#346](https://github.com/jsvine/pdfplumber/discussions/346) + [#520](https://github.com/jsvine/pdfplumber/pull/520))
 - `.extract_text(...)` returns `""` instead of `None` when character list is empty. ([#482](https://github.com/jsvine/pdfplumber/issues/482) + [cb9900b](https://github.com/jsvine/pdfplumber/commit/cb9900b49706e96df520dbd1067c2a57a4cdb20d)) [h/t @tungph]
