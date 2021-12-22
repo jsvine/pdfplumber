@@ -224,11 +224,11 @@ class Page(Container):
         table_settings = TableFinder.resolve_table_settings(table_settings)
         tables = self.find_tables(table_settings)
 
-        extract_kwargs = dict(
-            (k, table_settings["text_" + k])
+        extract_kwargs = {
+            k: table_settings["text_" + k]
             for k in ["x_tolerance", "y_tolerance"]
             if "text_" + k in table_settings
-        )
+        }
 
         return [table.extract(**extract_kwargs) for table in tables]
 
@@ -279,7 +279,7 @@ class Page(Container):
         and positioning (within `tolerance`) as other characters on the page.
         """
         p = FilteredPage(self, True)
-        p._objects = dict((kind, objs) for kind, objs in self.objects.items())
+        p._objects = {kind: objs for kind, objs in self.objects.items()}
         p._objects["char"] = utils.dedupe_chars(self.chars, **kwargs)
         return p
 
