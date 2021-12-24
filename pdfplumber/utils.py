@@ -484,10 +484,8 @@ def clip_obj(obj, bbox):
     for attr in ["x0", "top", "x1", "bottom"]:
         copy[attr] = dims[attr]
 
-    if dims["top"] != obj["bottom"]:
-        diff = dims["top"] - obj["top"]
-        copy["doctop"] = obj["doctop"] + diff
-
+    diff = dims["top"] - obj["top"]
+    copy["doctop"] = obj["doctop"] + diff
     copy["width"] = copy["x1"] - copy["x0"]
     copy["height"] = copy["bottom"] - copy["top"]
 
