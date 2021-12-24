@@ -143,11 +143,7 @@ def words_to_edges_v(words, word_threshold=DEFAULT_MIN_WORDS_VERTICAL):
     # Iterate through those bboxes, condensing overlapping bboxes
     condensed_bboxes = []
     for bbox in bboxes:
-        overlap = False
-        for c in condensed_bboxes:
-            if utils.get_bbox_overlap(bbox, c):
-                overlap = True
-                break
+        overlap = any(utils.get_bbox_overlap(bbox, c) for c in condensed_bboxes)
         if not overlap:
             condensed_bboxes.append(bbox)
 
@@ -161,8 +157,7 @@ def words_to_edges_v(words, word_threshold=DEFAULT_MIN_WORDS_VERTICAL):
     min_top = min(map(itemgetter("top"), sorted_rects))
     max_bottom = max(map(itemgetter("bottom"), sorted_rects))
 
-    # Describe all the left-hand edges of each text cluster
-    edges = [
+    return [
         {
             "x0": b["x0"],
             "x1": b["x0"],
@@ -182,8 +177,6 @@ def words_to_edges_v(words, word_threshold=DEFAULT_MIN_WORDS_VERTICAL):
             "orientation": "v",
         }
     ]
-
-    return edges
 
 
 def edges_to_intersections(edges, x_tolerance=1, y_tolerance=1):
@@ -366,7 +359,7 @@ class Table(object):
         xs = list(sorted(set(map(itemgetter(0), self.cells))))
         rows = []
         for y, row_cells in itertools.groupby(_sorted, itemgetter(1)):
-            xdict = dict((cell[0], cell) for cell in row_cells)
+            xdict = {cell[0]: cell for cell in row_cells}
             row = Row([xdict.get(x) for x in xs])
             rows.append(row)
         return rows
