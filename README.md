@@ -439,6 +439,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [bobluda](https://github.com/bobluda)
 - [@ramcdona](https://github.com/ramcdona)
 - [augeos-grosso](https://github.com/augeos-grosso) aka [johnhuge](https://github.com/johnhuge)
+
 ## Contributing
 
 Pull requests are welcome, but please submit a proposal issue first, as the library is in active development.
