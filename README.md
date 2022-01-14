@@ -438,6 +438,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Daniel Peña](https://github.com/trifling)
 - [bobluda](https://github.com/bobluda)
 - [@ramcdona](https://github.com/ramcdona)
+- [johnhuge](https://github.com/johnhuge)
 
 ## Contributing
 
