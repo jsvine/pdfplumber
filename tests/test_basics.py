@@ -165,3 +165,15 @@ class Test(unittest.TestCase):
             with pdfplumber.open(f) as pdf:
                 assert len(pdf.metadata)
             assert not f.closed
+
+    def test_bad_fileobj(self):
+        path = os.path.join(HERE, "pdfs/empty.pdf")
+        with pytest.raises(pdfplumber.pdf.PSException):
+            pdfplumber.open(path)
+
+        f = open(path)
+        with pytest.raises(pdfplumber.pdf.PSException):
+            pdfplumber.open(f)
+        # File objects passed to pdfplumber should not be auto-closed
+        assert not f.closed
+        f.close()
