@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.6.1] - [unreleased]
+
+### Fixed
+- If `pdfplumber.open(...)` opens a file but a `pdfminer.pdfparser.PSException` is raised during the process, `pdfplumber` now makes sure to close that file. ([#581](https://github.com/jsvine/pdfplumber/pull/581) + ([#578](https://github.com/jsvine/pdfplumber/issues/578)) [h/t @johnhuge]
+
 ## [0.6.0] - 2021-12-21
 ### Added
 - Add `.extract_text(layout=True)`, an *experimental feature* which attempts to mimic the structural layout of the text on the page. ([#10](https://github.com/jsvine/pdfplumber/issues/10))
