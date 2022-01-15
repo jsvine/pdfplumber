@@ -52,7 +52,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install ghostscript & imagemagick
-      run: sudo apt install ghostscript libmagickwand-dev
+      run: sudo apt update && sudo apt install ghostscript libmagickwand-dev
 
     - name: Remove policy.xml
       run: sudo rm /etc/ImageMagick-6/policy.xml
