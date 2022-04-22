@@ -2,5 +2,5 @@ pytest==6.2.5
 pytest-cov==3.0.0
 pytest-parallel==0.1.1
 flake8==4.0.1
-black==21.12b0
+black==22.3.0
 isort==5.10.1
