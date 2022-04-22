@@ -71,7 +71,7 @@ class PageImage(object):
                 (page.bbox[2] - page.root_page.bbox[0]) * self.scale,
                 (page.bbox[3] - page.root_page.bbox[1]) * self.scale,
             )
-            self.original = self.original.crop(map(int, cropbox))
+            self.original = self.original.crop(tuple(map(int, cropbox)))
         self.reset()
 
     def _reproject_bbox(self, bbox):
