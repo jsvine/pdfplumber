@@ -40,15 +40,16 @@ setup(
         ]
     ),
     tests_require=base_reqs + dev_reqs,
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=base_reqs,
     entry_points={"console_scripts": ["pdfplumber = pdfplumber.cli:main"]},
     classifiers=[
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 )
