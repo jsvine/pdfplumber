@@ -24,7 +24,7 @@ class Test(unittest.TestCase):
     def test_with_laparams(self):
         with pdfplumber.open(self.path, laparams={}) as pdf:
             page = pdf.pages[0]
-            assert len(page.textboxhorizontals) == 21
+            assert len(page.textboxhorizontals) == 27
             assert len(page.textlinehorizontals) == 79
             assert len(page.chars) == 4408
             assert "anno" not in page.objects.keys()
