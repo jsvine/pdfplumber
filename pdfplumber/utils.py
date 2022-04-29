@@ -159,13 +159,7 @@ def dedupe_chars(chars, tolerance=1):
         try:
             sorted_chars = sorted(chars, key=key)
         except Exception:
-            traceback.print_exc()
-            print()
-            print("".join(map(itemgetter("text"), chars)))
-            for i in chars:
-                print(i['text'], type(i['text']), type(i['fontname']))
-                # print(i['text'], type(i['text']), i['x0'], i['fontname'], i['size'], i['upright'])
-            
+            # 因为fontname的类型不一致，可能会报错： str 和 bytes 不能比较
             for char in chars:
                 if isinstance(char['fontname'], str):
                     char['fontname'] = char['fontname'].encode('utf-8')
@@ -242,6 +236,7 @@ class WordExtractor:
         upright = ordered_chars[0]["upright"]
 
         direction = 1 if (self.horizontal_ltr if upright else self.vertical_ttb) else -1
+        # 如果不排序的话，可能出现位置错乱
         ordered_chars = sorted(ordered_chars, key=lambda i: i['x0'])
         word = {
             "text": "".join(map(itemgetter("text"), ordered_chars)),
