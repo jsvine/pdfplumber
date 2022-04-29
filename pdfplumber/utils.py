@@ -242,13 +242,7 @@ class WordExtractor:
         upright = ordered_chars[0]["upright"]
 
         direction = 1 if (self.horizontal_ltr if upright else self.vertical_ttb) else -1
-        text = "".join(map(itemgetter("text"), sorted(ordered_chars, key=lambda item: item['x0'])))
-        if '44..66' in text:
-            print()
-            print(text)
-            print(ordered_chars)
-        # ordered_chars = sorted(ordered_chars, key=lambda i: i['x0'])
-        ordered_chars = dedupe_chars(ordered_chars)
+        ordered_chars = sorted(ordered_chars, key=lambda i: i['x0'])
         word = {
             "text": "".join(map(itemgetter("text"), ordered_chars)),
             "x0": x0,
