@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+
+- Add type annotations, and refactor parts of the library accordingly.
+- Add enforcement of type annotations via `mypy --strict`.
+- Add `TableSettings` class, a behind-the-scenes handler for managing and validating table-extraction settings.
+
+### Changed
+
+- Rename the positional argument to `.to_csv(...)` and `.to_json(...)` from `types` to `object_types`.
+- Tweak the output of `.to_json(...)` so that, if an object type is not present for a given page, it has no key in the page's object representation.
+
+### Removed
+
+- Remove `utils.filter_objects(...)` and move the functionality to within the `FilteredPage.objects` property calculation, the only part of the library that used it.
+- Remove code that sets `pdfminer.pdftypes.STRICT = True` and `pdfminer.pdfinterp.STRICT = True`, since that [has now been the default for a while](https://github.com/pdfminer/pdfminer.six/commit/9439a3a31a347836aad1c1226168156125d9505f).
+
+### Fixed
+
 ## [0.6.1] - 2022-04-23
 
 ### Changed
