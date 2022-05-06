@@ -29,12 +29,14 @@ class Test(unittest.TestCase):
 
     def test_table_settings_errors(self):
         with pytest.raises(ValueError):
+            tf = table.TableFinder(self.pdf.pages[0], tuple())
+
+        with pytest.raises(TypeError):
             tf = table.TableFinder(self.pdf.pages[0], {"strategy": "x"})
             tf.get_edges()
 
         with pytest.raises(ValueError):
             tf = table.TableFinder(self.pdf.pages[0], {"vertical_strategy": "x"})
-            tf.get_edges()
 
         with pytest.raises(ValueError):
             tf = table.TableFinder(
@@ -195,11 +197,7 @@ class Test(unittest.TestCase):
                 "min_words_horizontal": 1,
                 "keep_blank_chars": False,
                 "text_tolerance": 3,
-                "text_x_tolerance": None,
-                "text_y_tolerance": None,
                 "intersection_tolerance": 3,
-                "intersection_x_tolerance": None,
-                "intersection_y_tolerance": None,
             }
             assert page.extract_table(table_settings)
             assert page.extract_tables(table_settings)

@@ -1,6 +1,9 @@
 import itertools
 import logging
 import pathlib
+from io import BufferedReader
+from types import TracebackType
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from pdfminer.layout import LAParams
 from pdfminer.pdfdocument import PDFDocument
@@ -9,6 +12,7 @@ from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
 from pdfminer.psparser import PSException
 
+from ._typing import T_num, T_obj_list
 from .container import Container
 from .page import Page
 from .utils import resolve_and_decode
@@ -17,22 +21,26 @@ logger = logging.getLogger(__name__)
 
 
 class PDF(Container):
-    cached_properties = Container.cached_properties + ["_pages"]
+    cached_properties: List[str] = Container.cached_properties + ["_pages"]
 
     def __init__(
         self,
-        stream,
-        pages=None,
-        laparams=None,
-        password="",
-        strict_metadata=False,
+        stream: BufferedReader,
+        stream_is_external: bool = False,
+        pages: Optional[Union[List[int], Tuple[int]]] = None,
+        laparams: Optional[Dict[str, Any]] = None,
+        password: str = "",
+        strict_metadata: bool = False,
     ):
-        self.laparams = None if laparams is None else LAParams(**laparams)
         self.stream = stream
+        self.stream_is_external = stream_is_external
         self.pages_to_parse = pages
+        self.laparams = None if laparams is None else LAParams(**laparams)
+
         self.doc = PDFDocument(PDFParser(stream), password=password)
         self.rsrcmgr = PDFResourceManager()
         self.metadata = {}
+
         for info in self.doc.info:
             self.metadata.update(info)
         for k, v in self.metadata.items():
@@ -50,30 +58,61 @@ class PDF(Container):
                 )
 
     @classmethod
-    def open(cls, path_or_fp, **kwargs):
-        is_path = isinstance(path_or_fp, (str, pathlib.Path))
-        fp = open(path_or_fp, "rb") if is_path else path_or_fp
+    def open(
+        cls,
+        path_or_fp: Union[str, pathlib.Path, BufferedReader],
+        pages: Optional[Union[List[int], Tuple[int]]] = None,
+        laparams: Optional[Dict[str, Any]] = None,
+        password: str = "",
+        strict_metadata: bool = False,
+    ) -> "PDF":
+
+        if isinstance(path_or_fp, (str, pathlib.Path)):
+            stream = open(path_or_fp, "rb")
+            stream_is_external = False
+        else:
+            stream = path_or_fp
+            stream_is_external = True
 
         try:
-            inst = cls(fp, **kwargs)
+            return cls(
+                stream,
+                pages=pages,
+                laparams=laparams,
+                password=password,
+                strict_metadata=strict_metadata,
+                stream_is_external=stream_is_external,
+            )
+
         except PSException:
-            if is_path:
-                fp.close()
+            if not stream_is_external:
+                stream.close()
             raise
 
-        if is_path:
-            inst.close_file = fp.close
+    def close(self) -> None:
+        self.flush_cache()
+        if not self.stream_is_external:
+            self.stream.close()
 
-        return inst
+    def __enter__(self) -> "PDF":
+        return self
+
+    def __exit__(
+        self,
+        t: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        self.close()
 
     @property
-    def pages(self):
+    def pages(self) -> List[Page]:
         if hasattr(self, "_pages"):
             return self._pages
 
-        doctop = 0
+        doctop: T_num = 0
         pp = self.pages_to_parse
-        self._pages = []
+        self._pages: List[Page] = []
         for i, page in enumerate(PDFPage.create_pages(self.doc)):
             page_number = i + 1
             if pp is not None and page_number not in pp:
@@ -84,22 +123,28 @@ class PDF(Container):
         return self._pages
 
     @property
-    def objects(self):
+    def objects(self) -> Dict[str, T_obj_list]:
         if hasattr(self, "_objects"):
             return self._objects
-        all_objects = {}
+        all_objects: Dict[str, T_obj_list] = {}
         for p in self.pages:
             for kind in p.objects.keys():
                 all_objects[kind] = all_objects.get(kind, []) + p.objects[kind]
-        self._objects = all_objects
+        self._objects: Dict[str, T_obj_list] = all_objects
         return self._objects
 
     @property
-    def annots(self):
+    def annots(self) -> List[Dict[str, Any]]:
         gen = (p.annots for p in self.pages)
         return list(itertools.chain(*gen))
 
     @property
-    def hyperlinks(self):
+    def hyperlinks(self) -> List[Dict[str, Any]]:
         gen = (p.hyperlinks for p in self.pages)
         return list(itertools.chain(*gen))
+
+    def to_dict(self, object_types: Optional[List[str]] = None) -> Dict[str, Any]:
+        return {
+            "metadata": self.metadata,
+            "pages": [page.to_dict(object_types) for page in self.pages],
+        }

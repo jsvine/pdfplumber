@@ -1,11 +1,24 @@
 import re
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Optional, Tuple
 
 from pdfminer.converter import PDFPageAggregator
+from pdfminer.layout import (
+    LTChar,
+    LTComponent,
+    LTContainer,
+    LTCurve,
+    LTItem,
+    LTLine,
+    LTPage,
+    LTRect,
+)
 from pdfminer.pdfinterp import PDFPageInterpreter
+from pdfminer.pdfpage import PDFPage
 
 from . import utils
+from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
-from .table import TableFinder
+from .table import T_table_settings, Table, TableFinder, TableSettings
 from .utils import resolve_all
 
 lt_pat = re.compile(r"^LT")
@@ -42,12 +55,25 @@ ALL_ATTRS = set(
 )
 
 
-class Page(Container):
-    cached_properties = Container.cached_properties + ["_layout"]
-    is_original = True
+if TYPE_CHECKING:  # pragma: nocover
+    from .display import PageImage
+    from .pdf import PDF
 
-    def __init__(self, pdf, page_obj, page_number=None, initial_doctop=0):
+
+class Page(Container):
+    cached_properties: List[str] = Container.cached_properties + ["_layout"]
+    is_original: bool = True
+    pages = None
+
+    def __init__(
+        self,
+        pdf: "PDF",
+        page_obj: PDFPage,
+        page_number: int,
+        initial_doctop: T_num = 0,
+    ):
         self.pdf = pdf
+        self.root_page = self
         self.page_obj = page_obj
         self.page_number = page_number
         _rotation = resolve_all(self.page_obj.attrs.get("Rotate", 0))
@@ -62,31 +88,32 @@ class Page(Container):
         self.mediabox = resolve_all(mediabox) or self.cropbox
         m = self.mediabox
 
-        if self.rotation in [90, 270]:
-            self.bbox = (
+        self.bbox: T_bbox = (
+            (
                 min(m[1], m[3]),
                 min(m[0], m[2]),
                 max(m[1], m[3]),
                 max(m[0], m[2]),
             )
-        else:
-            self.bbox = (
+            if self.rotation in [90, 270]
+            else (
                 min(m[0], m[2]),
                 min(m[1], m[3]),
                 max(m[0], m[2]),
                 max(m[1], m[3]),
             )
+        )
 
     @property
-    def width(self):
+    def width(self) -> T_num:
         return self.bbox[2] - self.bbox[0]
 
     @property
-    def height(self):
+    def height(self) -> T_num:
         return self.bbox[3] - self.bbox[1]
 
     @property
-    def layout(self):
+    def layout(self) -> LTPage:
         if hasattr(self, "_layout"):
             return self._layout
         device = PDFPageAggregator(
@@ -96,12 +123,12 @@ class Page(Container):
         )
         interpreter = PDFPageInterpreter(self.pdf.rsrcmgr, device)
         interpreter.process_page(self.page_obj)
-        self._layout = device.get_result()
+        self._layout: LTPage = device.get_result()
         return self._layout
 
     @property
-    def annots(self):
-        def parse(annot):
+    def annots(self) -> T_obj_list:
+        def parse(annot: T_obj) -> T_obj:
             rect = annot["Rect"]
 
             a = annot.get("A", {})
@@ -142,20 +169,20 @@ class Page(Container):
         return list(map(parse, raw))
 
     @property
-    def hyperlinks(self):
+    def hyperlinks(self) -> T_obj_list:
         return [a for a in self.annots if a["uri"] is not None]
 
     @property
-    def objects(self):
+    def objects(self) -> Dict[str, T_obj_list]:
         if hasattr(self, "_objects"):
             return self._objects
-        self._objects = self.parse_objects()
+        self._objects: Dict[str, T_obj_list] = self.parse_objects()
         return self._objects
 
-    def process_object(self, obj):
+    def process_object(self, obj: LTItem) -> T_obj:
         kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
 
-        def process_attr(item):
+        def process_attr(item: Tuple[str, Any]) -> Optional[Tuple[str, Any]]:
             k, v = item
             if k in ALL_ATTRS:
                 res = resolve_all(v)
@@ -168,17 +195,15 @@ class Page(Container):
         attr["object_type"] = kind
         attr["page_number"] = self.page_number
 
-        if hasattr(obj, "graphicstate"):
+        if isinstance(obj, LTChar):
+            attr["text"] = obj.get_text()
             gs = obj.graphicstate
             attr["stroking_color"] = gs.scolor
             attr["non_stroking_color"] = gs.ncolor
 
-        if hasattr(obj, "get_text"):
-            attr["text"] = obj.get_text()
+        if isinstance(obj, LTCurve) and not isinstance(obj, (LTRect, LTLine)):
 
-        if kind == "curve":
-
-            def point2coord(pt):
+            def point2coord(pt: Tuple[T_num, T_num]) -> Tuple[T_num, T_num]:
                 x, y = pt
                 return (x, self.height - y)
 
@@ -191,10 +216,12 @@ class Page(Container):
 
         return attr
 
-    def iter_layout_objects(self, layout_objects):
+    def iter_layout_objects(
+        self, layout_objects: List[LTComponent]
+    ) -> Generator[T_obj, None, None]:
         for obj in layout_objects:
             # If object is, like LTFigure, a higher-level object ...
-            if hasattr(obj, "_objs"):
+            if isinstance(obj, LTContainer):
                 # and LAParams is passed, process the object itself.
                 if self.pdf.laparams is not None:
                     yield self.process_object(obj)
@@ -203,8 +230,8 @@ class Page(Container):
             else:
                 yield self.process_object(obj)
 
-    def parse_objects(self):
-        objects = {}
+    def parse_objects(self) -> Dict[str, T_obj_list]:
+        objects: Dict[str, T_obj_list] = {}
         for obj in self.iter_layout_objects(self.layout._objs):
             kind = obj["object_type"]
             if kind in ["anno"]:
@@ -214,76 +241,82 @@ class Page(Container):
             objects[kind].append(obj)
         return objects
 
-    def debug_tablefinder(self, table_settings={}):
-        return TableFinder(self, table_settings)
+    def debug_tablefinder(
+        self, table_settings: Optional[T_table_settings] = None
+    ) -> TableFinder:
+        tset = TableSettings.resolve(table_settings)
+        return TableFinder(self, tset)
 
-    def find_tables(self, table_settings={}):
-        return TableFinder(self, table_settings).tables
+    def find_tables(
+        self, table_settings: Optional[T_table_settings] = None
+    ) -> List[Table]:
+        tset = TableSettings.resolve(table_settings)
+        return TableFinder(self, tset).tables
 
-    def extract_tables(self, table_settings={}):
-        table_settings = TableFinder.resolve_table_settings(table_settings)
-        tables = self.find_tables(table_settings)
+    def extract_tables(
+        self, table_settings: Optional[T_table_settings] = None
+    ) -> List[List[List[Optional[str]]]]:
+        tset = TableSettings.resolve(table_settings)
+        tables = self.find_tables(tset)
 
         extract_kwargs = {
-            k: table_settings["text_" + k]
-            for k in ["x_tolerance", "y_tolerance"]
-            if "text_" + k in table_settings
+            k: getattr(tset, "text_" + k) for k in ["x_tolerance", "y_tolerance"]
         }
 
         return [table.extract(**extract_kwargs) for table in tables]
 
-    def extract_table(self, table_settings={}):
-        table_settings = TableFinder.resolve_table_settings(table_settings)
-        tables = self.find_tables(table_settings)
+    def extract_table(
+        self, table_settings: Optional[T_table_settings] = None
+    ) -> Optional[List[List[Optional[str]]]]:
+        tset = TableSettings.resolve(table_settings)
+        tables = self.find_tables(tset)
 
         if len(tables) == 0:
             return None
 
         # Return the largest table, as measured by number of cells.
-        def sorter(x):
+        def sorter(x: Table) -> Tuple[int, T_num, T_num]:
             return (-len(x.cells), x.bbox[1], x.bbox[0])
 
         largest = list(sorted(tables, key=sorter))[0]
 
-        extract_kwargs = dict(
-            (k, table_settings["text_" + k])
-            for k in ["x_tolerance", "y_tolerance"]
-            if "text_" + k in table_settings
-        )
+        extract_kwargs = {
+            k: getattr(tset, "text_" + k) for k in ["x_tolerance", "y_tolerance"]
+        }
 
         return largest.extract(**extract_kwargs)
 
-    def extract_text(self, **kwargs):
+    def extract_text(self, **kwargs: Any) -> str:
         return utils.extract_text(
             self.chars, x_shift=self.bbox[0], y_shift=self.bbox[1], **kwargs
         )
 
-    def extract_words(self, **kwargs):
+    def extract_words(self, **kwargs: Any) -> T_obj_list:
         return utils.extract_words(self.chars, **kwargs)
 
-    def crop(self, bbox, relative=False):
+    def crop(self, bbox: T_bbox, relative: bool = False) -> "CroppedPage":
         return CroppedPage(self, bbox, relative=relative)
 
-    def within_bbox(self, bbox, relative=False):
+    def within_bbox(self, bbox: T_bbox, relative: bool = False) -> "CroppedPage":
         """
         Same as .crop, except only includes objects fully within the bbox
         """
         return CroppedPage(self, bbox, relative=relative, crop_fn=utils.within_bbox)
 
-    def filter(self, test_function):
+    def filter(self, test_function: Callable[[T_obj], bool]) -> "FilteredPage":
         return FilteredPage(self, test_function)
 
-    def dedupe_chars(self, **kwargs):
+    def dedupe_chars(self, **kwargs: Any) -> "FilteredPage":
         """
         Removes duplicate chars — those sharing the same text, fontname, size,
         and positioning (within `tolerance`) as other characters on the page.
         """
-        p = FilteredPage(self, True)
+        p = FilteredPage(self, lambda x: True)
         p._objects = {kind: objs for kind, objs in self.objects.items()}
         p._objects["char"] = utils.dedupe_chars(self.chars, **kwargs)
         return p
 
-    def to_image(self, **conversion_kwargs):
+    def to_image(self, **conversion_kwargs: Any) -> "PageImage":
         """
         For conversion_kwargs, see:
         http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image
@@ -295,27 +328,42 @@ class Page(Container):
             kwargs["resolution"] = DEFAULT_RESOLUTION
         return PageImage(self, **kwargs)
 
-    def __repr__(self):
+    def to_dict(self, object_types: Optional[List[str]] = None) -> Dict[str, Any]:
+        if object_types is None:
+            _object_types = list(self.objects.keys()) + ["annot"]
+        else:
+            _object_types = object_types
+        d = {
+            "page_number": self.page_number,
+            "initial_doctop": self.initial_doctop,
+            "rotation": self.rotation,
+            "cropbox": self.cropbox,
+            "mediabox": self.mediabox,
+            "bbox": self.bbox,
+            "width": self.width,
+            "height": self.height,
+        }
+        for t in _object_types:
+            d[t + "s"] = getattr(self, t + "s")
+        return d
+
+    def __repr__(self) -> str:
         return f"<Page:{self.page_number}>"
 
 
 class DerivedPage(Page):
-    is_original = False
+    is_original: bool = False
 
-    def __init__(self, parent_page):
+    def __init__(self, parent_page: Page):
         self.parent_page = parent_page
+        self.root_page = parent_page.root_page
         self.pdf = parent_page.pdf
         self.page_obj = parent_page.page_obj
         self.page_number = parent_page.page_number
         self.flush_cache(Container.cached_properties)
 
-        if type(parent_page) == Page:
-            self.root_page = parent_page
-        else:
-            self.root_page = parent_page.root_page
 
-
-def test_proposed_bbox(bbox, parent_bbox):
+def test_proposed_bbox(bbox: T_bbox, parent_bbox: T_bbox) -> None:
     bbox_area = utils.calculate_area(bbox)
     if bbox_area == 0:
         raise ValueError(f"Bounding box {bbox} has an area of zero.")
@@ -336,7 +384,13 @@ def test_proposed_bbox(bbox, parent_bbox):
 
 
 class CroppedPage(DerivedPage):
-    def __init__(self, parent_page, bbox, crop_fn=utils.crop_to_bbox, relative=False):
+    def __init__(
+        self,
+        parent_page: Page,
+        bbox: T_bbox,
+        crop_fn: Callable[[T_obj_list, T_bbox], T_obj_list] = utils.crop_to_bbox,
+        relative: bool = False,
+    ):
         if relative:
             o_x0, o_top, _, _ = parent_page.bbox
             x0, top, x1, bottom = bbox
@@ -349,22 +403,27 @@ class CroppedPage(DerivedPage):
         super().__init__(parent_page)
 
     @property
-    def objects(self):
+    def objects(self) -> Dict[str, T_obj_list]:
         if hasattr(self, "_objects"):
             return self._objects
-        self._objects = self.crop_fn(self.parent_page.objects, self.bbox)
+        self._objects: Dict[str, T_obj_list] = {
+            k: self.crop_fn(v, self.bbox) for k, v in self.parent_page.objects.items()
+        }
         return self._objects
 
 
 class FilteredPage(DerivedPage):
-    def __init__(self, parent_page, filter_fn):
+    def __init__(self, parent_page: Page, filter_fn: Callable[[T_obj], bool]):
         self.bbox = parent_page.bbox
         self.filter_fn = filter_fn
         super().__init__(parent_page)
 
     @property
-    def objects(self):
+    def objects(self) -> Dict[str, T_obj_list]:
         if hasattr(self, "_objects"):
             return self._objects
-        self._objects = utils.filter_objects(self.parent_page.objects, self.filter_fn)
+        self._objects: Dict[str, T_obj_list] = {
+            k: list(filter(self.filter_fn, v))
+            for k, v in self.parent_page.objects.items()
+        }
         return self._objects

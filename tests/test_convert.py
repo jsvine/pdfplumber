@@ -35,13 +35,13 @@ class Test(unittest.TestCase):
         )
 
     def test_json_all_types(self):
-        c = json.loads(self.pdf.to_json(types=None))
+        c = json.loads(self.pdf.to_json(object_types=None))
         found_types = c["pages"][0].keys()
-        assert "curves" in found_types
         assert "chars" in found_types
         assert "lines" in found_types
         assert "rects" in found_types
         assert "images" in found_types
+        assert "curves" in c["pages"][2].keys()
 
     def test_single_pages(self):
         c = json.loads(self.pdf.pages[0].to_json())
@@ -67,10 +67,10 @@ class Test(unittest.TestCase):
         assert c == c_from_io
 
     def test_csv_all_types(self):
-        c = self.pdf.to_csv(types=None)
+        c = self.pdf.to_csv(object_types=None)
         assert c.split("\r\n")[1].split(",")[0] == "line"
 
-    def test_cli(self):
+    def test_cli_json(self):
         res = run(
             [
                 sys.executable,
@@ -94,3 +94,26 @@ class Test(unittest.TestCase):
         assert c["pages"][0]["rects"][0]["bottom"] == float(
             self.pdf.pages[0].rects[0]["bottom"]
         )
+
+    def test_cli_csv(self):
+        res = run(
+            [
+                sys.executable,
+                "-m",
+                "pdfplumber.cli",
+                self.path,
+                "--format",
+                "csv",
+                "--precision",
+                "3",
+            ]
+        )
+
+        assert res.decode("utf-8").split("\r\n")[9] == (
+            "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
+            '18.0,12.996,,,,,,TimesNewRomanPSMT,,,,"(0, 0, 0)",,,18.0,,,,,Y,,1,'
+        )
+
+    def test_page_to_dict(self):
+        x = self.pdf.pages[0].to_dict(object_types=["char"])
+        assert len(x["chars"]) == len(self.pdf.pages[0].chars)

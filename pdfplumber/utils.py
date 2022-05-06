@@ -1,9 +1,26 @@
 import itertools
+from collections.abc import Sequence
 from operator import itemgetter
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    Union,
+)
 
 from pdfminer.pdftypes import PDFObjRef
 from pdfminer.psparser import PSLiteral
 from pdfminer.utils import PDFDocEncoding
+
+from ._typing import T_bbox, T_num, T_obj, T_obj_iter, T_obj_list, T_seq
+
+if TYPE_CHECKING:  # pragma: nocover
+    from pandas.core.frame import DataFrame
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
@@ -11,7 +28,7 @@ DEFAULT_X_DENSITY = 7.25
 DEFAULT_Y_DENSITY = 13
 
 
-def cluster_list(xs, tolerance=0):
+def cluster_list(xs: List[T_num], tolerance: T_num = 0) -> List[List[T_num]]:
     if tolerance == 0:
         return [[x] for x in sorted(xs)]
     if len(xs) < 2:
@@ -31,8 +48,8 @@ def cluster_list(xs, tolerance=0):
     return groups
 
 
-def make_cluster_dict(values, tolerance):
-    clusters = cluster_list(set(values), tolerance)
+def make_cluster_dict(values: Iterable[T_num], tolerance: T_num) -> Dict[T_num, int]:
+    clusters = cluster_list(list(set(values)), tolerance)
 
     nested_tuples = [
         [(val, i) for val in value_cluster] for i, value_cluster in enumerate(clusters)
@@ -41,16 +58,25 @@ def make_cluster_dict(values, tolerance):
     return dict(itertools.chain(*nested_tuples))
 
 
-def cluster_objects(objs, attr, tolerance):
-    attr_getter = itemgetter(attr) if isinstance(attr, (str, int)) else attr
-    objs = to_list(objs)
-    values = map(attr_getter, objs)
+def _itemgetter(attr: Union[str, Callable[[T_obj], T_num]]) -> Callable[[T_obj], T_num]:
+    if isinstance(attr, (str, tuple)):
+        return itemgetter(attr)
+    else:
+        return attr
+
+
+def cluster_objects(
+    objs: T_obj_iter, attr: Union[str, Callable[[T_obj], T_num]], tolerance: T_num
+) -> List[T_obj_list]:
+    getter = _itemgetter(attr)
+    objs_list = list(objs)
+    values = map(getter, objs_list)
     cluster_dict = make_cluster_dict(values, tolerance)
 
     get_0, get_1 = itemgetter(0), itemgetter(1)
 
     cluster_tuples = sorted(
-        ((obj, cluster_dict.get(attr_getter(obj))) for obj in objs), key=get_1
+        ((obj, cluster_dict.get(getter(obj))) for obj in objs_list), key=get_1
     )
 
     grouped = itertools.groupby(cluster_tuples, key=get_1)
@@ -58,18 +84,18 @@ def cluster_objects(objs, attr, tolerance):
     return [list(map(get_0, v)) for k, v in grouped]
 
 
-def decode_text(s):
+def decode_text(s: Union[bytes, str]) -> str:
     """
     Decodes a PDFDocEncoding string to Unicode.
     Adds py3 compatibility to pdfminer's version.
     """
-    if type(s) == bytes and s.startswith(b"\xfe\xff"):
+    if isinstance(s, bytes) and s.startswith(b"\xfe\xff"):
         return str(s[2:], "utf-16be", "ignore")
-    ords = (ord(c) if type(c) == str else c for c in s)
+    ords = (ord(c) if isinstance(c, str) else c for c in s)
     return "".join(PDFDocEncoding[o] for o in ords)
 
 
-def resolve_and_decode(obj):
+def resolve_and_decode(obj: Any) -> Any:
     """Recursively resolve the metadata values."""
     if hasattr(obj, "resolve"):
         obj = obj.resolve()
@@ -87,36 +113,35 @@ def resolve_and_decode(obj):
     return obj
 
 
-def decode_psl_list(_list):
+def decode_psl_list(_list: List[Union[PSLiteral, str]]) -> List[str]:
     return [
         decode_text(value.name) if isinstance(value, PSLiteral) else value
         for value in _list
     ]
 
 
-def resolve(x):
-    if type(x) == PDFObjRef:
+def resolve(x: Any) -> Any:
+    if isinstance(x, PDFObjRef):
         return x.resolve()
     else:
         return x
 
 
-def get_dict_type(d):
-    if type(d) is not dict:
+def get_dict_type(d: Any) -> Optional[str]:
+    if not isinstance(d, dict):
         return None
     t = d.get("Type")
-    if type(t) is PSLiteral:
+    if isinstance(t, PSLiteral):
         return decode_text(t.name)
     else:
         return t
 
 
-def resolve_all(x):
+def resolve_all(x: Any) -> Any:
     """
     Recursively resolves the given object and all the internals.
     """
-    t = type(x)
-    if t == PDFObjRef:
+    if isinstance(x, PDFObjRef):
         resolved = x.resolve()
 
         # Avoid infinite recursion
@@ -124,29 +149,30 @@ def resolve_all(x):
             return x
 
         return resolve_all(resolved)
-    elif t in (list, tuple):
-        return t(resolve_all(v) for v in x)
-    elif t == dict:
+    elif isinstance(x, (list, tuple)):
+        return type(x)(resolve_all(v) for v in x)
+    elif isinstance(x, dict):
         exceptions = ["Parent"] if get_dict_type(x) == "Annot" else []
         return {k: v if k in exceptions else resolve_all(v) for k, v in x.items()}
     else:
         return x
 
 
-def is_dataframe(collection):
-    cls = collection.__class__
-    name = ".".join([cls.__module__, cls.__name__])
-    return name == "pandas.core.frame.DataFrame"
-
-
-def to_list(collection):
-    if is_dataframe(collection):
-        return collection.to_dict("records")  # pragma: nocover
+def to_list(collection: Union[T_seq[Any], "DataFrame"]) -> List[Any]:
+    if isinstance(collection, list):
+        return collection
+    elif isinstance(collection, Sequence):
+        return list(collection)
+    elif hasattr(collection, "to_dict"):
+        res: List[Dict[Union[str, int], Any]] = collection.to_dict(
+            "records"
+        )  # pragma: nocover
+        return res
     else:
         return list(collection)
 
 
-def dedupe_chars(chars, tolerance=1):
+def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
     """
     Removes duplicate chars — those sharing the same text, fontname, size,
     and positioning (within `tolerance`) as other characters in the set.
@@ -154,7 +180,7 @@ def dedupe_chars(chars, tolerance=1):
     key = itemgetter("fontname", "size", "upright", "text")
     pos_key = itemgetter("doctop", "x0")
 
-    def yield_unique_chars(chars):
+    def yield_unique_chars(chars: T_obj_list) -> Generator[T_obj, None, None]:
         sorted_chars = sorted(chars, key=key)
         for grp, grp_chars in itertools.groupby(sorted_chars, key=key):
             for y_cluster in cluster_objects(grp_chars, "doctop", tolerance):
@@ -165,7 +191,7 @@ def dedupe_chars(chars, tolerance=1):
     return sorted(deduped, key=chars.index)
 
 
-def objects_to_rect(objects):
+def objects_to_rect(objects: T_obj_list) -> Dict[str, T_num]:
     return {
         "x0": min(map(itemgetter("x0"), objects)),
         "x1": max(map(itemgetter("x1"), objects)),
@@ -174,7 +200,7 @@ def objects_to_rect(objects):
     }
 
 
-def objects_to_bbox(objects):
+def objects_to_bbox(objects: T_obj_list) -> T_bbox:
     return (
         min(map(itemgetter("x0"), objects)),
         min(map(itemgetter("top"), objects)),
@@ -183,14 +209,18 @@ def objects_to_bbox(objects):
     )
 
 
-obj_to_bbox = itemgetter("x0", "top", "x1", "bottom")
+bbox_getter = itemgetter("x0", "top", "x1", "bottom")
 
 
-def bbox_to_rect(bbox):
+def obj_to_bbox(obj: T_obj) -> T_bbox:
+    return bbox_getter(obj)
+
+
+def bbox_to_rect(bbox: T_bbox) -> Dict[str, T_num]:
     return {"x0": bbox[0], "top": bbox[1], "x1": bbox[2], "bottom": bbox[3]}
 
 
-def merge_bboxes(bboxes):
+def merge_bboxes(bboxes: List[T_bbox]) -> T_bbox:
     """
     Given a set of bounding boxes, return the smallest bounding box that
     contains them all.
@@ -203,26 +233,26 @@ def merge_bboxes(bboxes):
     )
 
 
-DEFAULT_WORD_EXTRACTION_SETTINGS = dict(
-    x_tolerance=DEFAULT_X_TOLERANCE,
-    y_tolerance=DEFAULT_Y_TOLERANCE,
-    keep_blank_chars=False,
-    use_text_flow=False,
-    horizontal_ltr=True,  # Should words be read left-to-right?
-    vertical_ttb=True,  # Should vertical words be read top-to-bottom?
-    extra_attrs=[],
-)
-
-
 class WordExtractor:
-    def __init__(self, **settings):
-        for s, val in settings.items():
-            if s not in DEFAULT_WORD_EXTRACTION_SETTINGS:
-                raise ValueError(f"{s} is not a valid WordExtractor parameter")
+    def __init__(
+        self,
+        x_tolerance: T_num = DEFAULT_X_TOLERANCE,
+        y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+        keep_blank_chars: bool = False,
+        use_text_flow: bool = False,
+        horizontal_ltr: bool = True,  # Should words be read left-to-right?
+        vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
+        extra_attrs: Optional[List[str]] = None,
+    ):
+        self.x_tolerance = x_tolerance
+        self.y_tolerance = y_tolerance
+        self.keep_blank_chars = keep_blank_chars
+        self.use_text_flow = use_text_flow
+        self.horizontal_ltr = horizontal_ltr
+        self.vertical_ttb = vertical_ttb
+        self.extra_attrs = [] if extra_attrs is None else extra_attrs
 
-            setattr(self, s, val)
-
-    def merge_chars(self, ordered_chars):
+    def merge_chars(self, ordered_chars: T_obj_list) -> T_obj:
         x0, top, x1, bottom = objects_to_bbox(ordered_chars)
         doctop_adj = ordered_chars[0]["doctop"] - ordered_chars[0]["top"]
         upright = ordered_chars[0]["upright"]
@@ -245,23 +275,31 @@ class WordExtractor:
 
         return word
 
-    def char_begins_new_word(self, current_chars, current_bbox, next_char):
+    def char_begins_new_word(
+        self,
+        current_chars: T_obj_list,
+        current_bbox: T_bbox,
+        next_char: T_obj,
+    ) -> bool:
+
         upright = current_chars[0]["upright"]
         intraline_tol = self.x_tolerance if upright else self.y_tolerance
         interline_tol = self.y_tolerance if upright else self.x_tolerance
 
         word_x0, word_top, word_x1, word_bottom = current_bbox
 
-        return (
+        return bool(
             (next_char["x0"] > word_x1 + intraline_tol)
             or (next_char["x1"] < word_x0 - intraline_tol)
             or (next_char["top"] > word_bottom + interline_tol)
             or (next_char["bottom"] < word_top - interline_tol)
         )
 
-    def iter_chars_to_words(self, chars):
-        current_word = []
-        current_bbox = None
+    def iter_chars_to_words(
+        self, chars: T_obj_iter
+    ) -> Generator[T_obj_list, None, None]:
+        current_word: T_obj_list = []
+        current_bbox: Optional[T_bbox] = None
 
         for char in chars:
             if not self.keep_blank_chars and char["text"].isspace():
@@ -270,8 +308,10 @@ class WordExtractor:
                     current_word = []
                     current_bbox = None
 
-            elif current_word and self.char_begins_new_word(
-                current_word, current_bbox, char
+            elif (
+                current_word
+                and current_bbox
+                and self.char_begins_new_word(current_word, current_bbox, char)
             ):
                 yield current_word
                 current_word = [char]
@@ -287,8 +327,8 @@ class WordExtractor:
         if current_word:
             yield current_word
 
-    def iter_sort_chars(self, chars):
-        def upright_key(x):
+    def iter_sort_chars(self, chars: T_obj_iter) -> Generator[T_obj, None, None]:
+        def upright_key(x: T_obj) -> int:
             return -int(x["upright"])
 
         for upright_cluster in cluster_objects(chars, upright_key, 0):
@@ -303,15 +343,15 @@ class WordExtractor:
             for sc in subclusters:
                 # Sort within line
                 sort_key = "x0" if upright else "doctop"
-                sc = sorted(sc, key=itemgetter(sort_key))
+                to_yield = sorted(sc, key=itemgetter(sort_key))
 
                 # Reverse order if necessary
                 if not (self.horizontal_ltr if upright else self.vertical_ttb):
-                    sc = reversed(sc)
+                    yield from reversed(to_yield)
+                else:
+                    yield from to_yield
 
-                yield from sc
-
-    def iter_extract(self, chars):
+    def iter_extract(self, chars: T_obj_iter) -> Generator[T_obj, None, None]:
         if not self.use_text_flow:
             chars = self.iter_sort_chars(chars)
 
@@ -322,25 +362,40 @@ class WordExtractor:
             for word_chars in self.iter_chars_to_words(char_group):
                 yield self.merge_chars(word_chars)
 
-    def extract(self, chars):
+    def extract(self, chars: T_obj_list) -> T_obj_list:
         return list(self.iter_extract(chars))
 
 
-def extract_words(chars, **kwargs):
-    settings = dict(DEFAULT_WORD_EXTRACTION_SETTINGS)
-    settings.update(kwargs)
-    return WordExtractor(**settings).extract(chars)
+def extract_words(
+    chars: T_obj_list,
+    x_tolerance: T_num = DEFAULT_X_TOLERANCE,
+    y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+    keep_blank_chars: bool = False,
+    use_text_flow: bool = False,
+    horizontal_ltr: bool = True,  # Should words be read left-to-right?
+    vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
+    extra_attrs: Optional[List[str]] = None,
+) -> T_obj_list:
+    return WordExtractor(
+        x_tolerance=x_tolerance,
+        y_tolerance=y_tolerance,
+        keep_blank_chars=keep_blank_chars,
+        use_text_flow=use_text_flow,
+        horizontal_ltr=horizontal_ltr,
+        vertical_ttb=vertical_ttb,
+        extra_attrs=extra_attrs,
+    ).extract(chars)
 
 
 def words_to_layout(
-    words,
-    x_density=DEFAULT_X_DENSITY,
-    y_density=DEFAULT_Y_DENSITY,
-    x_shift=0,
-    y_shift=0,
-    y_tolerance=DEFAULT_Y_TOLERANCE,
-    presorted=False,
-):
+    words: T_obj_list,
+    x_density: T_num = DEFAULT_X_DENSITY,
+    y_density: T_num = DEFAULT_Y_DENSITY,
+    x_shift: T_num = 0,
+    y_shift: T_num = 0,
+    y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+    presorted: bool = False,
+) -> str:
     """
     Given a set of word objects generated by `extract_words(...)`, return a
     string that mimics the structural layout of the text on the page(s), using
@@ -371,7 +426,7 @@ def words_to_layout(
     vertical text.
     """
     rendered = ""
-    words_sorted = words if presorted else sorted(words, itemgetter("doctop", "x0"))
+    words_sorted = words if presorted else sorted(words, key=itemgetter("doctop", "x0"))
     doctop_start = words_sorted[0]["doctop"] - words_sorted[0]["top"]
     for ws in cluster_objects(words_sorted, "doctop", y_tolerance):
         y_dist = (ws[0]["doctop"] - (doctop_start + y_shift)) / y_density
@@ -386,7 +441,9 @@ def words_to_layout(
     return rendered
 
 
-def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE, layout=False):
+def collate_line(
+    line_chars: T_obj_list, tolerance: T_num = DEFAULT_X_TOLERANCE, layout: bool = False
+) -> str:
     coll = ""
     last_x1 = None
     for char in sorted(line_chars, key=itemgetter("x0")):
@@ -398,21 +455,35 @@ def collate_line(line_chars, tolerance=DEFAULT_X_TOLERANCE, layout=False):
 
 
 def extract_text(
-    chars,
-    layout=False,
-    x_density=DEFAULT_X_DENSITY,
-    y_density=DEFAULT_Y_DENSITY,
-    x_shift=0,
-    y_shift=0,
-    **kwargs,
-):
+    chars: T_obj_list,
+    layout: bool = False,
+    x_density: T_num = DEFAULT_X_DENSITY,
+    y_density: T_num = DEFAULT_Y_DENSITY,
+    x_shift: T_num = 0,
+    y_shift: T_num = 0,
+    x_tolerance: T_num = DEFAULT_X_TOLERANCE,
+    y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+    keep_blank_chars: bool = False,
+    use_text_flow: bool = False,
+    horizontal_ltr: bool = True,  # Should words be read left-to-right?
+    vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
+    extra_attrs: Optional[List[str]] = None,
+) -> str:
     chars = to_list(chars)
     if len(chars) == 0:
         return ""
 
     if layout:
-        words = extract_words(chars, **kwargs)
-        y_tolerance = kwargs.get("y_tolerance", DEFAULT_Y_TOLERANCE)
+        words = extract_words(
+            chars,
+            x_tolerance=x_tolerance,
+            y_tolerance=y_tolerance,
+            keep_blank_chars=keep_blank_chars,
+            use_text_flow=use_text_flow,
+            horizontal_ltr=horizontal_ltr,
+            vertical_ttb=vertical_ttb,
+            extra_attrs=extra_attrs,
+        )
         return words_to_layout(
             words,
             x_density=x_density,
@@ -424,9 +495,6 @@ def extract_text(
         )
 
     else:
-        x_tolerance = kwargs.get("x_tolerance", DEFAULT_X_TOLERANCE)
-        y_tolerance = kwargs.get("y_tolerance", DEFAULT_Y_TOLERANCE)
-
         doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
 
         lines = (
@@ -439,18 +507,7 @@ def extract_text(
 collate_chars = extract_text
 
 
-def filter_objects(objs, fn):
-    if isinstance(objs, dict):
-        return {k: filter_objects(v, fn) for k, v in objs.items()}
-
-    initial_type = type(objs)
-    objs = to_list(objs)
-    filtered = filter(fn, objs)
-
-    return initial_type(filtered)
-
-
-def get_bbox_overlap(a, b):
+def get_bbox_overlap(a: T_bbox, b: T_bbox) -> Optional[T_bbox]:
     a_left, a_top, a_right, a_bottom = a
     b_left, b_top, b_right, b_bottom = b
     o_left = max(a_left, b_left)
@@ -465,14 +522,14 @@ def get_bbox_overlap(a, b):
         return None
 
 
-def calculate_area(bbox):
+def calculate_area(bbox: T_bbox) -> T_num:
     left, top, right, bottom = bbox
     if left > right or top > bottom:
         raise ValueError(f"{bbox} has a negative width or height.")
     return (right - left) * (bottom - top)
 
 
-def clip_obj(obj, bbox):
+def clip_obj(obj: T_obj, bbox: T_bbox) -> Optional[T_obj]:
 
     overlap = get_bbox_overlap(obj_to_bbox(obj), bbox)
     if overlap is None:
@@ -492,7 +549,7 @@ def clip_obj(obj, bbox):
     return copy
 
 
-def intersects_bbox(objs, bbox):
+def intersects_bbox(objs: T_obj_list, bbox: T_bbox) -> T_obj_list:
     """
     Filters objs to only those intersecting the bbox
     """
@@ -504,44 +561,32 @@ def intersects_bbox(objs, bbox):
     return initial_type(matching)
 
 
-def within_bbox(objs, bbox):
+def within_bbox(objs: T_obj_list, bbox: T_bbox) -> T_obj_list:
     """
     Filters objs to only those fully within the bbox
     """
-    if isinstance(objs, dict):
-        return {k: within_bbox(v, bbox) for k, v in objs.items()}
-
-    initial_type = type(objs)
-    objs = to_list(objs)
-    matching = [
+    return [
         obj
         for obj in objs
         if get_bbox_overlap(obj_to_bbox(obj), bbox) == obj_to_bbox(obj)
     ]
-    return initial_type(matching)
 
 
-def crop_to_bbox(objs, bbox):
+def crop_to_bbox(objs: T_obj_list, bbox: T_bbox) -> T_obj_list:
     """
     Filters objs to only those intersecting the bbox,
     and crops the extent of the objects to the bbox.
     """
-    if isinstance(objs, dict):
-        return {k: crop_to_bbox(v, bbox) for k, v in objs.items()}
-
-    initial_type = type(objs)
-    objs = to_list(objs)
-    cropped = list(filter(None, (clip_obj(obj, bbox) for obj in objs)))
-    return initial_type(cropped)
+    return list(filter(None, (clip_obj(obj, bbox) for obj in objs)))
 
 
-def move_object(obj, axis, value):
+def move_object(obj: T_obj, axis: str, value: T_num) -> T_obj:
     assert axis in ("h", "v")
     if axis == "h":
-        new_items = (
+        new_items = [
             ("x0", obj["x0"] + value),
             ("x1", obj["x1"] + value),
-        )
+        ]
     if axis == "v":
         new_items = [
             ("top", obj["top"] + value),
@@ -557,7 +602,7 @@ def move_object(obj, axis, value):
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
 
-def snap_objects(objs, attr, tolerance):
+def snap_objects(objs: T_obj_list, attr: str, tolerance: T_num) -> T_obj_list:
     axis = {"x0": "h", "x1": "h", "top": "v", "bottom": "v"}[attr]
     clusters = cluster_objects(objs, attr, tolerance)
     avgs = [sum(map(itemgetter(attr), objs)) / len(objs) for objs in clusters]
@@ -568,7 +613,7 @@ def snap_objects(objs, attr, tolerance):
     return list(itertools.chain(*snapped_clusters))
 
 
-def resize_object(obj, key, value):
+def resize_object(obj: T_obj, key: str, value: T_num) -> T_obj:
     assert key in ("x0", "x1", "top", "bottom")
     old_value = obj[key]
     diff = value - old_value
@@ -595,7 +640,7 @@ def resize_object(obj, key, value):
     return obj.__class__(tuple(obj.items()) + tuple(new_items))
 
 
-def curve_to_edges(curve):
+def curve_to_edges(curve: T_obj) -> T_obj_list:
     point_pairs = zip(curve["points"], curve["points"][1:])
     return [
         {
@@ -612,7 +657,7 @@ def curve_to_edges(curve):
     ]
 
 
-def rect_to_edges(rect):
+def rect_to_edges(rect: T_obj) -> T_obj_list:
     top, bottom, left, right = [dict(rect) for x in range(4)]
     top.update(
         {
@@ -652,13 +697,13 @@ def rect_to_edges(rect):
     return [top, bottom, left, right]
 
 
-def line_to_edge(line):
+def line_to_edge(line: T_obj) -> T_obj:
     edge = dict(line)
     edge["orientation"] = "h" if (line["top"] == line["bottom"]) else "v"
     return edge
 
 
-def obj_to_edges(obj):
+def obj_to_edges(obj: T_obj) -> T_obj_list:
     return {
         "line": lambda x: [line_to_edge(x)],
         "rect": rect_to_edges,
@@ -667,16 +712,20 @@ def obj_to_edges(obj):
     }[obj["object_type"]](obj)
 
 
-def filter_edges(edges, orientation=None, edge_type=None, min_length=1):
+def filter_edges(
+    edges: T_obj_list,
+    orientation: Optional[str] = None,
+    edge_type: Optional[str] = None,
+    min_length: T_num = 1,
+) -> T_obj_list:
 
     if orientation not in ("v", "h", None):
         raise ValueError("Orientation must be 'v' or 'h'")
 
-    def test(e):
+    def test(e: T_obj) -> bool:
         dim = "height" if e["orientation"] == "v" else "width"
         et_correct = e["object_type"] == edge_type if edge_type is not None else True
         orient_correct = orientation is None or e["orientation"] == orientation
-        return et_correct and orient_correct and (e[dim] >= min_length)
+        return bool(et_correct and orient_correct and (e[dim] >= min_length))
 
-    edges = filter(test, edges)
-    return list(edges)
+    return list(filter(test, edges))

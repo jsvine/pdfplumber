@@ -5,6 +5,7 @@ import unittest
 from itertools import groupby
 from operator import itemgetter
 
+import pandas as pd
 import pytest
 from pdfminer.pdfparser import PDFObjRef
 from pdfminer.psparser import PSLiteral
@@ -79,10 +80,6 @@ class Test(unittest.TestCase):
 
         assert words_rtl[1]["text"] == "baaabaaA/AAA"
         assert words_rtl[1]["direction"] == -1
-
-    def test_bad_word_extraction_settings(self):
-        with pytest.raises(ValueError):
-            self.pdf.pages[0].extract_words(not_real_param=True)
 
     def test_text_flow(self):
         path = os.path.join(HERE, "pdfs/federal-register-2020-17221.pdf")
@@ -300,3 +297,23 @@ class Test(unittest.TestCase):
     def test_filter_edges(self):
         with pytest.raises(ValueError):
             utils.filter_edges([], "x")
+
+    def test_to_list(self):
+        objs = [
+            {
+                "x0": 0,
+                "top": 0,
+                "x1": 20,
+                "bottom": 20,
+            },
+            {
+                "x0": 10,
+                "top": 10,
+                "x1": 15,
+                "bottom": 15,
+            },
+        ]
+        assert utils.to_list(objs) == objs
+        assert utils.to_list(tuple(objs)) == objs
+        assert utils.to_list((o for o in objs)) == objs
+        assert utils.to_list(pd.DataFrame(objs)) == objs

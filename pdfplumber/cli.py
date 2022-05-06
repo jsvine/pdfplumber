@@ -3,20 +3,20 @@ import argparse
 import json
 import sys
 from itertools import chain
+from typing import List
 
-from . import convert
 from .pdf import PDF
 
 
-def parse_page_spec(p_str):
+def parse_page_spec(p_str: str) -> List[int]:
     if "-" in p_str:
         start, end = map(int, p_str.split("-"))
-        return range(start, end + 1)
+        return list(range(start, end + 1))
     else:
         return [int(p_str)]
 
 
-def parse_args(args_raw):
+def parse_args(args_raw: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser("pdfplumber")
 
     parser.add_argument(
@@ -43,16 +43,16 @@ def parse_args(args_raw):
     return args
 
 
-def main(args_raw=sys.argv[1:]):
+def main(args_raw: List[str] = sys.argv[1:]) -> None:
     args = parse_args(args_raw)
-    converter = {"csv": convert.to_csv, "json": convert.to_json}[args.format]
-    kwargs = {
-        "csv": {"precision": args.precision},
-        "json": {"precision": args.precision, "indent": args.indent},
-    }[args.format]
 
     with PDF.open(args.infile, pages=args.pages, laparams=args.laparams) as pdf:
-        converter(pdf, sys.stdout, args.types, **kwargs)
+        if args.format == "csv":
+            pdf.to_csv(sys.stdout, args.types, precision=args.precision)
+        else:
+            pdf.to_json(
+                sys.stdout, args.types, precision=args.precision, indent=args.indent
+            )
 
 
 if __name__ == "__main__":
