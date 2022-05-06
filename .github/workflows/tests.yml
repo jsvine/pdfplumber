@@ -35,6 +35,9 @@ jobs:
     - name: Validate against flake8
       run: python -m flake8 pdfplumber tests
 
+    - name: Check type annotations via mypy
+      run: python -m mypy --strict pdfplumber
+
   test:
     needs: lint
     runs-on: ubuntu-latest

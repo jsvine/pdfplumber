@@ -17,13 +17,16 @@ check-black:
 	${PYTHON} -m black --check pdfplumber tests
 
 check-isort:
-	${PYTHON} -m isort --check-only pdfplumber tests
+	${PYTHON} -m isort --profile black --check-only pdfplumber tests
 
 check-flake:
 	${PYTHON} -m flake8 pdfplumber tests
 
-lint: check-flake check-black check-isort
+check-mypy:
+	${PYTHON} -m mypy --strict pdfplumber
+
+lint: check-flake check-mypy check-black check-isort
 
 format:
 	${PYTHON} -m black pdfplumber tests
-	${PYTHON} -m isort pdfplumber tests
+	${PYTHON} -m isort --profile black pdfplumber tests
