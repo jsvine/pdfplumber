@@ -4,7 +4,10 @@ import logging
 import os
 import unittest
 
+import pytest
+
 import pdfplumber
+from pdfplumber.table import TableFinder
 
 logging.disable(logging.ERROR)
 
@@ -34,6 +37,11 @@ class Test(unittest.TestCase):
         self.im.reset()
         settings = {"horizontal_strategy": "text", "intersection_tolerance": 5}
         self.im.debug_tablefinder(settings)
+        finder = TableFinder(self.im.page, settings)
+        self.im.debug_tablefinder(finder)
+
+        with pytest.raises(ValueError):
+            self.im.debug_tablefinder(0)
 
     def test_bytes_stream_to_image(self):
         path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
@@ -52,3 +60,20 @@ class Test(unittest.TestCase):
 
     def test_copy(self):
         assert self.im.copy().original == self.im.original
+
+    def test_outline_words(self):
+        self.im.outline_words(
+            stroke="blue",
+            fill=(0, 200, 10),
+            stroke_width=2,
+            x_tolerance=5,
+            y_tolerance=5,
+        )
+
+    def test_outline_chars(self):
+        self.im.outline_chars(stroke="blue", fill=(0, 200, 10), stroke_width=2)
+
+    def test__repr_png_(self):
+        png = self.im._repr_png_()
+        assert isinstance(png, bytes)
+        assert len(png) == 71948

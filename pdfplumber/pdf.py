@@ -46,7 +46,7 @@ class PDF(Container):
         for k, v in self.metadata.items():
             try:
                 self.metadata[k] = resolve_and_decode(v)
-            except Exception as e:
+            except Exception as e:  # pragma: nocover
                 if strict_metadata:
                     # Raise an exception since unable to resolve the metadata value.
                     raise

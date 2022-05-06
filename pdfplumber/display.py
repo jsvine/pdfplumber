@@ -10,7 +10,7 @@ from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list, T_point, T_seq
 from .table import T_table_settings, Table, TableFinder, TableSettings
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: nocover
     from pandas.core.frame import DataFrame
     from pandas.core.series import Series
 

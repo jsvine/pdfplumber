@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 
 - Add type annotations, and refactor parts of the library accordingly.
 - Add enforcement of type annotations via `mypy --strict`.
+- Add final bits of test coverage.
 - Add `TableSettings` class, a behind-the-scenes handler for managing and validating table-extraction settings.
 
 ### Changed
