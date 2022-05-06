@@ -2,24 +2,24 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [Unreleased]
+## [0.6.2] - 2022-05-06
 
 ### Added
 
-- Add type annotations, and refactor parts of the library accordingly.
-- Add enforcement of type annotations via `mypy --strict`.
-- Add final bits of test coverage.
-- Add `TableSettings` class, a behind-the-scenes handler for managing and validating table-extraction settings.
+- Add type annotations, and refactor parts of the library accordingly. ([9587cc7](https://github.com/jsvine/pdfplumber/commit/9587cc7d2292a1eae7a0150ab406f9365944266f))
+- Add enforcement of type annotations via `mypy --strict`. ([cdfdb87](https://github.com/jsvine/pdfplumber/commit/cdfdb87a215fed6cdc0db3a218c35bf18d399cbe))
+- Add final bits of test coverage. ([feb9d08](https://github.com/jsvine/pdfplumber/commit/feb9d082d7afb31edd0838cb93666d1e71c119da))
+- Add `TableSettings` class, a behind-the-scenes handler for managing and validating table-extraction settings. ([9587cc7](https://github.com/jsvine/pdfplumber/commit/9587cc7d2292a1eae7a0150ab406f9365944266f))
 
 ### Changed
 
-- Rename the positional argument to `.to_csv(...)` and `.to_json(...)` from `types` to `object_types`.
-- Tweak the output of `.to_json(...)` so that, if an object type is not present for a given page, it has no key in the page's object representation.
+- Rename the positional argument to `.to_csv(...)` and `.to_json(...)` from `types` to `object_types`. ([9587cc7](https://github.com/jsvine/pdfplumber/commit/9587cc7d2292a1eae7a0150ab406f9365944266f))
+- Tweak the output of `.to_json(...)` so that, if an object type is not present for a given page, it has no key in the page's object representation. ([9587cc7](https://github.com/jsvine/pdfplumber/commit/9587cc7d2292a1eae7a0150ab406f9365944266f))
 
 ### Removed
 
-- Remove `utils.filter_objects(...)` and move the functionality to within the `FilteredPage.objects` property calculation, the only part of the library that used it.
-- Remove code that sets `pdfminer.pdftypes.STRICT = True` and `pdfminer.pdfinterp.STRICT = True`, since that [has now been the default for a while](https://github.com/pdfminer/pdfminer.six/commit/9439a3a31a347836aad1c1226168156125d9505f).
+- Remove `utils.filter_objects(...)` and move the functionality to within the `FilteredPage.objects` property calculation, the only part of the library that used it. ([9587cc7](https://github.com/jsvine/pdfplumber/commit/9587cc7d2292a1eae7a0150ab406f9365944266f))
+- Remove code that sets `pdfminer.pdftypes.STRICT = True` and `pdfminer.pdfinterp.STRICT = True`, since that [has now been the default for a while](https://github.com/pdfminer/pdfminer.six/commit/9439a3a31a347836aad1c1226168156125d9505f). ([9587cc7](https://github.com/jsvine/pdfplumber/commit/9587cc7d2292a1eae7a0150ab406f9365944266f))
 
 ### Fixed
 
