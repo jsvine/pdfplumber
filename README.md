@@ -145,7 +145,17 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`top`| Distance of top of character from top of page.|
 |`bottom`| Distance of bottom of the character from top of page.|
 |`doctop`| Distance of top of character from top of document.|
+|`matrix`| The "current transformation matrix" for this character. (See below for details.)|
 |`object_type`| "char"|
+
+__Note__: A character’s `matrix` property represents the “current transformation matrix,” as described in Section 4.2.2 of the [PDF Reference](https://ghostscript.com/~robin/pdf_reference17.pdf) (6th Ed.). The matrix controls the character’s scale, skew, and positional translation. Rotation is a combination of scale and skew, but in most cases can be considered equal to the x-axis skew. The `pdfplumber.ctm` submodule defines a class, `CTM`, that assists with these calculations. For instance:
+
+```python
+from pdfplumber.ctm import CTM
+my_char = pdf.pages[0].chars[3]
+my_char_ctm = CTM(*my_char["matrix"])
+my_char_rotation = my_char_ctm.skew_x
+```
 
 #### `line` properties
 

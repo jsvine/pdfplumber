@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [unreleased]
+
+### Added
+
+- Add `"matrix"` property to `char` objects, representing the current transformation matrix.
+- Add `pdfplumber.ctm` submodule with class `CTM`, to calculate scale, skew, and translation of the current transformation matrix.
+
 ## [0.6.2] - 2022-05-06
 
 ### Added

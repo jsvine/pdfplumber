@@ -37,6 +37,7 @@ ALL_ATTRS = set(
         "y0",
         "y1",
         "bits",
+        "matrix",
         "upright",
         "font",
         "fontname",
@@ -200,6 +201,7 @@ class Page(Container):
             gs = obj.graphicstate
             attr["stroking_color"] = gs.scolor
             attr["non_stroking_color"] = gs.ncolor
+            attr["matrix"] = attr["matrix"]
 
         if isinstance(obj, LTCurve) and not isinstance(obj, (LTRect, LTLine)):
 
