@@ -146,6 +146,8 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`bottom`| Distance of bottom of the character from top of page.|
 |`doctop`| Distance of top of character from top of document.|
 |`matrix`| The "current transformation matrix" for this character. (See below for details.)|
+|`stroking_color`|The color of the character's outline (i.e., stroke), expressed as a tuple or integer, depending on the “color space” used.|
+|`non_stroking_color`|The character's interior color.|
 |`object_type`| "char"|
 
 __Note__: A character’s `matrix` property represents the “current transformation matrix,” as described in Section 4.2.2 of the [PDF Reference](https://ghostscript.com/~robin/pdf_reference17.pdf) (6th Ed.). The matrix controls the character’s scale, skew, and positional translation. Rotation is a combination of scale and skew, but in most cases can be considered equal to the x-axis skew. The `pdfplumber.ctm` submodule defines a class, `CTM`, that assists with these calculations. For instance:
@@ -172,6 +174,8 @@ my_char_rotation = my_char_ctm.skew_x
 |`bottom`| Distance of bottom of the line from top of page.|
 |`doctop`| Distance of top of line from top of document.|
 |`linewidth`| Thickness of line.|
+|`stroking_color`|The color of the line, expressed as a tuple or integer, depending on the “color space” used.|
+|`non_stroking_color`|The non-stroking color specified for the line’s path.|
 |`object_type`| "line"|
 
 #### `rect` properties
@@ -189,6 +193,8 @@ my_char_rotation = my_char_ctm.skew_x
 |`bottom`| Distance of bottom of the rectangle from top of page.|
 |`doctop`| Distance of top of rectangle from top of document.|
 |`linewidth`| Thickness of line.|
+|`stroking_color`|The color of the rectangle's outline, expressed as a tuple or integer, depending on the “color space” used.|
+|`non_stroking_color`|The rectangle’s fill color.|
 |`object_type`| "rect"|
 
 #### `curve` properties
@@ -207,6 +213,9 @@ my_char_rotation = my_char_ctm.skew_x
 |`bottom`| Distance of curve's lowest point from top of page.|
 |`doctop`| Distance of curve's highest point from top of document.|
 |`linewidth`| Thickness of line.|
+|`fill`| Whether the shape defined by the curve's path is filled.|
+|`stroking_color`|The color of the curve's outline, expressed as a tuple or integer, depending on the “color space” used.|
+|`non_stroking_color`|The curve’s fill color.|
 |`object_type`| "curve"|
 
 Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to two derived lists of objects: `.rect_edges` (which decomposes each rectangle into its four lines) and `.edges` (which combines `.rect_edges` with `.lines`). 
