@@ -299,7 +299,7 @@ class Page(Container):
 
         return largest.extract(**extract_kwargs)
 
-    @lru_cache
+    @lru_cache()
     def get_text_layout(self, **kwargs: Any) -> utils.TextLayout:
         defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])
         full_kwargs: Dict[str, Any] = {**defaults, **kwargs}
