@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file. The format 
 - Add `pdfplumber.ctm` submodule with class `CTM`, to calculate scale, skew, and translation of the current transformation matrix.
 - Add `page.search(...)`, an *experimental feature* that allows you to search a page's text via regular expressions and non-regex strings, returning the text, any regex matches, the bounding box coordinates, and the char objects themselves. ([#201](https://github.com/jsvine/pdfplumber/issues/201))
 
+### Removed
+
+- Remove `utils.collate_chars(...)`, the old name (and then alias) for `utils.extract_text(...)`.
+
 ## [0.6.2] - 2022-05-06
 
 ### Added

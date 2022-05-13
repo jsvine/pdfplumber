@@ -5,7 +5,7 @@ import unittest
 from operator import itemgetter
 
 import pdfplumber
-from pdfplumber.utils import collate_chars, within_bbox
+from pdfplumber.utils import extract_text, within_bbox
 
 logging.disable(logging.ERROR)
 
@@ -85,7 +85,7 @@ class Test(unittest.TestCase):
             assert colsum == (total * 2)
 
         month_chars = within_bbox(page.chars, (0, 35, self.PDF_WIDTH, 65))
-        month_text = collate_chars(month_chars)
+        month_text = extract_text(month_chars)
         assert month_text == "November - 2015"
 
     def test_filter(self):

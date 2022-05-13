@@ -619,9 +619,6 @@ def extract_text(
         return "\n".join(lines)
 
 
-collate_chars = extract_text
-
-
 def get_bbox_overlap(a: T_bbox, b: T_bbox) -> Optional[T_bbox]:
     a_left, a_top, a_right, a_bottom = a
     b_left, b_top, b_right, b_bottom = b
