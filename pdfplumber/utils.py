@@ -1,4 +1,5 @@
 import itertools
+import re
 from collections.abc import Sequence
 from operator import itemgetter
 from typing import (
@@ -9,7 +10,11 @@ from typing import (
     Generator,
     Iterable,
     List,
+    Match,
     Optional,
+    Pattern,
+    Tuple,
+    TypeVar,
     Union,
 )
 
@@ -58,26 +63,19 @@ def make_cluster_dict(values: Iterable[T_num], tolerance: T_num) -> Dict[T_num, 
     return dict(itertools.chain(*nested_tuples))
 
 
-def _itemgetter(attr: Union[str, Callable[[T_obj], T_num]]) -> Callable[[T_obj], T_num]:
-    if isinstance(attr, (str, tuple)):
-        return itemgetter(attr)
-    else:
-        return attr
+R = TypeVar("R")
 
 
 def cluster_objects(
-    objs: T_obj_iter, attr: Union[str, Callable[[T_obj], T_num]], tolerance: T_num
-) -> List[T_obj_list]:
-    getter = _itemgetter(attr)
-    objs_list = list(objs)
-    values = map(getter, objs_list)
+    xs: List[R], key_fn: Callable[[R], T_num], tolerance: T_num
+) -> List[List[R]]:
+
+    values = map(key_fn, xs)
     cluster_dict = make_cluster_dict(values, tolerance)
 
     get_0, get_1 = itemgetter(0), itemgetter(1)
 
-    cluster_tuples = sorted(
-        ((obj, cluster_dict.get(getter(obj))) for obj in objs_list), key=get_1
-    )
+    cluster_tuples = sorted(((x, cluster_dict.get(key_fn(x))) for x in xs), key=get_1)
 
     grouped = itertools.groupby(cluster_tuples, key=get_1)
 
@@ -183,8 +181,12 @@ def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
     def yield_unique_chars(chars: T_obj_list) -> Generator[T_obj, None, None]:
         sorted_chars = sorted(chars, key=key)
         for grp, grp_chars in itertools.groupby(sorted_chars, key=key):
-            for y_cluster in cluster_objects(grp_chars, "doctop", tolerance):
-                for x_cluster in cluster_objects(y_cluster, "x0", tolerance):
+            for y_cluster in cluster_objects(
+                list(grp_chars), itemgetter("doctop"), tolerance
+            ):
+                for x_cluster in cluster_objects(
+                    y_cluster, itemgetter("x0"), tolerance
+                ):
                     yield sorted(x_cluster, key=pos_key)[0]
 
     deduped = yield_unique_chars(chars)
@@ -331,13 +333,13 @@ class WordExtractor:
         def upright_key(x: T_obj) -> int:
             return -int(x["upright"])
 
-        for upright_cluster in cluster_objects(chars, upright_key, 0):
+        for upright_cluster in cluster_objects(list(chars), upright_key, 0):
             upright = upright_cluster[0]["upright"]
             cluster_key = "doctop" if upright else "x0"
 
             # Cluster by line
             subclusters = cluster_objects(
-                upright_cluster, cluster_key, self.y_tolerance
+                upright_cluster, itemgetter(cluster_key), self.y_tolerance
             )
 
             for sc in subclusters:
@@ -351,7 +353,9 @@ class WordExtractor:
                 else:
                     yield from to_yield
 
-    def iter_extract(self, chars: T_obj_iter) -> Generator[T_obj, None, None]:
+    def iter_extract_tuples(
+        self, chars: T_obj_iter
+    ) -> Generator[Tuple[T_obj, T_obj_list], None, None]:
         if not self.use_text_flow:
             chars = self.iter_sort_chars(chars)
 
@@ -360,10 +364,91 @@ class WordExtractor:
 
         for keyvals, char_group in grouped:
             for word_chars in self.iter_chars_to_words(char_group):
-                yield self.merge_chars(word_chars)
+                yield (self.merge_chars(word_chars), word_chars)
 
     def extract(self, chars: T_obj_list) -> T_obj_list:
-        return list(self.iter_extract(chars))
+        return list(word for word, word_chars in self.iter_extract_tuples(chars))
+
+
+class LayoutEngine:
+    def __init__(
+        self,
+        x_density: T_num = DEFAULT_X_DENSITY,
+        y_density: T_num = DEFAULT_Y_DENSITY,
+        x_shift: T_num = 0,
+        y_shift: T_num = 0,
+        y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+        presorted: bool = False,
+    ):
+        self.x_density = x_density
+        self.y_density = y_density
+        self.x_shift = x_shift
+        self.y_shift = y_shift
+        self.y_tolerance = y_tolerance
+        self.presorted = presorted
+
+    def calculate(
+        self, word_tuples: List[Tuple[T_obj, T_obj_list]]
+    ) -> List[Tuple[str, Optional[T_obj]]]:
+        """
+        Given a list of (word, chars) tuples, return a list of (char-text,
+        char) tuples that can be used to mimic the structural layout of the
+        text on the page(s), using the following approach:
+
+        - Sort the words by (doctop, x0) if not already sorted.
+
+        - Calculate the initial doctop for the starting page.
+
+        - Cluster the words by doctop (taking `y_tolerance` into account), and
+          iterate through them.
+
+        - For each cluster, calculate the distance between that doctop and the
+          initial doctop, in points, minus `y_shift`. Divide that distance by
+          `y_density` to calculate the minimum number of newlines that should come
+          before this cluster. Append that number of newlines *minus* the number of
+          newlines already appended, with a minimum of one.
+
+        - Then for each cluster, iterate through each word in it. Divide each
+          word's x0, minus `x_shift`, by `x_density` to calculate the minimum
+          number of characters that should come before this cluster.  Append that
+          number of spaces *minus* the number of characters and spaces already
+          appended, with a minimum of one. Then append the word's text.
+
+        Note: This approach currently works best for horizontal, left-to-right
+        text, but will display all words regardless of orientation. There is room
+        for improvement in better supporting right-to-left text, as well as
+        vertical text.
+        """
+        rendered: List[Tuple[str, Optional[T_obj]]] = []
+        num_newlines = 0
+        words_sorted = (
+            word_tuples
+            if self.presorted
+            else sorted(word_tuples, key=lambda x: (x[0]["doctop"], x[0]["x0"]))
+        )
+        first_word = words_sorted[0][0]
+        doctop_start = first_word["doctop"] - first_word["top"]
+        for ws in cluster_objects(
+            words_sorted, lambda x: float(x[0]["doctop"]), self.y_tolerance
+        ):
+            y_dist = (
+                ws[0][0]["doctop"] - (doctop_start + self.y_shift)
+            ) / self.y_density
+            num_newlines_prepend = max(
+                min(1, num_newlines), round(y_dist) - num_newlines
+            )
+            rendered += [("\n", None)] * num_newlines_prepend
+            num_newlines += num_newlines_prepend
+
+            line_len = 0
+            for word, chars in sorted(ws, key=lambda x: float(x[0]["x0"])):
+                x_dist = (word["x0"] - self.x_shift) / self.x_density
+                num_spaces_prepend = max(min(1, line_len), round(x_dist) - line_len)
+                rendered += [(" ", None)] * num_spaces_prepend
+                for c in chars:
+                    rendered.append((c["text"], c))
+                line_len += num_spaces_prepend + len(word["text"])
+        return rendered
 
 
 def extract_words(
@@ -387,58 +472,56 @@ def extract_words(
     ).extract(chars)
 
 
-def words_to_layout(
-    words: T_obj_list,
-    x_density: T_num = DEFAULT_X_DENSITY,
-    y_density: T_num = DEFAULT_Y_DENSITY,
-    x_shift: T_num = 0,
-    y_shift: T_num = 0,
-    y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
-    presorted: bool = False,
-) -> str:
-    """
-    Given a set of word objects generated by `extract_words(...)`, return a
-    string that mimics the structural layout of the text on the page(s), using
-    the following approach:
+class TextLayout:
+    def __init__(
+        self, chars: T_obj_list, extractor: WordExtractor, engine: LayoutEngine
+    ):
+        self.chars = chars
+        self.extractor = extractor
+        self.engine = engine
+        self.word_tuples = list(extractor.iter_extract_tuples(chars))
+        self.layout_tuples = engine.calculate(self.word_tuples)
+        self.as_string = "".join(map(itemgetter(0), self.layout_tuples))
 
-    - Sort the words by (doctop, x0) if not already sorted.
+    def to_string(self) -> str:
+        return self.as_string
 
-    - Calculate the initial doctop for the starting page.
+    def search(
+        self, pattern: Union[str, Pattern[str]], regex: bool = True, case: bool = True
+    ) -> List[Dict[str, Any]]:
+        def match_to_dict(m: Match[str]) -> Dict[str, Any]:
+            subset = self.layout_tuples[m.start() : m.end()]
+            chars = [c for (text, c) in subset if c is not None]
+            x0, top, x1, bottom = objects_to_bbox(chars)
+            return {
+                "text": m.group(0),
+                "groups": m.groups(),
+                "x0": x0,
+                "top": top,
+                "x1": x1,
+                "bottom": bottom,
+                "chars": chars,
+            }
 
-    - Cluster the words by doctop (taking `y_tolerance` into account), and
-      iterate through them.
+        if isinstance(pattern, Pattern):
+            if regex is False:
+                raise ValueError(
+                    "Cannot pass a compiled search pattern *and* regex=False together."
+                )
+            if case is False:
+                raise ValueError(
+                    "Cannot pass a compiled search pattern *and* case=False together."
+                )
+            compiled = pattern
+        else:
+            if regex is False:
+                pattern = re.escape(pattern)
 
-    - For each cluster, calculate the distance between that doctop and the
-      initial doctop, in points, minus `y_shift`. Divide that distance by
-      `y_density` to calculate the minimum number of newlines that should come
-      before this cluster. Append that number of newlines *minus* the number of
-      newlines already appended, with a minimum of one.
+            flags = re.I if case is False else 0
+            compiled = re.compile(pattern, flags)
 
-    - Then for each cluster, iterate through each word in it. Divide each
-      word's x0, minus `x_shift`, by `x_density` to calculate the minimum
-      number of characters that should come before this cluster.  Append that
-      number of spaces *minus* the number of characters and spaces already
-      appended, with a minimum of one. Then append the word's text.
-
-    Note: This approach currently works best for horizontal, left-to-right
-    text, but will display all words regardless of orientation. There is room
-    for improvement in better supporting right-to-left text, as well as
-    vertical text.
-    """
-    rendered = ""
-    words_sorted = words if presorted else sorted(words, key=itemgetter("doctop", "x0"))
-    doctop_start = words_sorted[0]["doctop"] - words_sorted[0]["top"]
-    for ws in cluster_objects(words_sorted, "doctop", y_tolerance):
-        y_dist = (ws[0]["doctop"] - (doctop_start + y_shift)) / y_density
-        newlines = rendered.count("\n")
-        rendered += "\n" * max(min(1, newlines), round(y_dist) - newlines)
-        line = ""
-        for word in sorted(ws, key=itemgetter("x0")):
-            x_dist = (word["x0"] - x_shift) / x_density
-            line += " " * max(min(1, len(line)), round(x_dist) - len(line))
-            line += word["text"]
-        rendered += line
-    return rendered
+        gen = re.finditer(compiled, self.as_string)
+        return list(map(match_to_dict, gen))
 
 
 def collate_line(
@@ -452,6 +535,42 @@ def collate_line(
         last_x1 = char["x1"]
         coll += char["text"]
     return coll
+
+
+def chars_to_layout(
+    chars: T_obj_list,
+    x_density: T_num = DEFAULT_X_DENSITY,
+    y_density: T_num = DEFAULT_Y_DENSITY,
+    x_shift: T_num = 0,
+    y_shift: T_num = 0,
+    x_tolerance: T_num = DEFAULT_X_TOLERANCE,
+    y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+    keep_blank_chars: bool = False,
+    use_text_flow: bool = False,
+    horizontal_ltr: bool = True,  # Should words be read left-to-right?
+    vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
+    extra_attrs: Optional[List[str]] = None,
+) -> TextLayout:
+    extractor = WordExtractor(
+        x_tolerance=x_tolerance,
+        y_tolerance=y_tolerance,
+        keep_blank_chars=keep_blank_chars,
+        use_text_flow=use_text_flow,
+        horizontal_ltr=horizontal_ltr,
+        vertical_ttb=vertical_ttb,
+        extra_attrs=extra_attrs,
+    )
+
+    engine = LayoutEngine(
+        x_density=x_density,
+        y_density=y_density,
+        x_shift=x_shift,
+        y_shift=y_shift,
+        y_tolerance=y_tolerance,
+        presorted=True,
+    )
+
+    return TextLayout(chars, extractor, engine)
 
 
 def extract_text(
@@ -474,7 +593,7 @@ def extract_text(
         return ""
 
     if layout:
-        words = extract_words(
+        calculated_layout = chars_to_layout(
             chars,
             x_tolerance=x_tolerance,
             y_tolerance=y_tolerance,
@@ -483,19 +602,15 @@ def extract_text(
             horizontal_ltr=horizontal_ltr,
             vertical_ttb=vertical_ttb,
             extra_attrs=extra_attrs,
-        )
-        return words_to_layout(
-            words,
             x_density=x_density,
             y_density=y_density,
             x_shift=x_shift,
             y_shift=y_shift,
-            y_tolerance=y_tolerance,
-            presorted=True,
         )
+        return calculated_layout.to_string()
 
     else:
-        doctop_clusters = cluster_objects(chars, "doctop", y_tolerance)
+        doctop_clusters = cluster_objects(chars, itemgetter("doctop"), y_tolerance)
 
         lines = (
             collate_line(line_chars, x_tolerance) for line_chars in doctop_clusters
@@ -604,7 +719,7 @@ def move_object(obj: T_obj, axis: str, value: T_num) -> T_obj:
 
 def snap_objects(objs: T_obj_list, attr: str, tolerance: T_num) -> T_obj_list:
     axis = {"x0": "h", "x1": "h", "top": "v", "bottom": "v"}[attr]
-    clusters = cluster_objects(objs, attr, tolerance)
+    clusters = cluster_objects(objs, itemgetter(attr), tolerance)
     avgs = [sum(map(itemgetter(attr), objs)) / len(objs) for objs in clusters]
     snapped_clusters = [
         [move_object(obj, axis, avg - obj[attr]) for obj in cluster]

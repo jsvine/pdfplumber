@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 
 - Add `"matrix"` property to `char` objects, representing the current transformation matrix.
 - Add `pdfplumber.ctm` submodule with class `CTM`, to calculate scale, skew, and translation of the current transformation matrix.
+- Add `page.search(...)`, an *experimental feature* that allows you to search a page's text via regular expressions and non-regex strings, returning the text, any regex matches, the bounding box coordinates, and the char objects themselves. ([#201](https://github.com/jsvine/pdfplumber/issues/201))
 
 ## [0.6.2] - 2022-05-06
 
@@ -27,8 +28,6 @@ All notable changes to this project will be documented in this file. The format 
 
 - Remove `utils.filter_objects(...)` and move the functionality to within the `FilteredPage.objects` property calculation, the only part of the library that used it. ([9587cc7](https://github.com/jsvine/pdfplumber/commit/9587cc7d2292a1eae7a0150ab406f9365944266f))
 - Remove code that sets `pdfminer.pdftypes.STRICT = True` and `pdfminer.pdfinterp.STRICT = True`, since that [has now been the default for a while](https://github.com/pdfminer/pdfminer.six/commit/9439a3a31a347836aad1c1226168156125d9505f). ([9587cc7](https://github.com/jsvine/pdfplumber/commit/9587cc7d2292a1eae7a0150ab406f9365944266f))
-
-### Fixed
 
 ## [0.6.1] - 2022-04-23
 

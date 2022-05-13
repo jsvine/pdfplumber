@@ -1,5 +1,17 @@
 import re
-from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Optional, Tuple
+from functools import lru_cache
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Pattern,
+    Tuple,
+    Union,
+)
 
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import (
@@ -287,10 +299,29 @@ class Page(Container):
 
         return largest.extract(**extract_kwargs)
 
+    @lru_cache
+    def get_text_layout(self, **kwargs: Any) -> utils.TextLayout:
+        defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])
+        full_kwargs: Dict[str, Any] = {**defaults, **kwargs}
+        return utils.chars_to_layout(self.chars, **full_kwargs)
+
+    def search(
+        self,
+        pattern: Union[str, Pattern[str]],
+        regex: bool = True,
+        case: bool = True,
+        **kwargs: Any,
+    ) -> List[Dict[str, Any]]:
+        text_layout = self.get_text_layout(**kwargs)
+        return text_layout.search(pattern, regex=regex, case=case)
+
     def extract_text(self, **kwargs: Any) -> str:
-        return utils.extract_text(
-            self.chars, x_shift=self.bbox[0], y_shift=self.bbox[1], **kwargs
-        )
+        if kwargs.get("layout") is True:
+            del kwargs["layout"]
+            text_layout = self.get_text_layout(**kwargs)
+            return text_layout.to_string()
+        else:
+            return utils.extract_text(self.chars, **kwargs)
 
     def extract_words(self, **kwargs: Any) -> T_obj_list:
         return utils.extract_words(self.chars, **kwargs)

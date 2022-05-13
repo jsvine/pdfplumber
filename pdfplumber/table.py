@@ -105,7 +105,7 @@ def words_to_edges_h(
     Find (imaginary) horizontal lines that connect the tops
     of at least `word_threshold` words.
     """
-    by_top = utils.cluster_objects(words, "top", 1)
+    by_top = utils.cluster_objects(words, itemgetter("top"), 1)
     large_clusters = filter(lambda x: len(x) >= word_threshold, by_top)
     rects = list(map(utils.objects_to_rect, large_clusters))
     if len(rects) == 0:
@@ -149,8 +149,8 @@ def words_to_edges_v(
     center of at least `word_threshold` words.
     """
     # Find words that share the same left, right, or centerpoints
-    by_x0 = utils.cluster_objects(words, "x0", 1)
-    by_x1 = utils.cluster_objects(words, "x1", 1)
+    by_x0 = utils.cluster_objects(words, itemgetter("x0"), 1)
+    by_x1 = utils.cluster_objects(words, itemgetter("x1"), 1)
 
     def get_center(word: T_obj) -> T_num:
         return float(word["x0"] + word["x1"]) / 2

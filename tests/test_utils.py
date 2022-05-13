@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import os
+import re
 import unittest
 from itertools import groupby
 from operator import itemgetter
@@ -21,8 +22,10 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 class Test(unittest.TestCase):
     @classmethod
     def setup_class(self):
-        path = os.path.join(HERE, "pdfs/pdffill-demo.pdf")
-        self.pdf = pdfplumber.open(path)
+        self.pdf = pdfplumber.open(os.path.join(HERE, "pdfs/pdffill-demo.pdf"))
+        self.pdf_scotus = pdfplumber.open(
+            os.path.join(HERE, "pdfs/scotus-transcript-p1.pdf")
+        )
 
     @classmethod
     def teardown_class(self):
@@ -129,20 +132,63 @@ class Test(unittest.TestCase):
         assert self.pdf.pages[0].crop((0, 0, 1, 1)).extract_text() == ""
 
     def test_extract_text_layout(self):
-        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/scotus-transcript-p1.pdf"))
         target = open(os.path.join(HERE, "comparisons/scotus-transcript-p1.txt")).read()
-        text = pdf.pages[0].extract_text(layout=True)
+        page = self.pdf_scotus.pages[0]
+        text = page.extract_text(layout=True)
+        utils_text = utils.extract_text(page.chars, layout=True)
+        assert text == utils_text
         assert text == target
 
     def test_extract_text_layout_cropped(self):
-        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/scotus-transcript-p1.pdf"))
         target = open(
             os.path.join(HERE, "comparisons/scotus-transcript-p1-cropped.txt")
         ).read()
-        p = pdf.pages[0]
+        p = self.pdf_scotus.pages[0]
         cropped = p.crop((90, 70, p.width, 300))
         text = cropped.extract_text(layout=True)
         assert text == target
+
+    def test_search_regex_compiled(self):
+        page = self.pdf_scotus.pages[0]
+        pat = re.compile(r"supreme\s+(\w+)", re.I)
+        results = page.search(pat)
+        assert results[0]["text"] == "SUPREME COURT"
+        assert results[0]["groups"] == ("COURT",)
+        assert results[1]["text"] == "Supreme Court"
+        assert results[1]["groups"] == ("Court",)
+
+        with pytest.raises(ValueError):
+            page.search(re.compile(r"x"), regex=False)
+
+        with pytest.raises(ValueError):
+            page.search(re.compile(r"x"), case=False)
+
+    def test_search_regex_uncompiled(self):
+        page = self.pdf_scotus.pages[0]
+        pat = r"supreme\s+(\w+)"
+        results = page.search(pat, case=False)
+        assert results[0]["text"] == "SUPREME COURT"
+        assert results[0]["groups"] == ("COURT",)
+        assert results[1]["text"] == "Supreme Court"
+        assert results[1]["groups"] == ("Court",)
+
+    def test_search_string(self):
+        page = self.pdf_scotus.pages[0]
+        results = page.search("SUPREME COURT", regex=False)
+        assert results[0]["text"] == "SUPREME COURT"
+        assert results[0]["groups"] == tuple()
+
+        results = page.search("supreme court", regex=False)
+        assert len(results) == 0
+
+        results = page.search("supreme court", regex=False, case=False)
+        assert len(results) == 2
+
+        results = page.search("supreme court", regex=True, case=False)
+        assert len(results) == 2
+
+        results = page.search(r"supreme\s+(\w+)", regex=False)
+        assert len(results) == 0
 
     def test_intersects_bbox(self):
         objs = [
