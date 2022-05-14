@@ -7,6 +7,8 @@ import unittest
 from io import StringIO
 from subprocess import PIPE, Popen
 
+import pytest
+
 import pdfplumber
 
 logging.disable(logging.ERROR)
@@ -33,6 +35,16 @@ class Test(unittest.TestCase):
         assert (
             c["pages"][0]["rects"][0]["bottom"] == self.pdf.pages[0].rects[0]["bottom"]
         )
+
+    def test_json_attr_filter(self):
+        c = json.loads(self.pdf.to_json(include_attrs=["page_number"]))
+        assert list(c["pages"][0]["rects"][0].keys()) == ["object_type", "page_number"]
+
+        with pytest.raises(ValueError):
+            self.pdf.to_json(include_attrs=["page_number"], exclude_attrs=["bottom"])
+
+        with pytest.raises(ValueError):
+            self.pdf.to_json(exclude_attrs=["object_type"])
 
     def test_json_all_types(self):
         c = json.loads(self.pdf.to_json(object_types=None))
@@ -115,6 +127,46 @@ class Test(unittest.TestCase):
             '18.0,12.996,,,,,,TimesNewRomanPSMT,,,"(1, 0, 0, 1, 45.83, 660.69)"'
             ',,"(0, 0, 0)",,,18.0,,,,,Y,,1,'
         )
+
+    def test_cli_csv_exclude(self):
+        res = run(
+            [
+                sys.executable,
+                "-m",
+                "pdfplumber.cli",
+                self.path,
+                "--format",
+                "csv",
+                "--precision",
+                "3",
+                "--exclude-attrs",
+                "matrix",
+            ]
+        )
+
+        assert res.decode("utf-8").split("\r\n")[9] == (
+            "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
+            "18.0,12.996,,,,,,TimesNewRomanPSMT,,"
+            ',,"(0, 0, 0)",,,18.0,,,,,Y,,1,'
+        )
+
+    def test_cli_csv_include(self):
+        res = run(
+            [
+                sys.executable,
+                "-m",
+                "pdfplumber.cli",
+                self.path,
+                "--format",
+                "csv",
+                "--precision",
+                "3",
+                "--include-attrs",
+                "page_number",
+            ]
+        )
+
+        assert res.decode("utf-8").split("\r\n")[9] == ("char,1")
 
     def test_page_to_dict(self):
         x = self.pdf.pages[0].to_dict(object_types=["char"])

@@ -6,21 +6,7 @@ from typing import Any, Dict, List, Optional, Set, TextIO
 
 from . import utils
 from ._typing import T_obj, T_obj_list
-from .convert import Serializer
-
-CSV_COLS_TO_PREPEND = [
-    "object_type",
-    "page_number",
-    "x0",
-    "x1",
-    "y0",
-    "y1",
-    "doctop",
-    "top",
-    "bottom",
-    "width",
-    "height",
-]
+from .convert import CSV_COLS_REQUIRED, CSV_COLS_TO_PREPEND, Serializer
 
 
 class Container(object):
@@ -113,13 +99,19 @@ class Container(object):
         self,
         stream: Optional[TextIO] = None,
         object_types: Optional[List[str]] = None,
+        include_attrs: Optional[List[str]] = None,
+        exclude_attrs: Optional[List[str]] = None,
         precision: Optional[int] = None,
         indent: Optional[int] = None,
     ) -> Optional[str]:
 
         data = self.to_dict(object_types)
 
-        serialized = Serializer(precision=precision).serialize(data)
+        serialized = Serializer(
+            precision=precision,
+            include_attrs=include_attrs,
+            exclude_attrs=exclude_attrs,
+        ).serialize(data)
 
         if stream is None:
             return json.dumps(serialized, indent=indent)
@@ -132,6 +124,8 @@ class Container(object):
         stream: Optional[TextIO] = None,
         object_types: Optional[List[str]] = None,
         precision: Optional[int] = None,
+        include_attrs: Optional[List[str]] = None,
+        exclude_attrs: Optional[List[str]] = None,
     ) -> Optional[str]:
         if stream is None:
             stream = StringIO()
@@ -142,26 +136,29 @@ class Container(object):
         if object_types is None:
             object_types = list(self.objects.keys()) + ["annot"]
 
-        objs = []
+        serialized = []
         fields: Set[str] = set()
 
         pages = [self] if self.pages is None else self.pages
 
+        serializer = Serializer(
+            precision=precision,
+            include_attrs=include_attrs,
+            exclude_attrs=exclude_attrs,
+        )
         for page in pages:
             for t in object_types:
-                new_objs = getattr(page, t + "s")
-                if len(new_objs):
-                    objs += new_objs
-                    new_keys = [
-                        k for k, v in new_objs[0].items() if type(v) is not dict
-                    ]
+                objs = getattr(page, t + "s")
+                if len(objs):
+                    serialized += serializer.serialize(objs)
+                    new_keys = [k for k, v in objs[0].items() if type(v) is not dict]
                     fields = fields.union(set(new_keys))
 
-        serialized = Serializer(precision=precision).serialize(objs)
-
-        cols = CSV_COLS_TO_PREPEND + list(
-            sorted(set(fields) - set(CSV_COLS_TO_PREPEND))
+        non_req_cols = CSV_COLS_TO_PREPEND + list(
+            sorted(set(fields) - set(CSV_COLS_REQUIRED + CSV_COLS_TO_PREPEND))
         )
+
+        cols = CSV_COLS_REQUIRED + list(filter(serializer.attr_filter, non_req_cols))
 
         w = csv.DictWriter(stream, fieldnames=cols, extrasaction="ignore")
         w.writeheader()

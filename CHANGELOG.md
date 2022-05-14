@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. The format 
 - Add `"matrix"` property to `char` objects, representing the current transformation matrix.
 - Add `pdfplumber.ctm` submodule with class `CTM`, to calculate scale, skew, and translation of the current transformation matrix.
 - Add `page.search(...)`, an *experimental feature* that allows you to search a page's text via regular expressions and non-regex strings, returning the text, any regex matches, the bounding box coordinates, and the char objects themselves. ([#201](https://github.com/jsvine/pdfplumber/issues/201))
+- Add `--include-attrs`/`--exclude-attrs` to CLI (and corresponding params to `.to_json(...)`, `.to_csv(...)`, and `Serializer`.
 
 ### Removed
 

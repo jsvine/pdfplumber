@@ -27,6 +27,18 @@ def parse_args(args_raw: List[str]) -> argparse.Namespace:
 
     parser.add_argument("--types", nargs="+")
 
+    parser.add_argument(
+        "--include-attrs",
+        nargs="+",
+        help="Include *only* these object attributes in output.",
+    )
+
+    parser.add_argument(
+        "--exclude-attrs",
+        nargs="+",
+        help="Exclude these object attributes from output.",
+    )
+
     parser.add_argument("--laparams", type=json.loads)
 
     parser.add_argument("--precision", type=int)
@@ -48,10 +60,21 @@ def main(args_raw: List[str] = sys.argv[1:]) -> None:
 
     with PDF.open(args.infile, pages=args.pages, laparams=args.laparams) as pdf:
         if args.format == "csv":
-            pdf.to_csv(sys.stdout, args.types, precision=args.precision)
+            pdf.to_csv(
+                sys.stdout,
+                args.types,
+                precision=args.precision,
+                include_attrs=args.include_attrs,
+                exclude_attrs=args.exclude_attrs,
+            )
         else:
             pdf.to_json(
-                sys.stdout, args.types, precision=args.precision, indent=args.indent
+                sys.stdout,
+                args.types,
+                precision=args.precision,
+                include_attrs=args.include_attrs,
+                exclude_attrs=args.exclude_attrs,
+                indent=args.indent,
             )
 
 

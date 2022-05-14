@@ -1,5 +1,5 @@
 import base64
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from pdfminer.psparser import PSLiteral
 
@@ -12,14 +12,65 @@ ENCODINGS_TO_TRY = [
     "utf-16le",
 ]
 
+CSV_COLS_REQUIRED = [
+    "object_type",
+]
+
+CSV_COLS_TO_PREPEND = [
+    "page_number",
+    "x0",
+    "x1",
+    "y0",
+    "y1",
+    "doctop",
+    "top",
+    "bottom",
+    "width",
+    "height",
+]
+
+
+def get_attr_filter(
+    include_attrs: Optional[List[str]] = None, exclude_attrs: Optional[List[str]] = None
+) -> Callable[[str], bool]:
+    if include_attrs is not None and exclude_attrs is not None:
+        raise ValueError(
+            "Cannot specify `include_attrs` and `exclude_attrs` at the same time."
+        )
+
+    elif include_attrs is not None:
+        incl = set(CSV_COLS_REQUIRED + include_attrs)
+        return lambda attr: attr in incl
+
+    elif exclude_attrs is not None:
+        nonexcludable = set(exclude_attrs).intersection(set(CSV_COLS_REQUIRED))
+        if len(nonexcludable):
+            raise ValueError(
+                f"Cannot exclude these required properties: {list(nonexcludable)}"
+            )
+        excl = set(exclude_attrs)
+        return lambda attr: attr not in excl
+
+    else:
+        return lambda attr: True
+
 
 def to_b64(data: bytes) -> str:
     return base64.b64encode(data).decode("ascii")
 
 
 class Serializer:
-    def __init__(self, precision: Optional[int] = None):
+    def __init__(
+        self,
+        precision: Optional[int] = None,
+        include_attrs: Optional[List[str]] = None,
+        exclude_attrs: Optional[List[str]] = None,
+    ):
+
         self.precision = precision
+        self.attr_filter = get_attr_filter(
+            include_attrs=include_attrs, exclude_attrs=exclude_attrs
+        )
 
     def serialize(self, obj: Any) -> Any:
         if obj is None:
@@ -53,7 +104,10 @@ class Serializer:
         return tuple(self.serialize(x) for x in obj)
 
     def do_dict(self, obj: Dict[str, Any]) -> Dict[str, Any]:
-        return {k: self.serialize(v) for k, v in obj.items()}
+        if "object_type" in obj.keys():
+            return {k: self.serialize(v) for k, v in obj.items() if self.attr_filter(k)}
+        else:
+            return {k: self.serialize(v) for k, v in obj.items()}
 
     def do_PDFStream(self, obj: Any) -> Dict[str, str]:
         return {"rawdata": to_b64(obj.rawdata)}
