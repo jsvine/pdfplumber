@@ -1,2 +1,3 @@
 include LICENSE.txt
 include README.md
+include pdfplumber/py.typed
