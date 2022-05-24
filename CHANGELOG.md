@@ -12,6 +12,10 @@ All notable changes to this project will be documented in this file. The format 
 - Add `--include-attrs`/`--exclude-attrs` to CLI (and corresponding params to `.to_json(...)`, `.to_csv(...)`, and `Serializer`.
 - Add `py.typed` for PEP561 compatibility and detection of typing hints by mypy.
 
+### Changed
+
+- Bump pinned `pdfminer.six` version to `20220524`.
+
 ### Removed
 
 - Remove `utils.collate_chars(...)`, the old name (and then alias) for `utils.extract_text(...)`.
