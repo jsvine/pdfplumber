@@ -453,12 +453,13 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Kwok-kuen Cheung](https://github.com/cheungpat)
 - [Marco](https://github.com/ubmarco)
 - [Idan David](https://github.com/idan-david)
-- [xv44586](https://github.com/xv44586)
+- [@xv44586](https://github.com/xv44586)
 - [Alexander Regueiro](https://github.com/alexreg)
 - [Daniel Peña](https://github.com/trifling)
-- [bobluda](https://github.com/bobluda)
+- [@bobluda](https://github.com/bobluda)
 - [@ramcdona](https://github.com/ramcdona)
-- [johnhuge](https://github.com/johnhuge)
+- [@johnhuge](https://github.com/johnhuge)
+- [Jhonatan Lopes](https://github.com/jhonatan-lopes)
 
 ## Contributing
 
