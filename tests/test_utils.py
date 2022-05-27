@@ -148,6 +148,11 @@ class Test(unittest.TestCase):
         text = cropped.extract_text(layout=True)
         assert text == target
 
+    def test_extract_text_nochars(self):
+        charless = self.pdf.pages[0].filter(lambda df: df["object_type"] != "char")
+        assert charless.extract_text() == ""
+        assert charless.extract_text(layout=True) == ""
+
     def test_search_regex_compiled(self):
         page = self.pdf_scotus.pages[0]
         pat = re.compile(r"supreme\s+(\w+)", re.I)

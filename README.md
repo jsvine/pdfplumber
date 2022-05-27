@@ -460,6 +460,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [@ramcdona](https://github.com/ramcdona)
 - [@johnhuge](https://github.com/johnhuge)
 - [Jhonatan Lopes](https://github.com/jhonatan-lopes)
+- [Ethan Corey](https://github.com/ethanscorey)
 
 ## Contributing
 

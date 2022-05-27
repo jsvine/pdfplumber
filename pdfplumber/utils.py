@@ -420,6 +420,10 @@ class LayoutEngine:
         vertical text.
         """
         rendered: List[Tuple[str, Optional[T_obj]]] = []
+
+        if not len(word_tuples):
+            return rendered
+
         num_newlines = 0
         words_sorted = (
             word_tuples

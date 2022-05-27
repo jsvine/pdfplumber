@@ -20,6 +20,10 @@ All notable changes to this project will be documented in this file. The format 
 
 - Remove `utils.collate_chars(...)`, the old name (and then alias) for `utils.extract_text(...)`.
 
+### Fixed
+
+- Fix `IndexError` bug for `.extract_text(layout=True)` on pages without text. ([#658](https://github.com/jsvine/pdfplumber/issues/658)) [h/t @ethanscorey]
+
 ## [0.6.2] - 2022-05-06
 
 ### Added
