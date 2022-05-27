@@ -2,27 +2,27 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [unreleased]
+## [0.7.0] - 2022-05-27
 
 ### Added
 
-- Add `"matrix"` property to `char` objects, representing the current transformation matrix.
-- Add `pdfplumber.ctm` submodule with class `CTM`, to calculate scale, skew, and translation of a current transformation matrix obtained from a `char`'s `"matrix"` property.
-- Add `page.search(...)`, an *experimental feature* that allows you to search a page's text via regular expressions and non-regex strings, returning the text, any regex matches, the bounding box coordinates, and the char objects themselves. ([#201](https://github.com/jsvine/pdfplumber/issues/201))
-- Add `--include-attrs`/`--exclude-attrs` to CLI (and corresponding params to `.to_json(...)`, `.to_csv(...)`, and `Serializer`.
-- Add `py.typed` for PEP561 compatibility and detection of typing hints by mypy.
+- Add `"matrix"` property to `char` objects, representing the current transformation matrix. ([ae6f99e](https://github.com/jsvine/pdfplumber/commit/ae6f99e))
+- Add `pdfplumber.ctm` submodule with class `CTM`, to calculate scale, skew, and translation of a current transformation matrix obtained from a `char`'s `"matrix"` property. ([ae6f99e](https://github.com/jsvine/pdfplumber/commit/ae6f99e))
+- Add `page.search(...)`, an *experimental feature* that allows you to search a page's text via regular expressions and non-regex strings, returning the text, any regex matches, the bounding box coordinates, and the char objects themselves. ([#201](https://github.com/jsvine/pdfplumber/issues/201) + [58b1ab1](https://github.com/jsvine/pdfplumber/commit/58b1ab1))
+- Add `--include-attrs`/`--exclude-attrs` to CLI (and corresponding params to `.to_json(...)`, `.to_csv(...)`, and `Serializer`. ([4deac25](https://github.com/jsvine/pdfplumber/commit/4deac25))
+- Add `py.typed` for PEP561 compatibility and detection of typing hints by mypy. ([ca795d1](https://github.com/jsvine/pdfplumber/commit/ca795d1))
 
 ### Changed
 
-- Bump pinned `pdfminer.six` version to `20220524`.
+- Bump pinned `pdfminer.six` version to `20220524`. ([486cea8](https://github.com/jsvine/pdfplumber/commit/486cea8))
 
 ### Removed
 
-- Remove `utils.collate_chars(...)`, the old name (and then alias) for `utils.extract_text(...)`.
+- Remove `utils.collate_chars(...)`, the old name (and then alias) for `utils.extract_text(...)`. ([24f3532](https://github.com/jsvine/pdfplumber/commit/24f3532))
 
 ### Fixed
 
-- Fix `IndexError` bug for `.extract_text(layout=True)` on pages without text. ([#658](https://github.com/jsvine/pdfplumber/issues/658)) [h/t @ethanscorey]
+- Fix `IndexError` bug for `.extract_text(layout=True)` on pages without text. ([#658](https://github.com/jsvine/pdfplumber/issues/658) + [ad3df11](https://github.com/jsvine/pdfplumber/commit/ad3df11)) [h/t @ethanscorey]
 
 ## [0.6.2] - 2022-05-06
 
