@@ -6,11 +6,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Fixed
 
-- Fix bug when calling `PageImage.debug_tablefinder()` (i.e., with no parameters). ([#659](https://github.com/jsvine/pdfplumber/issues/659)) [h/t @rneumann7]
+- Fix bug when calling `PageImage.debug_tablefinder()` (i.e., with no parameters). ([#659](https://github.com/jsvine/pdfplumber/issues/659) + [063e2ed](https://github.com/jsvine/pdfplumber/commit/063e2ed)) [h/t @rneumann7]
 
 ### Development Changes
 
-- Add `Makefile` target for `examples`, as well as dev requirements to support re-running the example notebooks automatically.
+- Add `Makefile` target for `examples`, as well as dev requirements to support re-running the example notebooks automatically. ([ef065a7](https://github.com/jsvine/pdfplumber/commit/ef065a7))
 
 ## [0.7.0] - 2022-05-27
 
