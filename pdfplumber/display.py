@@ -282,7 +282,7 @@ class PageImage:
     ) -> "PageImage":
         if isinstance(tf, TableFinder):
             finder = tf
-        elif isinstance(tf, (TableSettings, dict)):
+        elif tf is None or isinstance(tf, (TableSettings, dict)):
             finder = self.page.debug_tablefinder(tf)
         else:
             raise ValueError(

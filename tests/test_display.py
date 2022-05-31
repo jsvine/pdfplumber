@@ -40,6 +40,8 @@ class Test(unittest.TestCase):
         finder = TableFinder(self.im.page, settings)
         self.im.debug_tablefinder(finder)
 
+        self.im.debug_tablefinder(None)
+
         with pytest.raises(ValueError):
             self.im.debug_tablefinder(0)
 

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.7.1] - 2022-05-31
+
+### Fixed
+
+- Fix bug when calling `PageImage.debug_tablefinder()` (i.e., with no parameters). ([#659](https://github.com/jsvine/pdfplumber/issues/659)) [h/t @rneumann7]
+
 ## [0.7.0] - 2022-05-27
 
 ### Added
