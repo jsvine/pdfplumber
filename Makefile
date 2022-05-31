@@ -1,4 +1,4 @@
-.PHONY: venv tests check-black check-flake lint format
+.PHONY: venv tests check-black check-flake lint format examples
 PYTHON := venv/bin/python
 PIP = venv/bin/pip
 
@@ -30,3 +30,6 @@ lint: check-flake check-mypy check-black check-isort
 format:
 	${PYTHON} -m black pdfplumber tests
 	${PYTHON} -m isort --profile black pdfplumber tests
+
+examples:
+	${PYTHON} -m nbexec.cli examples/notebooks
