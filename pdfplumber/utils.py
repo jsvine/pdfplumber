@@ -311,7 +311,7 @@ class WordExtractor:
                     current_word = []
                     current_bbox = None
 
-            elif char["text"] in string.punctuation:
+            elif char["text"] in '!"&\'()*+,.:;<=>?@[\]^`{|}~':
                 if current_word:
                     yield current_word
                     current_word = []
