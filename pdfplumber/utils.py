@@ -1,5 +1,6 @@
 import itertools
 import re
+import string
 from collections.abc import Sequence
 from operator import itemgetter
 from typing import (
@@ -309,6 +310,13 @@ class WordExtractor:
                     yield current_word
                     current_word = []
                     current_bbox = None
+
+            elif char["text"] in string.punctuation:
+                if current_word:
+                    yield current_word
+                    current_word = []
+                    current_bbox = None
+                yield [char]
 
             elif (
                 current_word
