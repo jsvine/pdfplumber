@@ -246,7 +246,7 @@ class WordExtractor:
         horizontal_ltr: bool = True,  # Should words be read left-to-right?
         vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
         extra_attrs: Optional[List[str]] = None,
-        split_at_punctuation: Union[bool, str] = False, 
+        split_at_punctuation: Union[bool, str] = False,
     ):
         self.x_tolerance = x_tolerance
         self.y_tolerance = y_tolerance
@@ -256,13 +256,12 @@ class WordExtractor:
         self.vertical_ttb = vertical_ttb
         self.extra_attrs = [] if extra_attrs is None else extra_attrs
 
-        if split_at_punctuation is True: 
-            split_at_punctuation = string.punctuation # Use the default punctuations 
+        if split_at_punctuation is True:
+            split_at_punctuation = string.punctuation  # Use the default punctuations
             # '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
-            # '!"&\'()*+,.:;<=>?@[\]^`{|}~'
         if not split_at_punctuation:
             split_at_punctuation = ""
-        
+
         self.split_at_punctuation = split_at_punctuation
 
     def merge_chars(self, ordered_chars: T_obj_list) -> T_obj:
