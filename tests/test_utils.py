@@ -90,35 +90,46 @@ class Test(unittest.TestCase):
 
             wordsA = pdf.pages[0].extract_words(split_at_punctuation=True)
             wordsB = pdf.pages[0].extract_words(split_at_punctuation=False)
-            wordsC = pdf.pages[0].extract_words(split_at_punctuation='!"&\'()*+,.:;<=>?@[\]^`{|}~')
-            
-            assert wordsA[0]['text'] == "https"
-            assert wordsB[0]['text'] == "https://dell-research-harvard.github.io/HJDataset/"
-            assert wordsC[2]['text'] == "//dell-research-harvard"
-            
+            wordsC = pdf.pages[0].extract_words(
+                split_at_punctuation="!\"&'()*+,.:;<=>?@[\]^`{|}~"
+            )
+
+            assert wordsA[0]["text"] == "https"
+            assert (
+                wordsB[0]["text"]
+                == "https://dell-research-harvard.github.io/HJDataset/"
+            )
+            assert wordsC[2]["text"] == "//dell-research-harvard"
+
             wordsA = pdf.pages[1].extract_words(split_at_punctuation=True)
             wordsB = pdf.pages[1].extract_words(split_at_punctuation=False)
-            wordsC = pdf.pages[1].extract_words(split_at_punctuation='!"&\'()*+,.:;<=>?@[\]^`{|}~')
-            
+            wordsC = pdf.pages[1].extract_words(
+                split_at_punctuation="!\"&'()*+,.:;<=>?@[\]^`{|}~"
+            )
+
             assert len(wordsA) == 4
             assert len(wordsB) == 2
             assert len(wordsC) == 2
-            
+
             wordsA = pdf.pages[2].extract_words(split_at_punctuation=True)
             wordsB = pdf.pages[2].extract_words(split_at_punctuation=False)
-            wordsC = pdf.pages[2].extract_words(split_at_punctuation='!"&\'()*+,.:;<=>?@[\]^`{|}~')
-            
-            assert wordsA[1]['text'] == "["
-            assert wordsB[1]['text'] == "[2,"
-            assert wordsC[1]['text'] == "["
-            
+            wordsC = pdf.pages[2].extract_words(
+                split_at_punctuation="!\"&'()*+,.:;<=>?@[\]^`{|}~"
+            )
+
+            assert wordsA[1]["text"] == "["
+            assert wordsB[1]["text"] == "[2,"
+            assert wordsC[1]["text"] == "["
+
             wordsA = pdf.pages[3].extract_words(split_at_punctuation=True)
             wordsB = pdf.pages[3].extract_words(split_at_punctuation=False)
-            wordsC = pdf.pages[3].extract_words(split_at_punctuation='!"&\'()*+,.:;<=>?@[\]^`{|}~')
-            
-            assert wordsA[2]['text'] == 'al'
-            assert wordsB[2]['text'] == 'al.'
-            assert wordsC[2]['text'] == 'al'
+            wordsC = pdf.pages[3].extract_words(
+                split_at_punctuation="!\"&'()*+,.:;<=>?@[\]^`{|}~"
+            )
+
+            assert wordsA[2]["text"] == "al"
+            assert wordsB[2]["text"] == "al."
+            assert wordsC[2]["text"] == "al"
 
     def test_text_flow(self):
         path = os.path.join(HERE, "pdfs/federal-register-2020-17221.pdf")
