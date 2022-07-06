@@ -91,7 +91,7 @@ class Test(unittest.TestCase):
             wordsA = pdf.pages[0].extract_words(split_at_punctuation=True)
             wordsB = pdf.pages[0].extract_words(split_at_punctuation=False)
             wordsC = pdf.pages[0].extract_words(
-                split_at_punctuation="!\"&'()*+,.:;<=>?@[\]^`{|}~"
+                split_at_punctuation=r"!\"&'()*+,.:;<=>?@[]^`{|}~"
             )
 
             assert wordsA[0]["text"] == "https"
@@ -104,7 +104,7 @@ class Test(unittest.TestCase):
             wordsA = pdf.pages[1].extract_words(split_at_punctuation=True)
             wordsB = pdf.pages[1].extract_words(split_at_punctuation=False)
             wordsC = pdf.pages[1].extract_words(
-                split_at_punctuation="!\"&'()*+,.:;<=>?@[\]^`{|}~"
+                split_at_punctuation=r"!\"&'()*+,.:;<=>?@[]^`{|}~"
             )
 
             assert len(wordsA) == 4
@@ -114,7 +114,7 @@ class Test(unittest.TestCase):
             wordsA = pdf.pages[2].extract_words(split_at_punctuation=True)
             wordsB = pdf.pages[2].extract_words(split_at_punctuation=False)
             wordsC = pdf.pages[2].extract_words(
-                split_at_punctuation="!\"&'()*+,.:;<=>?@[\]^`{|}~"
+                split_at_punctuation=r"!\"&'()*+,.:;<=>?@[]^`{|}~"
             )
 
             assert wordsA[1]["text"] == "["
@@ -124,7 +124,7 @@ class Test(unittest.TestCase):
             wordsA = pdf.pages[3].extract_words(split_at_punctuation=True)
             wordsB = pdf.pages[3].extract_words(split_at_punctuation=False)
             wordsC = pdf.pages[3].extract_words(
-                split_at_punctuation="!\"&'()*+,.:;<=>?@[\]^`{|}~"
+                split_at_punctuation=r"!\"&'()*+,.:;<=>?@[]^`{|}~"
             )
 
             assert wordsA[2]["text"] == "al"
