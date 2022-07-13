@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Unreleased
+
+### Fixed
+
+- Fix `ValueError` exception when using `page.search(regex=True)`. ([#683](https://github.com/jsvine/pdfplumber/issues/683)
+
 ## [0.7.1] - 2022-05-31
 
 ### Fixed

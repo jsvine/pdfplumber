@@ -496,7 +496,10 @@ class TextLayout:
         def match_to_dict(m: Match[str]) -> Dict[str, Any]:
             subset = self.layout_tuples[m.start() : m.end()]
             chars = [c for (text, c) in subset if c is not None]
-            x0, top, x1, bottom = objects_to_bbox(chars)
+            try:
+                x0, top, x1, bottom = objects_to_bbox(chars)
+            except ValueError:
+                x0, top, x1, bottom = None, None, None, None
             return {
                 "text": m.group(0),
                 "groups": m.groups(),

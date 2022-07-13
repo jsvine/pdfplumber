@@ -198,3 +198,12 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             annots = pdf.annots
             annots[0]["contents"] == "日本語"
+
+    def test_issue_683(self):
+        """
+        Page.search ValueError: min() arg is an empty sequence
+        """
+        path = os.path.join(HERE, "pdfs/issue-71-duplicate-chars-2.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            page.search(r"\d+", regex=True)
