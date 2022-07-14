@@ -6,7 +6,7 @@ Plumb a PDF for detailed information about each text character, rectangle, and l
 
 Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer.six`](https://github.com/goulu/pdfminer). 
 
-Currently [tested](tests/) on [Python 3.6, 3.7, and 3.8](.github/workflows/tests.yml).
+Currently [tested](tests/) on [Python 3.7, 3.8, 3.9, 3.10](.github/workflows/tests.yml).
 
 __To report a bug__ or request a feature, please [file an issue](https://github.com/jsvine/pdfplumber/issues/new/choose). __To ask a question__ or request assistance with a specific PDF, please [use the discussions forum](https://github.com/jsvine/pdfplumber/discussions).
 
