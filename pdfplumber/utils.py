@@ -450,7 +450,8 @@ class LayoutEngine:
                 num_spaces_prepend = max(min(1, line_len), round(x_dist) - line_len)
                 rendered += [(" ", None)] * num_spaces_prepend
                 for c in chars:
-                    rendered.append((c["text"], c))
+                    for letter in c["text"]:
+                        rendered.append((letter, c))
                 line_len += num_spaces_prepend + len(word["text"])
         return rendered
 

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.7.2] - [unreleased]
+
+### Fixed
+
+- Fix bug in `LayoutEngine.calculate(...)` when processing char objects with len>1 representations, such as ligatures. ([#683](https://github.com/jsvine/pdfplumber/issues/683))
+
 ## [0.7.1] - 2022-05-31
 
 ### Fixed

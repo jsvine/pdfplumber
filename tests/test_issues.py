@@ -198,3 +198,19 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             annots = pdf.annots
             annots[0]["contents"] == "日本語"
+
+    def test_issue_683(self):
+        """
+        Page.search ValueError: min() arg is an empty sequence
+
+        This ultimately stemmed from a mistaken assumption in
+        LayoutEngine.calculate(...) that len(char["text"]) would always equal
+        1, which is not true for ligatures. Issue 683 does not provide a PDF,
+        but the test PDF triggers the same error, which should now be fixed.
+
+        Thank you to @samkit-jain for identifying and writing this test.
+        """
+        path = os.path.join(HERE, "pdfs/issue-71-duplicate-chars-2.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            page.search(r"\d+", regex=True)
