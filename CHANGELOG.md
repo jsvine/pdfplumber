@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.7.2] - [unreleased]
 
+### Added
+
+- Add README.md link to @hbh112233abc's [Chinese translation of README.md](https://github.com/hbh112233abc/pdfplumber/blob/stable/README-CN.md). ([#674](https://github.com/jsvine/pdfplumber/issues/674))
+
 ### Fixed
 
 - Fix bug in `LayoutEngine.calculate(...)` when processing char objects with len>1 representations, such as ligatures. ([#683](https://github.com/jsvine/pdfplumber/issues/683))

@@ -8,7 +8,10 @@ Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer.
 
 Currently [tested](tests/) on [Python 3.7, 3.8, 3.9, 3.10](.github/workflows/tests.yml).
 
+Translations of this document are available in: [Chinese (by @hbh112233abc)](https://github.com/hbh112233abc/pdfplumber/blob/stable/README-CN.md).
+
 __To report a bug__ or request a feature, please [file an issue](https://github.com/jsvine/pdfplumber/issues/new/choose). __To ask a question__ or request assistance with a specific PDF, please [use the discussions forum](https://github.com/jsvine/pdfplumber/discussions).
+
 
 ## Table of Contents
 
