@@ -464,6 +464,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [@johnhuge](https://github.com/johnhuge)
 - [Jhonatan Lopes](https://github.com/jhonatan-lopes)
 - [Ethan Corey](https://github.com/ethanscorey)
+- [Shannon Shen](https://github.com/lolipopshock)
 
 ## Contributing
 
