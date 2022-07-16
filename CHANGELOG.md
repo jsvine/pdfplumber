@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- Add `split_at_punctuation` parameter to `.extract_words(...)` and `.extract_text(...)`. ([#682](https://github.com/jsvine/pdfplumber/issues/674)) [h/t @lolipopshock]
 - Add README.md link to @hbh112233abc's [Chinese translation of README.md](https://github.com/hbh112233abc/pdfplumber/blob/stable/README-CN.md). ([#674](https://github.com/jsvine/pdfplumber/issues/674))
 
 ### Fixed
