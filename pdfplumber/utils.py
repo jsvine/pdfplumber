@@ -1,5 +1,6 @@
 import itertools
 import re
+import string
 from collections.abc import Sequence
 from operator import itemgetter
 from typing import (
@@ -245,6 +246,7 @@ class WordExtractor:
         horizontal_ltr: bool = True,  # Should words be read left-to-right?
         vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
         extra_attrs: Optional[List[str]] = None,
+        split_at_punctuation: Union[bool, str] = False,
     ):
         self.x_tolerance = x_tolerance
         self.y_tolerance = y_tolerance
@@ -253,6 +255,14 @@ class WordExtractor:
         self.horizontal_ltr = horizontal_ltr
         self.vertical_ttb = vertical_ttb
         self.extra_attrs = [] if extra_attrs is None else extra_attrs
+
+        if split_at_punctuation is True:
+            split_at_punctuation = string.punctuation  # Use the default punctuations
+            # '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+        if not split_at_punctuation:
+            split_at_punctuation = ""
+
+        self.split_at_punctuation = split_at_punctuation
 
     def merge_chars(self, ordered_chars: T_obj_list) -> T_obj:
         x0, top, x1, bottom = objects_to_bbox(ordered_chars)
@@ -309,6 +319,13 @@ class WordExtractor:
                     yield current_word
                     current_word = []
                     current_bbox = None
+
+            elif char["text"] in self.split_at_punctuation:
+                if current_word:
+                    yield current_word
+                    current_word = []
+                    current_bbox = None
+                yield [char]
 
             elif (
                 current_word
@@ -465,6 +482,7 @@ def extract_words(
     horizontal_ltr: bool = True,  # Should words be read left-to-right?
     vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
     extra_attrs: Optional[List[str]] = None,
+    split_at_punctuation: Union[bool, str] = False,
 ) -> T_obj_list:
     return WordExtractor(
         x_tolerance=x_tolerance,
@@ -474,6 +492,7 @@ def extract_words(
         horizontal_ltr=horizontal_ltr,
         vertical_ttb=vertical_ttb,
         extra_attrs=extra_attrs,
+        split_at_punctuation=split_at_punctuation,
     ).extract(chars)
 
 
@@ -555,6 +574,7 @@ def chars_to_layout(
     horizontal_ltr: bool = True,  # Should words be read left-to-right?
     vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
     extra_attrs: Optional[List[str]] = None,
+    split_at_punctuation: Union[bool, str] = False,
 ) -> TextLayout:
     extractor = WordExtractor(
         x_tolerance=x_tolerance,
@@ -564,6 +584,7 @@ def chars_to_layout(
         horizontal_ltr=horizontal_ltr,
         vertical_ttb=vertical_ttb,
         extra_attrs=extra_attrs,
+        split_at_punctuation=split_at_punctuation,
     )
 
     engine = LayoutEngine(
