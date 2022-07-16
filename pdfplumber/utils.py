@@ -619,6 +619,7 @@ def extract_text(
     horizontal_ltr: bool = True,  # Should words be read left-to-right?
     vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
     extra_attrs: Optional[List[str]] = None,
+    split_at_punctuation: Union[bool, str] = False,
 ) -> str:
     chars = to_list(chars)
     if len(chars) == 0:
@@ -634,6 +635,7 @@ def extract_text(
             horizontal_ltr=horizontal_ltr,
             vertical_ttb=vertical_ttb,
             extra_attrs=extra_attrs,
+            split_at_punctuation=split_at_punctuation,
             x_density=x_density,
             y_density=y_density,
             x_shift=x_shift,
