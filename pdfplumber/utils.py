@@ -256,13 +256,12 @@ class WordExtractor:
         self.vertical_ttb = vertical_ttb
         self.extra_attrs = [] if extra_attrs is None else extra_attrs
 
-        if split_at_punctuation is True:
-            split_at_punctuation = string.punctuation  # Use the default punctuations
-            # '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
-        if not split_at_punctuation:
-            split_at_punctuation = ""
-
-        self.split_at_punctuation = split_at_punctuation
+        # Note: string.punctuation = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+        self.split_at_punctuation = (
+            string.punctuation
+            if split_at_punctuation is True
+            else (split_at_punctuation or "")
+        )
 
     def merge_chars(self, ordered_chars: T_obj_list) -> T_obj:
         x0, top, x1, bottom = objects_to_bbox(ordered_chars)
@@ -313,28 +312,34 @@ class WordExtractor:
         current_word: T_obj_list = []
         current_bbox: Optional[T_bbox] = None
 
-        for char in chars:
-            if not self.keep_blank_chars and char["text"].isspace():
-                if current_word:
-                    yield current_word
-                    current_word = []
-                    current_bbox = None
+        def start_next_word(
+            new_char: Optional[T_obj],
+        ) -> Generator[T_obj_list, None, None]:
+            nonlocal current_word
+            nonlocal current_bbox
 
-            elif char["text"] in self.split_at_punctuation:
-                if current_word:
-                    yield current_word
-                    current_word = []
-                    current_bbox = None
-                yield [char]
+            if current_word:
+                yield current_word
+
+            current_word = [] if new_char is None else [new_char]
+            current_bbox = None if new_char is None else obj_to_bbox(new_char)
+
+        for char in chars:
+            text = char["text"]
+
+            if not self.keep_blank_chars and text.isspace():
+                yield from start_next_word(None)
+
+            elif text in self.split_at_punctuation:
+                yield from start_next_word(char)
+                yield from start_next_word(None)
 
             elif (
                 current_word
                 and current_bbox
                 and self.char_begins_new_word(current_word, current_bbox, char)
             ):
-                yield current_word
-                current_word = [char]
-                current_bbox = obj_to_bbox(char)
+                yield from start_next_word(char)
 
             else:
                 current_word.append(char)
@@ -343,6 +348,7 @@ class WordExtractor:
                 else:
                     current_bbox = merge_bboxes([current_bbox, obj_to_bbox(char)])
 
+        # Finally, after all chars processed
         if current_word:
             yield current_word
 
