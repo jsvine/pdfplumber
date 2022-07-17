@@ -131,6 +131,15 @@ class Test(unittest.TestCase):
             assert wordsB[2]["text"] == "al."
             assert wordsC[2]["text"] == "al"
 
+    def test_extract_text_punctuation(self):
+        path = os.path.join(HERE, "pdfs/test-punkt.pdf")
+        with pdfplumber.open(path) as pdf:
+            text = pdf.pages[0].extract_text(
+                layout=True,
+                split_at_punctuation=True,
+            )
+            assert "https " in text
+
     def test_text_flow(self):
         path = os.path.join(HERE, "pdfs/federal-register-2020-17221.pdf")
 
