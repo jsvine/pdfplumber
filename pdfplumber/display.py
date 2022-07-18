@@ -58,7 +58,7 @@ def get_page_image(stream: BufferedReader, page_no: int, resolution: int) -> Wan
         ) as bg:
             bg.composite(img, 0, 0)
             im = PIL.Image.open(BytesIO(bg.make_blob("png")))
-        return im.convert("RGBA")
+        return im.convert("RGB")
 
 
 class PageImage:
