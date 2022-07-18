@@ -78,7 +78,4 @@ class Test(unittest.TestCase):
     def test__repr_png_(self):
         png = self.im._repr_png_()
         assert isinstance(png, bytes)
-        assert len(png) in (
-            71948,
-            61247,
-        )  # PNG encoder seems to work differently on different setups
+        assert len(png) == 79774

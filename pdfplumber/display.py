@@ -53,12 +53,12 @@ def get_page_image(stream: BufferedReader, page_no: int, resolution: int) -> Wan
 
     with WandImage(resolution=resolution, filename=filename, file=file) as img_init:
         img = postprocess(img_init)
-        if img.alpha_channel:
-            img.background_color = WandColor("white")
-            img.alpha_channel = "remove"
-        with img.convert("png") as png:
-            im = PIL.Image.open(BytesIO(png.make_blob()))
-            return im.convert("RGB")
+        with WandImage(
+            width=img.width, height=img.height, background=WandColor("white")
+        ) as bg:
+            bg.composite(img, 0, 0)
+            im = PIL.Image.open(BytesIO(bg.make_blob("png")))
+        return im.convert("RGBA")
 
 
 class PageImage:
