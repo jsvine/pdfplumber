@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.7.2] - [unreleased]
+## [0.7.2] - 2022-07-17
 
 ### Added
 
