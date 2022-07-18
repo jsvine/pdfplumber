@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file. The format 
 - Add `split_at_punctuation` parameter to `.extract_words(...)` and `.extract_text(...)`. ([#682](https://github.com/jsvine/pdfplumber/issues/674)) [h/t @lolipopshock]
 - Add README.md link to @hbh112233abc's [Chinese translation of README.md](https://github.com/hbh112233abc/pdfplumber/blob/stable/README-CN.md). ([#674](https://github.com/jsvine/pdfplumber/issues/674))
 
+### Changed
+
+- Change `.to_image(...)`'s approach, preferring to composite with a white background instead of removing the alpha channel. ([1cd1f9a](https://github.com/jsvine/pdfplumber/commit/1cd1f9a))
+
 ### Fixed
 
 - Fix bug in `LayoutEngine.calculate(...)` when processing char objects with len>1 representations, such as ligatures. ([#683](https://github.com/jsvine/pdfplumber/issues/683))
