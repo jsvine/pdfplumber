@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.7.4] - [unreleased]
 
+### Added
+
+- Add `strict=True/False` parameter to `Page.crop(...)` and `Page.within_bbox(...)`; default is `True`, while `False` bypasses the `test_proposed_bbox(...)` check. ([#421](https://github.com/jsvine/pdfplumber/issues/421))
+
 ### Fixed
 
 - Fix `PageImage` conversions for PDFs with `cmyk` colorspaces; convert them to `rgb` earlier in the process.

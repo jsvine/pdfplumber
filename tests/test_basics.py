@@ -116,6 +116,12 @@ class Test(unittest.TestCase):
         with pytest.raises(ValueError):
             bottom.crop((0.5 * float(bottom.width), 0, bottom.width, bottom.height))
 
+        # via issue #421, testing strict=True/False
+        with pytest.raises(ValueError):
+            page.crop((0, 0, page.width + 10, page.height + 10))
+
+        page.crop((0, 0, page.width + 10, page.height + 10), strict=False)
+
     def test_rotation(self):
         assert self.pdf.pages[0].width == 1008
         assert self.pdf.pages[0].height == 612

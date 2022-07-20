@@ -326,14 +326,20 @@ class Page(Container):
     def extract_words(self, **kwargs: Any) -> T_obj_list:
         return utils.extract_words(self.chars, **kwargs)
 
-    def crop(self, bbox: T_bbox, relative: bool = False) -> "CroppedPage":
-        return CroppedPage(self, bbox, relative=relative)
+    def crop(
+        self, bbox: T_bbox, relative: bool = False, strict: bool = True
+    ) -> "CroppedPage":
+        return CroppedPage(self, bbox, relative=relative, strict=strict)
 
-    def within_bbox(self, bbox: T_bbox, relative: bool = False) -> "CroppedPage":
+    def within_bbox(
+        self, bbox: T_bbox, relative: bool = False, strict: bool = True
+    ) -> "CroppedPage":
         """
         Same as .crop, except only includes objects fully within the bbox
         """
-        return CroppedPage(self, bbox, relative=relative, crop_fn=utils.within_bbox)
+        return CroppedPage(
+            self, bbox, relative=relative, strict=strict, crop_fn=utils.within_bbox
+        )
 
     def filter(self, test_function: Callable[[T_obj], bool]) -> "FilteredPage":
         return FilteredPage(self, test_function)
@@ -422,6 +428,7 @@ class CroppedPage(DerivedPage):
         bbox: T_bbox,
         crop_fn: Callable[[T_obj_list, T_bbox], T_obj_list] = utils.crop_to_bbox,
         relative: bool = False,
+        strict: bool = True,
     ):
         if relative:
             o_x0, o_top, _, _ = parent_page.bbox
@@ -430,7 +437,9 @@ class CroppedPage(DerivedPage):
         else:
             self.bbox = bbox
 
-        test_proposed_bbox(self.bbox, parent_page.bbox)
+        if strict:
+            test_proposed_bbox(self.bbox, parent_page.bbox)
+
         self.crop_fn = crop_fn
         super().__init__(parent_page)
 
