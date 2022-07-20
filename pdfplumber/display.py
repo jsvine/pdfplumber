@@ -52,7 +52,11 @@ def get_page_image(stream: BufferedReader, page_no: int, resolution: int) -> Wan
             return WandImage(image=img.sequence[page_no])
 
     with WandImage(
-        resolution=resolution, filename=filename, file=file, colorspace="rgb"
+        resolution=resolution,
+        filename=filename,
+        file=file,
+        colorspace="rgb",
+        format="pdf",
     ) as img_init:
         img = postprocess(img_init)
         with WandImage(
