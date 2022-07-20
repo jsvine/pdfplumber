@@ -4,6 +4,7 @@ import logging
 import os
 import unittest
 
+import PIL.Image
 import pytest
 
 import pdfplumber
@@ -82,3 +83,10 @@ class Test(unittest.TestCase):
             71939,
             61247,
         )  # PNG encoder seems to work differently on different setups
+
+    def test_decompression_bomb(self):
+        original_max = PIL.Image.MAX_IMAGE_PIXELS
+        PIL.Image.MAX_IMAGE_PIXELS = 10
+        with pytest.raises(PIL.Image.DecompressionBombError):
+            self.pdf.pages[0].to_image()
+        PIL.Image.MAX_IMAGE_PIXELS = original_max

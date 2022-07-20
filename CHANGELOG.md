@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - Add `strict=True/False` parameter to `Page.crop(...)` and `Page.within_bbox(...)`; default is `True`, while `False` bypasses the `test_proposed_bbox(...)` check. ([#421](https://github.com/jsvine/pdfplumber/issues/421))
+- Add more guidance to exception when `.to_image(...)` raises `PIL.Image.DecompressionBombError`. ([#413](https://github.com/jsvine/pdfplumber/issues/413))
 
 ### Fixed
 

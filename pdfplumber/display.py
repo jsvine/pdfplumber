@@ -62,7 +62,18 @@ def get_page_image(stream: BufferedReader, page_no: int, resolution: int) -> Wan
             colorspace="rgb",
         ) as bg:
             bg.composite(img, 0, 0)
-            im = PIL.Image.open(BytesIO(bg.make_blob("png")))
+            try:
+                im = PIL.Image.open(BytesIO(bg.make_blob("png")))
+            except PIL.Image.DecompressionBombError:
+                raise PIL.Image.DecompressionBombError(
+                    "Image conversion raised a DecompressionBombError. "
+                    "PIL.Image.MAX_IMAGE_PIXELS is currently set to "
+                    f"{PIL.Image.MAX_IMAGE_PIXELS}. "
+                    "If you trust this PDF, you can try setting "
+                    "PIL.Image.MAX_IMAGE_PIXELS to a higher value. "
+                    "See https://github.com/jsvine/pdfplumber/issues/413"
+                    "#issuecomment-1190650404 for more information."
+                )
         return im.convert("RGB")
 
 
