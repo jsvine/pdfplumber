@@ -75,6 +75,12 @@ class Test(unittest.TestCase):
         assert id(filtered.chars) == id(filtered._objects["char"])
         assert len(filtered.rects) == 0
 
+    def test_outside_bbox(self):
+        original = self.pdf.pages[0]
+        outside_bbox = original.outside_bbox(original.find_tables()[0].bbox)
+        assert outside_bbox.extract_text() == "Page 1 of 205"
+        assert outside_bbox.bbox == original.bbox
+
     def test_relative_crop(self):
         page = self.pdf.pages[0]
         cropped = page.crop((10, 10, 40, 40))

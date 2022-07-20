@@ -718,6 +718,13 @@ def within_bbox(objs: T_obj_list, bbox: T_bbox) -> T_obj_list:
     ]
 
 
+def outside_bbox(objs: T_obj_list, bbox: T_bbox) -> T_obj_list:
+    """
+    Filters objs to only those fully outside the bbox
+    """
+    return [obj for obj in objs if get_bbox_overlap(obj_to_bbox(obj), bbox) is None]
+
+
 def crop_to_bbox(objs: T_obj_list, bbox: T_bbox) -> T_obj_list:
     """
     Filters objs to only those intersecting the bbox,

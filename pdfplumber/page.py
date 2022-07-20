@@ -341,6 +341,20 @@ class Page(Container):
             self, bbox, relative=relative, strict=strict, crop_fn=utils.within_bbox
         )
 
+    def outside_bbox(
+        self, bbox: T_bbox, relative: bool = False, strict: bool = True
+    ) -> "CroppedPage":
+        """
+        Same as .crop, except only includes objects fully within the bbox
+        """
+        p = CroppedPage(
+            self, bbox, relative=relative, strict=strict, crop_fn=utils.outside_bbox
+        )
+
+        # Reset, because this operation should not actually change bbox
+        p.bbox = self.bbox
+        return p
+
     def filter(self, test_function: Callable[[T_obj], bool]) -> "FilteredPage":
         return FilteredPage(self, test_function)
 
@@ -440,7 +454,11 @@ class CroppedPage(DerivedPage):
         if strict:
             test_proposed_bbox(self.bbox, parent_page.bbox)
 
-        self.crop_fn = crop_fn
+        def _crop_fn(objs: T_obj_list) -> T_obj_list:
+            return crop_fn(objs, bbox)
+
+        self._crop_fn = _crop_fn
+
         super().__init__(parent_page)
 
     @property
@@ -448,7 +466,7 @@ class CroppedPage(DerivedPage):
         if hasattr(self, "_objects"):
             return self._objects
         self._objects: Dict[str, T_obj_list] = {
-            k: self.crop_fn(v, self.bbox) for k, v in self.parent_page.objects.items()
+            k: self._crop_fn(v) for k, v in self.parent_page.objects.items()
         }
         return self._objects
 

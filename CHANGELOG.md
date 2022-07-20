@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
-- Add `strict=True/False` parameter to `Page.crop(...)` and `Page.within_bbox(...)`; default is `True`, while `False` bypasses the `test_proposed_bbox(...)` check. ([#421](https://github.com/jsvine/pdfplumber/issues/421))
+- Add `utils.outside_bbox(...)` and `Page.outside_bbox(...)` method, which are the inverse of `utils.within_bbox(...)` and `Page.within_bbox(...)`. ([#369](https://github.com/jsvine/pdfplumber/issues/369))
+- Add `strict=True/False` parameter to `Page.crop(...)`, `Page.within_bbox(...)`, and `Page.outside_bbox(...)`; default is `True`, while `False` bypasses the `test_proposed_bbox(...)` check. ([#421](https://github.com/jsvine/pdfplumber/issues/421))
 - Add more guidance to exception when `.to_image(...)` raises `PIL.Image.DecompressionBombError`. ([#413](https://github.com/jsvine/pdfplumber/issues/413))
 
 ### Fixed
