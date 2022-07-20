@@ -50,6 +50,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Removed
 
 - Remove `utils.collate_chars(...)`, the old name (and then alias) for `utils.extract_text(...)`. ([24f3532](https://github.com/jsvine/pdfplumber/commit/24f3532))
+- Remove `utils._itemgetter(...)`, an internal-use method previously used by `utils.cluster_objects(...)`. ([58b1ab1](https://github.com/jsvine/pdfplumber/commit/58b1ab1))
 
 ### Fixed
 
