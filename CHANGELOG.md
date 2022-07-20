@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.7.4] - [unreleased]
+
+### Fixed
+
+- Fix `PageImage` conversions for PDFs with `cmyk` colorspaces; convert them to `rgb` earlier in the process.
+
 ## [0.7.3] - 2022-07-18
 
 ### Fixed

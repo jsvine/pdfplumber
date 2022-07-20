@@ -51,10 +51,15 @@ def get_page_image(stream: BufferedReader, page_no: int, resolution: int) -> Wan
         def postprocess(img: WandImage) -> WandImage:
             return WandImage(image=img.sequence[page_no])
 
-    with WandImage(resolution=resolution, filename=filename, file=file) as img_init:
+    with WandImage(
+        resolution=resolution, filename=filename, file=file, colorspace="rgb"
+    ) as img_init:
         img = postprocess(img_init)
         with WandImage(
-            width=img.width, height=img.height, background=WandColor("white")
+            width=img.width,
+            height=img.height,
+            background=WandColor("white"),
+            colorspace="rgb",
         ) as bg:
             bg.composite(img, 0, 0)
             im = PIL.Image.open(BytesIO(bg.make_blob("png")))
