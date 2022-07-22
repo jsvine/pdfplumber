@@ -12,6 +12,7 @@ Translations of this document are available in: [Chinese (by @hbh112233abc)](htt
 
 __To report a bug__ or request a feature, please [file an issue](https://github.com/jsvine/pdfplumber/issues/new/choose). __To ask a question__ or request assistance with a specific PDF, please [use the discussions forum](https://github.com/jsvine/pdfplumber/discussions).
 
+> 👋 This repository’s maintainers are available to hire for PDF data-extraction consulting projects. To get a cost estimate, contact [Jeremy](https://www.jsvine.com/consulting/pdf-data-extraction/) (for projects of any size or complexity) and/or [Samkit](https://www.linkedin.com/in/samkit-jain/) (specifically for table extraction).
 
 ## Table of Contents
 
