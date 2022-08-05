@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+
+## Fixed
+
+- `py.typed` file not included in Pypi distribution. Fixed with adding mypy compatibility.
+
 ## [0.7.4] - 2022-07-19
 
 ### Added
