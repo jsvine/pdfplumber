@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Fixed
 
-- `py.typed` file not included in Pypi distribution. Fixed with adding mypy compatibility.
+- Fixed issue where `py.typed` file was not included in PyPi distribution. ([#698](https://github.com/jsvine/pdfplumber/issues/698) + [#703](https://github.com/jsvine/pdfplumber/pull/703)) [h/t @jhonatan-lopes]
 
 ## [0.7.4] - 2022-07-19
 
