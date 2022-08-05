@@ -39,6 +39,9 @@ setup(
             "test",
         ]
     ),
+    include_package_data=True,
+    package_data={"pdfplumber": ["py.typed"]},
+    zip_safe=False,
     tests_require=base_reqs + dev_reqs,
     python_requires=">=3.7",
     install_requires=base_reqs,
