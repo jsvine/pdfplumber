@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file. The format 
 
 - Fixed issue where `py.typed` file was not included in PyPi distribution. ([#698](https://github.com/jsvine/pdfplumber/issues/698) + [#703](https://github.com/jsvine/pdfplumber/pull/703)) [h/t @jhonatan-lopes]
 
+### Development Changes
+
+- Update Wand version in `requirements.txt` from `>=0.6.7` to `>=0.6.10`. ([#713](https://github.com/jsvine/pdfplumber/issues/713))
+
 ## [0.7.4] - 2022-07-19
 
 ### Added
