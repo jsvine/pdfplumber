@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## Added
+
+- Add `PageImage.show()` as alias for `PageImage.annotated.show()`. ([#715](https://github.com/jsvine/pdfplumber/discussions/715))
+
 ## Fixed
 
 - Fixed issue where `py.typed` file was not included in PyPi distribution. ([#698](https://github.com/jsvine/pdfplumber/issues/698) + [#703](https://github.com/jsvine/pdfplumber/pull/703)) [h/t @jhonatan-lopes]

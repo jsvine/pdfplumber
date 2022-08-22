@@ -354,3 +354,6 @@ class PageImage:
         b = BytesIO()
         self.annotated.save(b, "PNG")
         return b.getvalue()
+
+    def show(self) -> None:  # pragma: no cover
+        self.annotated.show()

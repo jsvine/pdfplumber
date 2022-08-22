@@ -261,6 +261,7 @@ im = my_pdf.pages[0].to_image(resolution=150)
 |--------|-------------|
 |`im.reset()`| Clears anything you've drawn so far.|
 |`im.copy()`| Copies the image to a new `PageImage` object.|
+|`im.show()`| Opens the image in your local image viewer.|
 |`im.save(path_or_fileobject, format="PNG")`| Saves the annotated image.|
 
 ### Drawing methods
