@@ -254,6 +254,7 @@ im = my_pdf.pages[0].to_image(resolution=150)
 
 ![Visual debugging in Jupyter](examples/screenshots/visual-debugging-in-jupyter.png "Visual debugging in Jupyter")
 
+Alternatively, they can also be displayed without IPython/Jupyter with `im.annotated.show()`.
 
 ### Basic `PageImage` methods
 
