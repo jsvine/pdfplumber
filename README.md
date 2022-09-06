@@ -250,7 +250,7 @@ To turn any page (including cropped pages) into an `PageImage` object, call `my_
 im = my_pdf.pages[0].to_image(resolution=150)
 ```
 
-`PageImage` objects play nicely with IPython/Jupyter notebooks; they automatically render as cell outputs. For example:
+From a script or REPL, `im.show()` will open the image in your local image viewer. But `PageImage` objects also play nicely with IPython/Jupyter notebooks; they automatically render as cell outputs. For example:
 
 ![Visual debugging in Jupyter](examples/screenshots/visual-debugging-in-jupyter.png "Visual debugging in Jupyter")
 
