@@ -439,7 +439,7 @@ It's also helpful to know what features `pdfplumber` does __not__ provide:
 
 - [`camelot`](https://github.com/camelot-dev/camelot), [`tabula-py`](https://github.com/chezou/tabula-py), and [`pdftables`](https://github.com/drj11/pdftables) all focus primarily on extracting tables. In some cases, they may be better suited to the particular tables you are trying to extract.
 
-- [`PyPDF2`](https://github.com/mstamy2/PyPDF2) and its successor libraries appear no longer to be maintained.
+- [`PyPDF2`](https://github.com/mstamy2/PyPDF2) and its successor libraries - at the time of writing - appear no longer to be maintained.
 
 ## Acknowledgments / Contributors
 
