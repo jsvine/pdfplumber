@@ -6,16 +6,16 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Added
 
-- Add `PageImage.show()` as alias for `PageImage.annotated.show()`. ([#715](https://github.com/jsvine/pdfplumber/discussions/715))
+- Add `PageImage.show()` as alias for `PageImage.annotated.show()`. ([#715](https://github.com/jsvine/pdfplumber/discussions/715) + [5c7787b](https://github.com/jsvine/pdfplumber/commit/5c7787b))
 
 ## Fixed
 
-- Fixed issue where `py.typed` file was not included in PyPi distribution. ([#698](https://github.com/jsvine/pdfplumber/issues/698) + [#703](https://github.com/jsvine/pdfplumber/pull/703)) [h/t @jhonatan-lopes]
-- Reinstated the ability to call `utils.cluster_objects(...)` with any hashable value (`str`, `int`, `tuple`, etc.) as the `key_fn` parameter, reverting breaking change in [58b1ab1](https://github.com/jsvine/pdfplumber/commit/58b1ab1). ([#691](https://github.com/jsvine/pdfplumber/issues/691)) [h/t @jfuruness]
+- Fixed issue where `py.typed` file was not included in PyPi distribution. ([#698](https://github.com/jsvine/pdfplumber/issues/698) + [#703](https://github.com/jsvine/pdfplumber/pull/703) + [6908487](https://github.com/jsvine/pdfplumber/commit/6908487)) [h/t @jhonatan-lopes]
+- Reinstated the ability to call `utils.cluster_objects(...)` with any hashable value (`str`, `int`, `tuple`, etc.) as the `key_fn` parameter, reverting breaking change in [58b1ab1](https://github.com/jsvine/pdfplumber/commit/58b1ab1). ([#691](https://github.com/jsvine/pdfplumber/issues/691) + [1e97656](https://github.com/jsvine/pdfplumber/commit/1e97656)) [h/t @jfuruness]
 
 ### Development Changes
 
-- Update Wand version in `requirements.txt` from `>=0.6.7` to `>=0.6.10`. ([#713](https://github.com/jsvine/pdfplumber/issues/713))
+- Update Wand version in `requirements.txt` from `>=0.6.7` to `>=0.6.10`. ([#713](https://github.com/jsvine/pdfplumber/issues/713) + [3457d79](https://github.com/jsvine/pdfplumber/commit/3457d79))
 
 ## [0.7.4] - 2022-07-19
 
