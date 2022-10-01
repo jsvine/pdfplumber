@@ -33,3 +33,6 @@ format:
 
 examples:
 	${PYTHON} -m nbexec.cli examples/notebooks
+
+build:
+	${PYTHON} -m build
