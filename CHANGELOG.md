@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Fixed
 
 - Fixed issue where `py.typed` file was not included in PyPi distribution. ([#698](https://github.com/jsvine/pdfplumber/issues/698) + [#703](https://github.com/jsvine/pdfplumber/pull/703)) [h/t @jhonatan-lopes]
+- Reinstated the ability to call `utils.cluster_objects(...)` with any hashable value (`str`, `int`, `tuple`, etc.) as the `key_fn` parameter, reverting breaking change in [58b1ab1](https://github.com/jsvine/pdfplumber/commit/58b1ab1). ([#691](https://github.com/jsvine/pdfplumber/issues/691)) [h/t @jfuruness]
 
 ### Development Changes
 

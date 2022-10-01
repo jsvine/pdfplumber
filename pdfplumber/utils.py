@@ -1,7 +1,7 @@
 import itertools
 import re
 import string
-from collections.abc import Sequence
+from collections.abc import Hashable, Sequence
 from operator import itemgetter
 from typing import (
     TYPE_CHECKING,
@@ -68,8 +68,11 @@ R = TypeVar("R")
 
 
 def cluster_objects(
-    xs: List[R], key_fn: Callable[[R], T_num], tolerance: T_num
+    xs: List[R], key_fn: Union[Hashable, Callable[[R], T_num]], tolerance: T_num
 ) -> List[List[R]]:
+
+    if not callable(key_fn):
+        key_fn = itemgetter(key_fn)
 
     values = map(key_fn, xs)
     cluster_dict = make_cluster_dict(values, tolerance)

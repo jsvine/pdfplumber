@@ -43,6 +43,10 @@ class Test(unittest.TestCase):
         a = ["a", "ab", "abc", "b"]
         assert utils.cluster_objects(a, len, 0) == [["a", "b"], ["ab"], ["abc"]]
 
+        b = [{"x": 1, 7: "a"}, {"x": 1, 7: "b"}, {"x": 2, 7: "b"}, {"x": 2, 7: "b"}]
+        assert utils.cluster_objects(b, "x", 0) == [[b[0], b[1]], [b[2], b[3]]]
+        assert utils.cluster_objects(b, 7, 0) == [[b[0]], [b[1], b[2], b[3]]]
+
     def test_resolve(self):
         annot = self.pdf.annots[0]
         annot_ad0 = utils.resolve(annot["data"]["A"]["D"][0])
