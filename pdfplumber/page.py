@@ -117,6 +117,9 @@ class Page(Container):
             )
         )
 
+        # https://rednafi.github.io/reflections/dont-wrap-instance-methods-with-functoolslru_cache-decorator-in-python.html
+        self.get_text_layout = lru_cache()(self._get_text_layout)
+
     @property
     def width(self) -> T_num:
         return self.bbox[2] - self.bbox[0]
@@ -299,8 +302,7 @@ class Page(Container):
 
         return largest.extract(**extract_kwargs)
 
-    @lru_cache()
-    def get_text_layout(self, **kwargs: Any) -> utils.TextLayout:
+    def _get_text_layout(self, **kwargs: Any) -> utils.TextLayout:
         defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])
         full_kwargs: Dict[str, Any] = {**defaults, **kwargs}
         return utils.chars_to_layout(self.chars, **full_kwargs)
@@ -413,6 +415,7 @@ class DerivedPage(Page):
         self.page_obj = parent_page.page_obj
         self.page_number = parent_page.page_number
         self.flush_cache(Container.cached_properties)
+        self.get_text_layout = lru_cache()(self._get_text_layout)
 
 
 def test_proposed_bbox(bbox: T_bbox, parent_bbox: T_bbox) -> None:
