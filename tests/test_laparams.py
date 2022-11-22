@@ -26,6 +26,8 @@ class Test(unittest.TestCase):
             page = pdf.pages[0]
             assert len(page.textboxhorizontals) == 27
             assert len(page.textlinehorizontals) == 79
+            assert "text" in page.textboxhorizontals[0]
+            assert "text" in page.textlinehorizontals[0]
             assert len(page.chars) == 4408
             assert "anno" not in page.objects.keys()
 
@@ -38,6 +40,8 @@ class Test(unittest.TestCase):
             assert len(page.textboxhorizontals) == 74
             assert len(page.textlineverticals) == 11
             assert len(page.textboxverticals) == 6
+            assert "text" in page.textboxverticals[0]
+            assert "text" in page.textlineverticals[0]
 
     def test_issue_383(self):
         with pdfplumber.open(self.path, laparams={}) as pdf:

@@ -23,6 +23,7 @@ from pdfminer.layout import (
     LTLine,
     LTPage,
     LTRect,
+    LTTextContainer,
 )
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
@@ -211,8 +212,10 @@ class Page(Container):
         attr["object_type"] = kind
         attr["page_number"] = self.page_number
 
-        if isinstance(obj, LTChar):
+        if isinstance(obj, (LTChar, LTTextContainer)):
             attr["text"] = obj.get_text()
+
+        if isinstance(obj, LTChar):
             gs = obj.graphicstate
             attr["stroking_color"] = gs.scolor
             attr["non_stroking_color"] = gs.ncolor
