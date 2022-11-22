@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: pdfplumber
+type: software
+version: 0.7.6
+date-released: "2022-11-22"
+authors:
+  - family-names: "Singer-Vine"
+    given-names: "Jeremy"
+    email: "jsvine@gmail.com"
+  - name: "The pdfplumber contributors"
+repository-code: "https://github.com/jsvine/pdfplumber"
+url: "https://github.com/jsvine/pdfplumber"
+license: MIT
+abstract: >- 
+  Plumb a PDF for detailed information about each char, rectangle,
+  line, et cetera — and easily extract text and tables.
+keywords:
+  - "pdf"
+  - "pdf parsing"
+  - "table extraction"
