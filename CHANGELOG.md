@@ -2,13 +2,28 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.7.6] - 2022-11-22
+
+### Changed
+
+- Bump pinned `pdfminer.six` version to `20221105`. ([e63a038](https://github.com/jsvine/pdfplumber/commit/e63a038))
+
+### Fixed
+
+- Restore `text` attribute to `.textboxhorizontal`/etc., regression introduced in `9587cc7` / `v0.6.2`. ([8a0c126](https://github.com/jsvine/pdfplumber/commit/8a0c126))
+- Fix `lru_cache` usage, which are [discouraged for class methods](https://rednafi.github.io/reflections/dont-wrap-instance-methods-with-functoolslru_cache-decorator-in-python.html) due to garbage-collection issues. ([e3142a0](https://github.com/jsvine/pdfplumber/commit/e3142a0))
+
+### Development Changes
+
+- Upgrade `nbexec` development requirement from `0.1.0` to `0.2.0`. ([30dac25](https://github.com/jsvine/pdfplumber/commit/30dac25))
+
 ## [0.7.5] - 2022-10-01
 
-## Added
+### Added
 
 - Add `PageImage.show()` as alias for `PageImage.annotated.show()`. ([#715](https://github.com/jsvine/pdfplumber/discussions/715) + [5c7787b](https://github.com/jsvine/pdfplumber/commit/5c7787b))
 
-## Fixed
+### Fixed
 
 - Fixed issue where `py.typed` file was not included in PyPi distribution. ([#698](https://github.com/jsvine/pdfplumber/issues/698) + [#703](https://github.com/jsvine/pdfplumber/pull/703) + [6908487](https://github.com/jsvine/pdfplumber/commit/6908487)) [h/t @jhonatan-lopes]
 - Reinstated the ability to call `utils.cluster_objects(...)` with any hashable value (`str`, `int`, `tuple`, etc.) as the `key_fn` parameter, reverting breaking change in [58b1ab1](https://github.com/jsvine/pdfplumber/commit/58b1ab1). ([#691](https://github.com/jsvine/pdfplumber/issues/691) + [1e97656](https://github.com/jsvine/pdfplumber/commit/1e97656)) [h/t @jfuruness]
