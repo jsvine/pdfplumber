@@ -239,7 +239,7 @@ If you pass the `pdfminer.six`-handling `laparams` parameter to `pdfplumber.open
 __Note:__ To use `pdfplumber`'s visual-debugging tools, you'll also need to have two additional pieces of software installed on your computer:
 
 - [`ImageMagick`](https://www.imagemagick.org/). [Installation instructions here](http://docs.wand-py.org/en/latest/guide/install.html#install-imagemagick-debian).
-- [`ghostscript`](https://www.ghostscript.com). [Installation instructions here](https://www.ghostscript.com/doc/current/Install.htm), or simply `apt install ghostscript` (Ubuntu) / `brew install ghostscript` (Mac).
+- [`ghostscript`](https://www.ghostscript.com). [Installation instructions here](https://ghostscript.readthedocs.io/en/latest/Install.html), or simply `apt install ghostscript` (Ubuntu) / `brew install ghostscript` (Mac).
 
 
 ### Creating a `PageImage` with `.to_image()`
