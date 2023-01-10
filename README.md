@@ -254,6 +254,8 @@ From a script or REPL, `im.show()` will open the image in your local image viewe
 
 ![Visual debugging in Jupyter](examples/screenshots/visual-debugging-in-jupyter.png "Visual debugging in Jupyter")
 
+*Note*: `.to_image(...)` works as expected with `Page.crop(...)`/`CroppedPage` instances, but is unable to incorporate changes made via `Page.filter(...)`/`FilteredPage` instances.
+
 
 ### Basic `PageImage` methods
 
