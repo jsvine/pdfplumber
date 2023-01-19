@@ -33,7 +33,9 @@ T_color = Union[Tuple[int, int, int], Tuple[int, int, int, int], str]
 T_contains_points = Union[Tuple[T_point, ...], List[T_point], T_obj]
 
 
-def get_page_image(stream: BufferedReader, page_no: int, resolution: int) -> WandImage:
+def get_page_image(
+    stream: Union[BufferedReader, BytesIO], page_no: int, resolution: int
+) -> WandImage:
     # If we are working with a file object saved to disk
     if hasattr(stream, "name"):
         filename = f"{stream.name}[{page_no}]"

@@ -1,7 +1,7 @@
 import itertools
 import logging
 import pathlib
-from io import BufferedReader
+from io import BufferedReader, BytesIO
 from types import TracebackType
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
@@ -25,7 +25,7 @@ class PDF(Container):
 
     def __init__(
         self,
-        stream: BufferedReader,
+        stream: Union[BufferedReader, BytesIO],
         stream_is_external: bool = False,
         pages: Optional[Union[List[int], Tuple[int]]] = None,
         laparams: Optional[Dict[str, Any]] = None,
@@ -60,7 +60,7 @@ class PDF(Container):
     @classmethod
     def open(
         cls,
-        path_or_fp: Union[str, pathlib.Path, BufferedReader],
+        path_or_fp: Union[str, pathlib.Path, BufferedReader, BytesIO],
         pages: Optional[Union[List[int], Tuple[int]]] = None,
         laparams: Optional[Dict[str, Any]] = None,
         password: str = "",
@@ -68,7 +68,7 @@ class PDF(Container):
     ) -> "PDF":
 
         if isinstance(path_or_fp, (str, pathlib.Path)):
-            stream = open(path_or_fp, "rb")
+            stream: Union[BufferedReader, BytesIO] = open(path_or_fp, "rb")
             stream_is_external = False
         else:
             stream = path_or_fp
