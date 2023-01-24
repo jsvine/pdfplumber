@@ -23,7 +23,7 @@ check-flake:
 	${PYTHON} -m flake8 pdfplumber tests
 
 check-mypy:
-	${PYTHON} -m mypy --strict pdfplumber
+	${PYTHON} -m mypy --strict --implicit-reexport pdfplumber
 
 lint: check-flake check-mypy check-black check-isort
 

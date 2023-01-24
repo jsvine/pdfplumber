@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+
+### Development Changes
+
+- Converted `utils.py` into `utils/` submodules. Retains same interface, just an improvement in organization.
+
 ## [0.7.6] - 2022-11-22
 
 ### Changed

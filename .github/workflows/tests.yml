@@ -36,7 +36,7 @@ jobs:
       run: python -m flake8 pdfplumber tests
 
     - name: Check type annotations via mypy
-      run: python -m mypy --strict pdfplumber
+      run: python -m mypy --strict --implicit-reexport pdfplumber
 
   test:
     needs: lint
