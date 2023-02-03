@@ -368,17 +368,14 @@ class Page(Container):
         p._objects["char"] = utils.dedupe_chars(self.chars, **kwargs)
         return p
 
-    def to_image(self, **conversion_kwargs: Any) -> "PageImage":
+    def to_image(self, resolution: Optional[int] = None) -> "PageImage":
         """
         For conversion_kwargs, see:
         http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image
         """
         from .display import DEFAULT_RESOLUTION, PageImage
 
-        kwargs = dict(conversion_kwargs)
-        if "resolution" not in conversion_kwargs:
-            kwargs["resolution"] = DEFAULT_RESOLUTION
-        return PageImage(self, **kwargs)
+        return PageImage(self, resolution=resolution or DEFAULT_RESOLUTION)
 
     def to_dict(self, object_types: Optional[List[str]] = None) -> Dict[str, Any]:
         if object_types is None:
