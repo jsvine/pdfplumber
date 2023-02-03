@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- Refactor handling of `pts` attribute and, in doing so, deprecate the `curve_obj["points"]` attribute, and fix `PageImage.draw_line(...)`'s handling of diagonal lines.
+
 ### Development Changes
 
 - Convert `utils.py` into `utils/` submodules. Retains same interface, just an improvement in organization. ([6351d97](https://github.com/jsvine/pdfplumber/commit/6351d97))

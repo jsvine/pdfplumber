@@ -190,7 +190,7 @@ def resize_object(obj: T_obj, key: str, value: T_num) -> T_obj:
 
 
 def curve_to_edges(curve: T_obj) -> T_obj_list:
-    point_pairs = zip(curve["points"], curve["points"][1:])
+    point_pairs = zip(curve["pts"], curve["pts"][1:])
     return [
         {
             "x0": min(p0[0], p1[0]),

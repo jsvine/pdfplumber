@@ -18,11 +18,8 @@ from pdfminer.layout import (
     LTChar,
     LTComponent,
     LTContainer,
-    LTCurve,
     LTItem,
-    LTLine,
     LTPage,
-    LTRect,
     LTTextContainer,
 )
 from pdfminer.pdfinterp import PDFPageInterpreter
@@ -196,6 +193,9 @@ class Page(Container):
         self._objects: Dict[str, T_obj_list] = self.parse_objects()
         return self._objects
 
+    def point2coord(self, pt: Tuple[T_num, T_num]) -> Tuple[T_num, T_num]:
+        return (pt[0], self.height - pt[1])
+
     def process_object(self, obj: LTItem) -> T_obj:
         kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
 
@@ -220,15 +220,10 @@ class Page(Container):
             attr["stroking_color"] = gs.scolor
             attr["non_stroking_color"] = gs.ncolor
 
-        if isinstance(obj, LTCurve) and not isinstance(obj, (LTRect, LTLine)):
+        if "pts" in attr:
+            attr["pts"] = list(map(self.point2coord, attr["pts"]))
 
-            def point2coord(pt: Tuple[T_num, T_num]) -> Tuple[T_num, T_num]:
-                x, y = pt
-                return (x, self.height - y)
-
-            attr["points"] = list(map(point2coord, obj.pts))
-
-        if attr.get("y0") is not None:
+        if "y0" in attr:
             attr["top"] = self.height - attr["y1"]
             attr["bottom"] = self.height - attr["y0"]
             attr["doctop"] = self.initial_doctop + attr["top"]
