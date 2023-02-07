@@ -30,6 +30,7 @@ from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
 from .table import T_table_settings, Table, TableFinder, TableSettings
 from .utils import resolve_all
+from .utils.text import TextMap
 
 lt_pat = re.compile(r"^LT")
 
@@ -116,7 +117,7 @@ class Page(Container):
         )
 
         # https://rednafi.github.io/reflections/dont-wrap-instance-methods-with-functoolslru_cache-decorator-in-python.html
-        self.get_text_layout = lru_cache()(self._get_text_layout)
+        self.get_textmap = lru_cache()(self._get_textmap)
 
     @property
     def width(self) -> T_num:
@@ -300,10 +301,10 @@ class Page(Container):
 
         return largest.extract(**extract_kwargs)
 
-    def _get_text_layout(self, **kwargs: Any) -> utils.TextLayout:
+    def _get_textmap(self, **kwargs: Any) -> TextMap:
         defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])
         full_kwargs: Dict[str, Any] = {**defaults, **kwargs}
-        return utils.chars_to_layout(self.chars, **full_kwargs)
+        return utils.chars_to_textmap(self.chars, **full_kwargs)
 
     def search(
         self,
@@ -312,16 +313,14 @@ class Page(Container):
         case: bool = True,
         **kwargs: Any,
     ) -> List[Dict[str, Any]]:
-        text_layout = self.get_text_layout(**kwargs)
-        return text_layout.search(pattern, regex=regex, case=case)
+        textmap = self.get_textmap(**kwargs)
+        return textmap.search(pattern, regex=regex, case=case)
 
     def extract_text(self, **kwargs: Any) -> str:
-        if kwargs.get("layout") is True:
-            del kwargs["layout"]
-            text_layout = self.get_text_layout(**kwargs)
-            return text_layout.to_string()
-        else:
-            return utils.extract_text(self.chars, **kwargs)
+        return self.get_textmap(**kwargs).as_string
+
+    def extract_text_simple(self, **kwargs: Any) -> str:
+        return utils.extract_text_simple(self.chars, **kwargs)
 
     def extract_words(self, **kwargs: Any) -> T_obj_list:
         return utils.extract_words(self.chars, **kwargs)
@@ -410,7 +409,7 @@ class DerivedPage(Page):
         self.page_obj = parent_page.page_obj
         self.page_number = parent_page.page_number
         self.flush_cache(Container.cached_properties)
-        self.get_text_layout = lru_cache()(self._get_text_layout)
+        self.get_textmap = lru_cache()(self._get_textmap)
 
 
 def test_proposed_bbox(bbox: T_bbox, parent_bbox: T_bbox) -> None:

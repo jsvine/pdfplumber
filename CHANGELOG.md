@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. The format 
 
 - Convert `utils.py` into `utils/` submodules. Retains same interface, just an improvement in organization. ([6351d97](https://github.com/jsvine/pdfplumber/commit/6351d97))
 - Fix typing hints to include io.BytesIO. ([d4107f6](https://github.com/jsvine/pdfplumber/commit/d4107f6)) [h/t @ conitrade-as]
+- Refactor text-extraction utilities, paving way for better consistency across various entrypoints to text extraction (e.g., via `utils.extract_text(...)`, via `Page.extract_text(...)`, via `Page.extract_table(...)`).
 
 ## [0.7.6] - 2022-11-22
 

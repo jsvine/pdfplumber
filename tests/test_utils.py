@@ -189,7 +189,14 @@ class Test(unittest.TestCase):
         goal = "\n".join(goal_lines)
 
         assert text == goal
+
+        text_simple = self.pdf.pages[0].extract_text_simple()
+        assert text_simple == goal
+
         assert self.pdf.pages[0].crop((0, 0, 1, 1)).extract_text() == ""
+
+    def test_extract_text_blank(self):
+        assert utils.extract_text([]) == ""
 
     def test_extract_text_layout(self):
         target = open(os.path.join(HERE, "comparisons/scotus-transcript-p1.txt")).read()

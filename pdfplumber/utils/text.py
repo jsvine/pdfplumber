@@ -1,3 +1,4 @@
+import inspect
 import itertools
 import re
 import string
@@ -13,6 +14,146 @@ DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
 DEFAULT_X_DENSITY = 7.25
 DEFAULT_Y_DENSITY = 13
+
+
+class TextMap:
+    """
+    A TextMap maps each bit of text to an individual `char` object.
+
+    In almost all cases, the bit of text is a single unicode character.
+    The main exception is ligatures, which can contain two unicode characters
+    but correspond to a single `char` object.
+    """
+
+    def __init__(self, tuples: List[Tuple[str, Optional[T_obj]]]) -> None:
+        self.tuples = tuples
+        self.as_string = "".join(map(itemgetter(0), tuples))
+
+    def search(
+        self, pattern: Union[str, Pattern[str]], regex: bool = True, case: bool = True
+    ) -> List[Dict[str, Any]]:
+        def match_to_dict(m: Match[str]) -> Dict[str, Any]:
+            subset = self.tuples[m.start() : m.end()]
+            chars = [c for (text, c) in subset if c is not None]
+            x0, top, x1, bottom = objects_to_bbox(chars)
+            return {
+                "text": m.group(0),
+                "groups": m.groups(),
+                "x0": x0,
+                "top": top,
+                "x1": x1,
+                "bottom": bottom,
+                "chars": chars,
+            }
+
+        if isinstance(pattern, Pattern):
+            if regex is False:
+                raise ValueError(
+                    "Cannot pass a compiled search pattern *and* regex=False together."
+                )
+            if case is False:
+                raise ValueError(
+                    "Cannot pass a compiled search pattern *and* case=False together."
+                )
+            compiled = pattern
+        else:
+            if regex is False:
+                pattern = re.escape(pattern)
+
+            flags = re.I if case is False else 0
+            compiled = re.compile(pattern, flags)
+
+        gen = re.finditer(compiled, self.as_string)
+        return list(map(match_to_dict, gen))
+
+
+class WordMap:
+    """
+    A WordMap maps words->chars.
+    """
+
+    def __init__(self, tuples: List[Tuple[T_obj, T_obj_list]]) -> None:
+        self.tuples = tuples
+
+    def to_textmap(
+        self,
+        layout: bool = False,
+        x_density: T_num = DEFAULT_X_DENSITY,
+        y_density: T_num = DEFAULT_Y_DENSITY,
+        x_shift: T_num = 0,
+        y_shift: T_num = 0,
+        y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+        presorted: bool = False,
+    ) -> TextMap:
+        """
+        Given a list of (word, chars) tuples (i.e., a WordMap), return a list of
+        (char-text, char) tuples (i.e., a TextMap) that can be used to mimic the
+        structural layout of the text on the page(s), using the following approach:
+
+        - Sort the words by (doctop, x0) if not already sorted.
+
+        - Calculate the initial doctop for the starting page.
+
+        - Cluster the words by doctop (taking `y_tolerance` into account), and
+          iterate through them.
+
+        - For each cluster, calculate the distance between that doctop and the
+          initial doctop, in points, minus `y_shift`. Divide that distance by
+          `y_density` to calculate the minimum number of newlines that should come
+          before this cluster. Append that number of newlines *minus* the number of
+          newlines already appended, with a minimum of one.
+
+        - Then for each cluster, iterate through each word in it. Divide each
+          word's x0, minus `x_shift`, by `x_density` to calculate the minimum
+          number of characters that should come before this cluster.  Append that
+          number of spaces *minus* the number of characters and spaces already
+          appended, with a minimum of one. Then append the word's text.
+
+        Note: This approach currently works best for horizontal, left-to-right
+        text, but will display all words regardless of orientation. There is room
+        for improvement in better supporting right-to-left text, as well as
+        vertical text.
+        """
+        _textmap: List[Tuple[str, Optional[T_obj]]] = []
+
+        if not len(self.tuples):
+            return TextMap(_textmap)
+
+        num_newlines = 0
+        words_sorted = (
+            self.tuples
+            if presorted
+            else sorted(self.tuples, key=lambda x: (x[0]["doctop"], x[0]["x0"]))
+        )
+        first_word = words_sorted[0][0]
+        doctop_start = first_word["doctop"] - first_word["top"]
+        for i, ws in enumerate(
+            cluster_objects(words_sorted, lambda x: float(x[0]["doctop"]), y_tolerance)
+        ):
+            y_dist = (
+                (ws[0][0]["doctop"] - (doctop_start + y_shift)) / y_density
+                if layout
+                else 0
+            )
+            num_newlines_prepend = max(
+                # At least one newline, unless this iis the first line
+                int(i > 0),
+                # ... or as many as needed to get the imputed "distance" from the top
+                round(y_dist) - num_newlines,
+            )
+            _textmap += [("\n", None)] * num_newlines_prepend
+            num_newlines += num_newlines_prepend
+
+            line_len = 0
+            for word, chars in sorted(ws, key=lambda x: float(x[0]["x0"])):
+                x_dist = (word["x0"] - x_shift) / x_density if layout else 0
+                num_spaces_prepend = max(min(1, line_len), round(x_dist) - line_len)
+                _textmap += [(" ", None)] * num_spaces_prepend
+                for c in chars:
+                    for letter in c["text"]:
+                        _textmap.append((letter, c))
+                line_len += num_spaces_prepend + len(word["text"])
+        return TextMap(_textmap)
 
 
 class WordExtractor:
@@ -168,173 +309,59 @@ class WordExtractor:
             for word_chars in self.iter_chars_to_words(char_group):
                 yield (self.merge_chars(word_chars), word_chars)
 
-    def extract(self, chars: T_obj_list) -> T_obj_list:
+    def extract_wordmap(self, chars: T_obj_iter) -> WordMap:
+        return WordMap(list(self.iter_extract_tuples(chars)))
+
+    def extract_words(self, chars: T_obj_list) -> T_obj_list:
         return list(word for word, word_chars in self.iter_extract_tuples(chars))
 
 
-class LayoutEngine:
-    def __init__(
-        self,
-        x_density: T_num = DEFAULT_X_DENSITY,
-        y_density: T_num = DEFAULT_Y_DENSITY,
-        x_shift: T_num = 0,
-        y_shift: T_num = 0,
-        y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
-        presorted: bool = False,
-    ):
-        self.x_density = x_density
-        self.y_density = y_density
-        self.x_shift = x_shift
-        self.y_shift = y_shift
-        self.y_tolerance = y_tolerance
-        self.presorted = presorted
-
-    def calculate(
-        self, word_tuples: List[Tuple[T_obj, T_obj_list]]
-    ) -> List[Tuple[str, Optional[T_obj]]]:
-        """
-        Given a list of (word, chars) tuples, return a list of (char-text,
-        char) tuples that can be used to mimic the structural layout of the
-        text on the page(s), using the following approach:
-
-        - Sort the words by (doctop, x0) if not already sorted.
-
-        - Calculate the initial doctop for the starting page.
-
-        - Cluster the words by doctop (taking `y_tolerance` into account), and
-          iterate through them.
-
-        - For each cluster, calculate the distance between that doctop and the
-          initial doctop, in points, minus `y_shift`. Divide that distance by
-          `y_density` to calculate the minimum number of newlines that should come
-          before this cluster. Append that number of newlines *minus* the number of
-          newlines already appended, with a minimum of one.
-
-        - Then for each cluster, iterate through each word in it. Divide each
-          word's x0, minus `x_shift`, by `x_density` to calculate the minimum
-          number of characters that should come before this cluster.  Append that
-          number of spaces *minus* the number of characters and spaces already
-          appended, with a minimum of one. Then append the word's text.
-
-        Note: This approach currently works best for horizontal, left-to-right
-        text, but will display all words regardless of orientation. There is room
-        for improvement in better supporting right-to-left text, as well as
-        vertical text.
-        """
-        rendered: List[Tuple[str, Optional[T_obj]]] = []
-
-        if not len(word_tuples):
-            return rendered
-
-        num_newlines = 0
-        words_sorted = (
-            word_tuples
-            if self.presorted
-            else sorted(word_tuples, key=lambda x: (x[0]["doctop"], x[0]["x0"]))
-        )
-        first_word = words_sorted[0][0]
-        doctop_start = first_word["doctop"] - first_word["top"]
-        for ws in cluster_objects(
-            words_sorted, lambda x: float(x[0]["doctop"]), self.y_tolerance
-        ):
-            y_dist = (
-                ws[0][0]["doctop"] - (doctop_start + self.y_shift)
-            ) / self.y_density
-            num_newlines_prepend = max(
-                min(1, num_newlines), round(y_dist) - num_newlines
-            )
-            rendered += [("\n", None)] * num_newlines_prepend
-            num_newlines += num_newlines_prepend
-
-            line_len = 0
-            for word, chars in sorted(ws, key=lambda x: float(x[0]["x0"])):
-                x_dist = (word["x0"] - self.x_shift) / self.x_density
-                num_spaces_prepend = max(min(1, line_len), round(x_dist) - line_len)
-                rendered += [(" ", None)] * num_spaces_prepend
-                for c in chars:
-                    for letter in c["text"]:
-                        rendered.append((letter, c))
-                line_len += num_spaces_prepend + len(word["text"])
-        return rendered
+def extract_words(chars: T_obj_list, **kwargs: Any) -> T_obj_list:
+    return WordExtractor(**kwargs).extract_words(chars)
 
 
-def extract_words(
+TEXTMAP_KWARGS = inspect.signature(WordMap.to_textmap).parameters.keys()
+WORD_EXTRACTOR_KWARGS = inspect.signature(WordExtractor).parameters.keys()
+
+
+def chars_to_textmap(chars: T_obj_list, **kwargs: Any) -> TextMap:
+    kwargs.update({"presorted": True})
+
+    extractor = WordExtractor(
+        **{k: kwargs[k] for k in WORD_EXTRACTOR_KWARGS if k in kwargs}
+    )
+    wordmap = extractor.extract_wordmap(chars)
+    textmap = wordmap.to_textmap(
+        **{k: kwargs[k] for k in TEXTMAP_KWARGS if k in kwargs}
+    )
+
+    return textmap
+
+
+def extract_text(
     chars: T_obj_list,
-    x_tolerance: T_num = DEFAULT_X_TOLERANCE,
-    y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
-    keep_blank_chars: bool = False,
-    use_text_flow: bool = False,
-    horizontal_ltr: bool = True,  # Should words be read left-to-right?
-    vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
-    extra_attrs: Optional[List[str]] = None,
-    split_at_punctuation: Union[bool, str] = False,
-) -> T_obj_list:
-    return WordExtractor(
-        x_tolerance=x_tolerance,
-        y_tolerance=y_tolerance,
-        keep_blank_chars=keep_blank_chars,
-        use_text_flow=use_text_flow,
-        horizontal_ltr=horizontal_ltr,
-        vertical_ttb=vertical_ttb,
-        extra_attrs=extra_attrs,
-        split_at_punctuation=split_at_punctuation,
-    ).extract(chars)
+    **kwargs: Any,
+) -> str:
+    chars = to_list(chars)
+    if len(chars) == 0:
+        return ""
 
-
-class TextLayout:
-    def __init__(
-        self, chars: T_obj_list, extractor: WordExtractor, engine: LayoutEngine
-    ):
-        self.chars = chars
-        self.extractor = extractor
-        self.engine = engine
-        self.word_tuples = list(extractor.iter_extract_tuples(chars))
-        self.layout_tuples = engine.calculate(self.word_tuples)
-        self.as_string = "".join(map(itemgetter(0), self.layout_tuples))
-
-    def to_string(self) -> str:
-        return self.as_string
-
-    def search(
-        self, pattern: Union[str, Pattern[str]], regex: bool = True, case: bool = True
-    ) -> List[Dict[str, Any]]:
-        def match_to_dict(m: Match[str]) -> Dict[str, Any]:
-            subset = self.layout_tuples[m.start() : m.end()]
-            chars = [c for (text, c) in subset if c is not None]
-            x0, top, x1, bottom = objects_to_bbox(chars)
-            return {
-                "text": m.group(0),
-                "groups": m.groups(),
-                "x0": x0,
-                "top": top,
-                "x1": x1,
-                "bottom": bottom,
-                "chars": chars,
-            }
-
-        if isinstance(pattern, Pattern):
-            if regex is False:
-                raise ValueError(
-                    "Cannot pass a compiled search pattern *and* regex=False together."
-                )
-            if case is False:
-                raise ValueError(
-                    "Cannot pass a compiled search pattern *and* case=False together."
-                )
-            compiled = pattern
-        else:
-            if regex is False:
-                pattern = re.escape(pattern)
-
-            flags = re.I if case is False else 0
-            compiled = re.compile(pattern, flags)
-
-        gen = re.finditer(compiled, self.as_string)
-        return list(map(match_to_dict, gen))
+    if kwargs.get("layout"):
+        return chars_to_textmap(chars, **kwargs).as_string
+    else:
+        kwargs.update()
+        y_tolerance = kwargs.get("y_tolerance", DEFAULT_Y_TOLERANCE)
+        extractor = WordExtractor(
+            **{k: kwargs[k] for k in WORD_EXTRACTOR_KWARGS if k in kwargs}
+        )
+        words = extractor.extract_words(chars)
+        lines = cluster_objects(words, itemgetter("doctop"), y_tolerance)
+        return "\n".join(" ".join(word["text"] for word in line) for line in lines)
 
 
 def collate_line(
-    line_chars: T_obj_list, tolerance: T_num = DEFAULT_X_TOLERANCE, layout: bool = False
+    line_chars: T_obj_list,
+    tolerance: T_num = DEFAULT_X_TOLERANCE,
 ) -> str:
     coll = ""
     last_x1 = None
@@ -346,90 +373,13 @@ def collate_line(
     return coll
 
 
-def chars_to_layout(
+def extract_text_simple(
     chars: T_obj_list,
-    x_density: T_num = DEFAULT_X_DENSITY,
-    y_density: T_num = DEFAULT_Y_DENSITY,
-    x_shift: T_num = 0,
-    y_shift: T_num = 0,
     x_tolerance: T_num = DEFAULT_X_TOLERANCE,
     y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
-    keep_blank_chars: bool = False,
-    use_text_flow: bool = False,
-    horizontal_ltr: bool = True,  # Should words be read left-to-right?
-    vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
-    extra_attrs: Optional[List[str]] = None,
-    split_at_punctuation: Union[bool, str] = False,
-) -> TextLayout:
-    extractor = WordExtractor(
-        x_tolerance=x_tolerance,
-        y_tolerance=y_tolerance,
-        keep_blank_chars=keep_blank_chars,
-        use_text_flow=use_text_flow,
-        horizontal_ltr=horizontal_ltr,
-        vertical_ttb=vertical_ttb,
-        extra_attrs=extra_attrs,
-        split_at_punctuation=split_at_punctuation,
-    )
-
-    engine = LayoutEngine(
-        x_density=x_density,
-        y_density=y_density,
-        x_shift=x_shift,
-        y_shift=y_shift,
-        y_tolerance=y_tolerance,
-        presorted=True,
-    )
-
-    return TextLayout(chars, extractor, engine)
-
-
-def extract_text(
-    chars: T_obj_list,
-    layout: bool = False,
-    x_density: T_num = DEFAULT_X_DENSITY,
-    y_density: T_num = DEFAULT_Y_DENSITY,
-    x_shift: T_num = 0,
-    y_shift: T_num = 0,
-    x_tolerance: T_num = DEFAULT_X_TOLERANCE,
-    y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
-    keep_blank_chars: bool = False,
-    use_text_flow: bool = False,
-    horizontal_ltr: bool = True,  # Should words be read left-to-right?
-    vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
-    extra_attrs: Optional[List[str]] = None,
-    split_at_punctuation: Union[bool, str] = False,
 ) -> str:
-    chars = to_list(chars)
-    if len(chars) == 0:
-        return ""
-
-    if layout:
-        calculated_layout = chars_to_layout(
-            chars,
-            x_tolerance=x_tolerance,
-            y_tolerance=y_tolerance,
-            keep_blank_chars=keep_blank_chars,
-            use_text_flow=use_text_flow,
-            horizontal_ltr=horizontal_ltr,
-            vertical_ttb=vertical_ttb,
-            extra_attrs=extra_attrs,
-            split_at_punctuation=split_at_punctuation,
-            x_density=x_density,
-            y_density=y_density,
-            x_shift=x_shift,
-            y_shift=y_shift,
-        )
-        return calculated_layout.to_string()
-
-    else:
-        doctop_clusters = cluster_objects(chars, itemgetter("doctop"), y_tolerance)
-
-        lines = (
-            collate_line(line_chars, x_tolerance) for line_chars in doctop_clusters
-        )
-
-        return "\n".join(lines)
+    clustered = cluster_objects(chars, itemgetter("doctop"), y_tolerance)
+    return "\n".join(collate_line(c, x_tolerance) for c in clustered)
 
 
 def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
