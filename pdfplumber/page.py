@@ -362,12 +362,29 @@ class Page(Container):
         p._objects["char"] = utils.dedupe_chars(self.chars, **kwargs)
         return p
 
-    def to_image(self, resolution: Optional[int] = None) -> "PageImage":
+    def to_image(
+        self,
+        resolution: Optional[Union[int, float]] = None,
+        width: Optional[Union[int, float]] = None,
+        height: Optional[Union[int, float]] = None,
+    ) -> "PageImage":
         """
-        For conversion_kwargs, see:
-        http://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image
+        You can pass a maximum of 1 of the following:
+        - resolution: The desired number pixels per inch. Defaults to 72.
+        - width: The desired image width in pixels.
+        - height: The desired image width in pixels.
         """
         from .display import DEFAULT_RESOLUTION, PageImage
+
+        num_specs = sum(x is not None for x in [resolution, width, height])
+        if num_specs > 1:
+            raise ValueError(
+                f"Only one of these arguments can be provided: resolution, width, height. You provided {num_specs}"  # noqa: E501
+            )
+        elif width is not None:
+            resolution = 72 * width / self.width
+        elif height is not None:
+            resolution = 72 * height / self.height
 
         return PageImage(self, resolution=resolution or DEFAULT_RESOLUTION)
 

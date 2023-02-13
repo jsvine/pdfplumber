@@ -34,7 +34,7 @@ T_contains_points = Union[Tuple[T_point, ...], List[T_point], T_obj]
 
 
 def get_page_image(
-    stream: Union[BufferedReader, BytesIO], page_no: int, resolution: int
+    stream: Union[BufferedReader, BytesIO], page_no: int, resolution: Union[int, float]
 ) -> WandImage:
     # If we are working with a file object saved to disk
     if hasattr(stream, "name"):
@@ -88,7 +88,7 @@ class PageImage:
         self,
         page: "Page",
         original: Optional[WandImage] = None,
-        resolution: int = DEFAULT_RESOLUTION,
+        resolution: Union[int, float] = DEFAULT_RESOLUTION,
     ):
         self.page = page
         if original is None:

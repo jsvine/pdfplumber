@@ -34,6 +34,17 @@ class Test(unittest.TestCase):
         self.im.draw_vlines([10])
         self.im.draw_hlines([10])
 
+    def test_width_height(self):
+        p = self.pdf.pages[0]
+        with pytest.raises(ValueError):
+            p.to_image(resolution=72, height=100)
+
+        im = p.to_image(width=503)
+        assert im.original.width == 503
+
+        im = p.to_image(height=805)
+        assert im.original.height == 805
+
     def test_debug_tablefinder(self):
         self.im.reset()
         settings = {"horizontal_strategy": "text", "intersection_tolerance": 5}
