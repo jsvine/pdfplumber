@@ -273,12 +273,7 @@ class Page(Container):
     ) -> List[List[List[Optional[str]]]]:
         tset = TableSettings.resolve(table_settings)
         tables = self.find_tables(tset)
-
-        extract_kwargs = {
-            k: getattr(tset, "text_" + k) for k in ["x_tolerance", "y_tolerance"]
-        }
-
-        return [table.extract(**extract_kwargs) for table in tables]
+        return [table.extract(**(tset.text_settings or {})) for table in tables]
 
     def extract_table(
         self, table_settings: Optional[T_table_settings] = None
@@ -295,11 +290,7 @@ class Page(Container):
 
         largest = list(sorted(tables, key=sorter))[0]
 
-        extract_kwargs = {
-            k: getattr(tset, "text_" + k) for k in ["x_tolerance", "y_tolerance"]
-        }
-
-        return largest.extract(**extract_kwargs)
+        return largest.extract(**(tset.text_settings or {}))
 
     def _get_textmap(self, **kwargs: Any) -> TextMap:
         defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])

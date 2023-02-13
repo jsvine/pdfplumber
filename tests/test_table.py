@@ -133,6 +133,16 @@ class Test(unittest.TestCase):
         ]
         assert t_tol[-1] == t_tol_from_tables[-1]
 
+    def test_text_layout(self):
+        path = os.path.join(HERE, "pdfs/issue-53-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            table = pdf.pages[0].extract_table(
+                {
+                    "text_layout": True,
+                }
+            )
+            assert table[3][0] == "   FY2013   \n   FY2014   "
+
     def test_text_without_words(self):
         assert table.words_to_edges_h([]) == []
         assert table.words_to_edges_v([]) == []
@@ -195,7 +205,7 @@ class Test(unittest.TestCase):
                 "edge_min_length": 3,
                 "min_words_vertical": 3,
                 "min_words_horizontal": 1,
-                "keep_blank_chars": False,
+                "text_keep_blank_chars": False,
                 "text_tolerance": 3,
                 "intersection_tolerance": 3,
             }

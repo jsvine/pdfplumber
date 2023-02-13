@@ -396,11 +396,7 @@ class Table(object):
             rows.append(row)
         return rows
 
-    def extract(
-        self,
-        x_tolerance: T_num = utils.DEFAULT_X_TOLERANCE,
-        y_tolerance: T_num = utils.DEFAULT_Y_TOLERANCE,
-    ) -> List[List[Optional[str]]]:
+    def extract(self, **kwargs: Any) -> List[List[Optional[str]]]:
 
         chars = self.page.chars
         table_arr = []
@@ -426,11 +422,12 @@ class Table(object):
                     ]
 
                     if len(cell_chars):
-                        cell_text = utils.extract_text(
-                            cell_chars,
-                            x_tolerance=x_tolerance,
-                            y_tolerance=y_tolerance,
-                        ).strip()
+                        kwargs["x_shift"] = cell[0]
+                        kwargs["y_shift"] = cell[1]
+                        if "layout" in kwargs:
+                            kwargs["layout_width"] = cell[2] - cell[0]
+                            kwargs["layout_height"] = cell[3] - cell[1]
+                        cell_text = utils.extract_text(cell_chars, **kwargs)
                     else:
                         cell_text = ""
                 arr.append(cell_text)
@@ -450,9 +447,6 @@ NON_NEGATIVE_SETTINGS = [
     "edge_min_length",
     "min_words_vertical",
     "min_words_horizontal",
-    "text_tolerance",
-    "text_x_tolerance",
-    "text_y_tolerance",
     "intersection_tolerance",
     "intersection_x_tolerance",
     "intersection_y_tolerance",
@@ -481,13 +475,10 @@ class TableSettings:
     edge_min_length: T_num = 3
     min_words_vertical: int = DEFAULT_MIN_WORDS_VERTICAL
     min_words_horizontal: int = DEFAULT_MIN_WORDS_HORIZONTAL
-    keep_blank_chars: bool = False
-    text_tolerance: T_num = 3
-    text_x_tolerance: T_num = UNSET
-    text_y_tolerance: T_num = UNSET
     intersection_tolerance: T_num = 3
     intersection_x_tolerance: T_num = UNSET
     intersection_y_tolerance: T_num = UNSET
+    text_settings: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> "TableSettings":
         """Clean up user-provided table settings.
@@ -517,9 +508,19 @@ class TableSettings:
                     f'{{{",".join(TABLE_STRATEGIES)}}}'
                 )
 
+        if self.text_settings is None:
+            self.text_settings = {}
+
+        # This next section is for backwards compatibility
+        for attr in ["x_tolerance", "y_tolerance"]:
+            if attr not in self.text_settings:
+                self.text_settings[attr] = self.text_settings.get("tolerance", 3)
+
+        if "tolerance" in self.text_settings:
+            del self.text_settings["tolerance"]
+        # End of that section
+
         for attr, fallback in [
-            ("text_x_tolerance", "text_tolerance"),
-            ("text_y_tolerance", "text_tolerance"),
             ("snap_x_tolerance", "snap_tolerance"),
             ("snap_y_tolerance", "snap_tolerance"),
             ("join_x_tolerance", "join_tolerance"),
@@ -539,7 +540,15 @@ class TableSettings:
         elif isinstance(settings, cls):
             return settings
         elif isinstance(settings, dict):
-            return cls(**settings)
+            core_settings = {}
+            text_settings = {}
+            for k, v in settings.items():
+                if k[:5] == "text_":
+                    text_settings[k[5:]] = v
+                else:
+                    core_settings[k] = v
+            core_settings["text_settings"] = text_settings
+            return cls(**core_settings)
         else:
             raise ValueError(f"Cannot resolve settings: {settings}")
 
@@ -588,11 +597,7 @@ class TableFinder(object):
         h_strat = settings.horizontal_strategy
 
         if v_strat == "text" or h_strat == "text":
-            words = self.page.extract_words(
-                x_tolerance=settings.text_x_tolerance,
-                y_tolerance=settings.text_y_tolerance,
-                keep_blank_chars=settings.keep_blank_chars,
-            )
+            words = self.page.extract_words(**(settings.text_settings or {}))
 
         v_explicit = []
         for desc in settings.explicit_vertical_lines or []:
