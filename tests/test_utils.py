@@ -199,21 +199,38 @@ class Test(unittest.TestCase):
         assert utils.extract_text([]) == ""
 
     def test_extract_text_layout(self):
-        target = open(os.path.join(HERE, "comparisons/scotus-transcript-p1.txt")).read()
+        target = (
+            open(os.path.join(HERE, "comparisons/scotus-transcript-p1.txt"))
+            .read()
+            .strip("\n")
+        )
         page = self.pdf_scotus.pages[0]
         text = page.extract_text(layout=True)
-        utils_text = utils.extract_text(page.chars, layout=True)
+        utils_text = utils.extract_text(
+            page.chars, layout=True, layout_width=page.width, layout_height=page.height
+        )
         assert text == utils_text
         assert text == target
 
     def test_extract_text_layout_cropped(self):
-        target = open(
-            os.path.join(HERE, "comparisons/scotus-transcript-p1-cropped.txt")
-        ).read()
+        target = (
+            open(os.path.join(HERE, "comparisons/scotus-transcript-p1-cropped.txt"))
+            .read()
+            .strip("\n")
+        )
         p = self.pdf_scotus.pages[0]
         cropped = p.crop((90, 70, p.width, 300))
         text = cropped.extract_text(layout=True)
         assert text == target
+
+    def test_extract_text_layout_widths(self):
+        p = self.pdf_scotus.pages[0]
+        text = p.extract_text(layout=True, layout_width_chars=75)
+        assert all(len(line) == 75 for line in text.splitlines())
+        with pytest.raises(ValueError):
+            p.extract_text(layout=True, layout_width=300, layout_width_chars=50)
+        with pytest.raises(ValueError):
+            p.extract_text(layout=True, layout_height=300, layout_height_chars=50)
 
     def test_extract_text_nochars(self):
         charless = self.pdf.pages[0].filter(lambda df: df["object_type"] != "char")

@@ -303,6 +303,10 @@ class Page(Container):
 
     def _get_textmap(self, **kwargs: Any) -> TextMap:
         defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])
+        if "layout_width_chars" not in kwargs:
+            defaults.update({"layout_width": self.width})
+        if "layout_height_chars" not in kwargs:
+            defaults.update({"layout_height": self.height})
         full_kwargs: Dict[str, Any] = {**defaults, **kwargs}
         return utils.chars_to_textmap(self.chars, **full_kwargs)
 
