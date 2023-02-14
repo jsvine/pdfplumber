@@ -6,13 +6,26 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Changed
 
-- Refactor handling of `pts` attribute and, in doing so, deprecate the `curve_obj["points"]` attribute, and fix `PageImage.draw_line(...)`'s handling of diagonal lines.
+- Change the (still experimental) `Page/utils.extract_text(layout=True)` approach so that it pads, to the degree necessary, the ends of lines with spaces and the end of the text with blank lines to acheive better mimicry of page layout. ([d3662de](https://github.com/jsvine/pdfplumber/commit/d3662de))
+- Refactor handling of `pts` attribute and, in doing so, deprecate the `curve_obj["points"]` attribute, and fix `PageImage.draw_line(...)`'s handling of diagonal lines. ([216bedd](https://github.com/jsvine/pdfplumber/commit/216bedd))
+- Breaking change: In `Page.extract_table[s](...)`, `keep_blank_chars` must now be passed as `text_keep_blank_chars`, for consistency's sake. ([c4e1b29](https://github.com/jsvine/pdfplumber/commit/c4e1b29))
+
+### Added
+
+- Add `Page.extract_table[s](...)` support for all `Page.extract_text(...)` keyword arguments. ([c4e1b29](https://github.com/jsvine/pdfplumber/commit/c4e1b29))
+- Add `height` and `width` keyword arguemnts to `Page.to_image(...)`. ([#798](https://github.com/jsvine/pdfplumber/issues/798) + [93f7dbd](https://github.com/jsvine/pdfplumber/commit/93f7dbd))
+- Add `layout_width`, `layout_width_chars`, `layout_height`, and `layout_width_chars` parameters to `Page/utils.extract_text(layout=True)`. ([d3662de](https://github.com/jsvine/pdfplumber/commit/d3662de))
+- Add CITATION.cff. ([#755](https://github.com/jsvine/pdfplumber/issues/755)) [h/t @joaoccruz]
+
+### Fixed
+
+- Fix simple edge-case for when page rotation is (incorrectly) set to `None`. ([#811](https://github.com/jsvine/pdfplumber/pull/811)) [h/t @toshi1127]
 
 ### Development Changes
 
 - Convert `utils.py` into `utils/` submodules. Retains same interface, just an improvement in organization. ([6351d97](https://github.com/jsvine/pdfplumber/commit/6351d97))
-- Fix typing hints to include io.BytesIO. ([d4107f6](https://github.com/jsvine/pdfplumber/commit/d4107f6)) [h/t @ conitrade-as]
-- Refactor text-extraction utilities, paving way for better consistency across various entrypoints to text extraction (e.g., via `utils.extract_text(...)`, via `Page.extract_text(...)`, via `Page.extract_table(...)`).
+- Fix typing hints to include io.BytesIO. ([d4107f6](https://github.com/jsvine/pdfplumber/commit/d4107f6)) [h/t @conitrade-as]
+- Refactor text-extraction utilities, paving way for better consistency across various entrypoints to text extraction (e.g., via `utils.extract_text(...)`, via `Page.extract_text(...)`, via `Page.extract_table(...)`). ([3424b57](https://github.com/jsvine/pdfplumber/commit/3424b57))
 
 ## [0.7.6] - 2022-11-22
 
