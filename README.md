@@ -492,6 +492,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Jhonatan Lopes](https://github.com/jhonatan-lopes)
 - [Ethan Corey](https://github.com/ethanscorey)
 - [Shannon Shen](https://github.com/lolipopshock)
+- [Matsumoto Toshi](https://github.com/toshi1127)
 
 ## Contributing
 
