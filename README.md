@@ -250,9 +250,11 @@ __Note:__ To use this feature, you'll also need to have two additional pieces of
 
 To turn any page (including cropped pages) into an `PageImage` object, call `my_page.to_image()`. You can optionally pass *one* of the  following keyword arguments:
 
-- `resolution`: The desired number pixels per inch. Defaults to 72.
+- `resolution`: The desired number pixels per inch. Defaults to 72. See note below.
 - `width`: The desired image width in pixels.
 - `height`: The desired image width in pixels.
+
+For instance:
 
 ```python
 im = my_pdf.pages[0].to_image(resolution=150)
@@ -261,6 +263,8 @@ im = my_pdf.pages[0].to_image(resolution=150)
 From a script or REPL, `im.show()` will open the image in your local image viewer. But `PageImage` objects also play nicely with IPython/Jupyter notebooks; they automatically render as cell outputs. For example:
 
 ![Visual debugging in Jupyter](examples/screenshots/visual-debugging-in-jupyter.png "Visual debugging in Jupyter")
+
+*Note*: `pdfplumber` passes the `resolution` parameter to [Wand](https://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image), the Python library we use for image conversion. Wand will create the image with the desired number of total pixels of height/width, but does not fully respect the `resolution` in the strict sense of that word: Although PNGs are capable of storing an image's resolution density as metadata, Wand's PNGs do not.
 
 *Note*: `.to_image(...)` works as expected with `Page.crop(...)`/`CroppedPage` instances, but is unable to incorporate changes made via `Page.filter(...)`/`FilteredPage` instances.
 
@@ -493,6 +497,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Ethan Corey](https://github.com/ethanscorey)
 - [Shannon Shen](https://github.com/lolipopshock)
 - [Matsumoto Toshi](https://github.com/toshi1127)
+- [John West](https://github.com/jwestwsj)
 
 ## Contributing
 
