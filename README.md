@@ -92,7 +92,7 @@ The top-level `pdfplumber.PDF` class represents a single PDF and has two main pr
 |`.metadata`| A dictionary of metadata key/value pairs, drawn from the PDF's `Info` trailers. Typically includes "CreationDate," "ModDate," "Producer," et cetera.|
 |`.pages`| A list containing one `pdfplumber.Page` instance per page loaded.|
 
-... and also has the method
+... and also has the following method:
 
 | Method | Description |
 |--------|-------------|
