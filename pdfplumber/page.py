@@ -71,6 +71,27 @@ if TYPE_CHECKING:  # pragma: nocover
     from .display import PageImage
     from .pdf import PDF
 
+# via https://git.ghostscript.com/?p=mupdf.git;a=blob;f=source/pdf/pdf-font.c;h=6322cedf2c26cfb312c0c0878d7aff97b4c7470e;hb=HEAD#l774   # noqa
+
+CP936_FONTNAMES = {
+    b"\xcb\xce\xcc\xe5": "SimSun,Regular",
+    b"\xba\xda\xcc\xe5": "SimHei,Regular",
+    b"\xbf\xac\xcc\xe5_GB2312": "SimKai,Regular",
+    b"\xb7\xc2\xcb\xce_GB2312": "SimFang,Regular",
+    b"\xc1\xa5\xca\xe9": "SimLi,Regular",
+}
+
+
+def fix_fontname_bytes(fontname: bytes) -> str:
+    if b"+" in fontname:
+        split_at = fontname.index(b"+") + 1
+        prefix, suffix = fontname[:split_at], fontname[split_at:]
+    else:
+        prefix, suffix = b"", fontname
+
+    suffix_new = CP936_FONTNAMES.get(suffix, str(suffix)[2:-1])
+    return str(prefix)[2:-1] + suffix_new
+
 
 class Page(Container):
     cached_properties: List[str] = Container.cached_properties + ["_layout"]
@@ -220,6 +241,10 @@ class Page(Container):
             gs = obj.graphicstate
             attr["stroking_color"] = gs.scolor
             attr["non_stroking_color"] = gs.ncolor
+
+            # Handle (rare) byte-encoded fontnames
+            if isinstance(attr["fontname"], bytes):
+                attr["fontname"] = fix_fontname_bytes(attr["fontname"])
 
         if "pts" in attr:
             attr["pts"] = list(map(self.point2coord, attr["pts"]))
