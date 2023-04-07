@@ -61,7 +61,10 @@ class TextMap:
             compiled = re.compile(pattern, flags)
 
         gen = re.finditer(compiled, self.as_string)
-        return list(map(match_to_dict, gen))
+        # Remove zero-length matches (can happen, e.g., with optional
+        # patterns in regexes) and whitespace-only matches
+        filtered = filter(lambda m: bool(m.group(0).strip()), gen)
+        return list(map(match_to_dict, filtered))
 
 
 class WordMap:

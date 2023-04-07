@@ -279,6 +279,18 @@ class Test(unittest.TestCase):
         results = page.search(r"supreme\s+(\w+)", regex=False)
         assert len(results) == 0
 
+    def test_handle_empty_and_whitespace_search_results(self):
+        # via https://github.com/jsvine/pdfplumber/discussions/853
+        # The searches below should not raise errors but instead
+        # should return empty result-sets.
+        page = self.pdf_scotus.pages[0]
+        for regex in [True, False]:
+            results = page.search("\n", regex=regex)
+            assert len(results) == 0
+
+        assert len(page.search("(sdfsd)?")) == 0
+        assert len(page.search("")) == 0
+
     def test_intersects_bbox(self):
         objs = [
             # Is same as bbox
