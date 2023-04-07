@@ -214,7 +214,7 @@ my_char_rotation = my_char_ctm.skew_x
 | Property | Description |
 |----------|-------------|
 |`page_number`| Page number on which this curve was found.|
-|`points`| Points — as a list of `(x, top)` tuples — describing the curve.|
+|`pts`| Points — as a list of `(x, top)` tuples — describing the curve.|
 |`height`| Height of curve's bounding box.|
 |`width`| Width of curve's bounding box.|
 |`x0`| Distance of curve's left-most point from left side of page.|
