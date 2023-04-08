@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.8.1] - 2023-04-08
+### Fixed
+
+- Fix `x0>x1`/etc. error for when drawing rect fills, per new Pillow version ([db136b7](https://github.com/jsvine/pdfplumber/commit/db136b7))
+
 ## [0.8.0] - 2023-02-13
 
 ### Changed
