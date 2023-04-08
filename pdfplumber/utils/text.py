@@ -5,10 +5,10 @@ import string
 from operator import itemgetter
 from typing import Any, Dict, Generator, List, Match, Optional, Pattern, Tuple, Union
 
-from .._typing import T_bbox, T_num, T_obj, T_obj_iter, T_obj_list
+from .._typing import T_num, T_obj, T_obj_iter, T_obj_list
 from .clustering import cluster_objects
 from .generic import to_list
-from .geometry import merge_bboxes, obj_to_bbox, objects_to_bbox
+from .geometry import objects_to_bbox
 
 DEFAULT_X_TOLERANCE = 3
 DEFAULT_Y_TOLERANCE = 3
@@ -264,41 +264,35 @@ class WordExtractor:
 
     def char_begins_new_word(
         self,
-        current_chars: T_obj_list,
-        current_bbox: T_bbox,
+        prev_char: T_obj,
         next_char: T_obj,
     ) -> bool:
 
-        upright = current_chars[0]["upright"]
+        upright = prev_char["upright"]
         intraline_tol = self.x_tolerance if upright else self.y_tolerance
         interline_tol = self.y_tolerance if upright else self.x_tolerance
 
-        word_x0, word_top, word_x1, word_bottom = current_bbox
-
         return bool(
-            (next_char["x0"] > word_x1 + intraline_tol)
-            or (next_char["x1"] < word_x0 - intraline_tol)
-            or (next_char["top"] > word_bottom + interline_tol)
-            or (next_char["bottom"] < word_top - interline_tol)
+            (next_char["x0"] > prev_char["x1"] + intraline_tol)
+            or (next_char["x1"] < prev_char["x0"] - intraline_tol)
+            or (next_char["top"] > prev_char["bottom"] + interline_tol)
+            or (next_char["bottom"] < prev_char["top"] - interline_tol)
         )
 
     def iter_chars_to_words(
         self, chars: T_obj_iter
     ) -> Generator[T_obj_list, None, None]:
         current_word: T_obj_list = []
-        current_bbox: Optional[T_bbox] = None
 
         def start_next_word(
             new_char: Optional[T_obj],
         ) -> Generator[T_obj_list, None, None]:
             nonlocal current_word
-            nonlocal current_bbox
 
             if current_word:
                 yield current_word
 
             current_word = [] if new_char is None else [new_char]
-            current_bbox = None if new_char is None else obj_to_bbox(new_char)
 
         for char in chars:
             text = char["text"]
@@ -310,19 +304,11 @@ class WordExtractor:
                 yield from start_next_word(char)
                 yield from start_next_word(None)
 
-            elif (
-                current_word
-                and current_bbox
-                and self.char_begins_new_word(current_word, current_bbox, char)
-            ):
+            elif current_word and self.char_begins_new_word(current_word[-1], char):
                 yield from start_next_word(char)
 
             else:
                 current_word.append(char)
-                if current_bbox is None:
-                    current_bbox = obj_to_bbox(char)
-                else:
-                    current_bbox = merge_bboxes([current_bbox, obj_to_bbox(char)])
 
         # Finally, after all chars processed
         if current_word:

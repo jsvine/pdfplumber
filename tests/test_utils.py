@@ -340,6 +340,14 @@ class Test(unittest.TestCase):
 
         assert utils.intersects_bbox(objs, bbox) == objs[:4]
 
+    def test_merge_bboxes(self):
+        bboxes = [
+            (0, 10, 20, 20),
+            (10, 5, 10, 30),
+        ]
+        merged = utils.merge_bboxes(bboxes)
+        assert merged == (0, 5, 20, 30)
+
     def test_resize_object(self):
         obj = {
             "x0": 5,
