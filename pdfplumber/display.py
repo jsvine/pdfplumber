@@ -231,14 +231,13 @@ class PageImage:
 
         x0, top, x1, bottom = bbox
         half = stroke_width / 2
-        x0 += half
-        top += half
-        x1 -= half
-        bottom -= half
+        x0 = min(x0 + half, (x0 + x1) / 2)
+        top = min(top + half, (top + bottom) / 2)
+        x1 = max(x1 - half, (x0 + x1) / 2)
+        bottom = max(bottom - half, (top + bottom) / 2)
 
-        self.draw.rectangle(
-            self._reproject_bbox((x0, top, x1, bottom)), fill, COLORS.TRANSPARENT
-        )
+        fill_bbox = self._reproject_bbox((x0, top, x1, bottom))
+        self.draw.rectangle(fill_bbox, fill, COLORS.TRANSPARENT)
 
         if stroke_width > 0:
             segments = [
