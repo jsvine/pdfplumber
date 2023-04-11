@@ -338,7 +338,7 @@ class WordExtractor:
         )
 
     def iter_chars_to_words(
-        self, chars: T_obj_iter
+        self, ordered_chars: T_obj_iter
     ) -> Generator[T_obj_list, None, None]:
         current_word: T_obj_list = []
 
@@ -352,7 +352,7 @@ class WordExtractor:
 
             current_word = [] if new_char is None else [new_char]
 
-        for char in chars:
+        for char in ordered_chars:
             text = char["text"]
 
             if not self.keep_blank_chars and text.isspace():
@@ -399,13 +399,12 @@ class WordExtractor:
     def iter_extract_tuples(
         self, chars: T_obj_iter
     ) -> Generator[Tuple[T_obj, T_obj_list], None, None]:
-        if not self.use_text_flow:
-            chars = self.iter_sort_chars(chars)
+        ordered_chars = chars if self.use_text_flow else self.iter_sort_chars(chars)
 
         grouping_key = itemgetter("upright", *self.extra_attrs)
-        grouped = itertools.groupby(chars, grouping_key)
+        grouped_chars = itertools.groupby(ordered_chars, grouping_key)
 
-        for keyvals, char_group in grouped:
+        for keyvals, char_group in grouped_chars:
             for word_chars in self.iter_chars_to_words(char_group):
                 yield (self.merge_chars(word_chars), word_chars)
 
