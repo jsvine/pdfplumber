@@ -265,18 +265,76 @@ class WordExtractor:
     def char_begins_new_word(
         self,
         prev_char: T_obj,
-        next_char: T_obj,
+        curr_char: T_obj,
     ) -> bool:
+        """This method takes several factors into account to determine if
+        `curr_char` represents the beginning of a new word:
 
-        upright = prev_char["upright"]
-        intraline_tol = self.x_tolerance if upright else self.y_tolerance
-        interline_tol = self.y_tolerance if upright else self.x_tolerance
+        - Whether the text is "upright" (i.e., non-rotated)
+        - Whether the user has specified that horizontal text runs
+          left-to-right (default) or right-to-left, as represented by
+          self.horizontal_ltr
+        - Whether the user has specified that vertical text the text runs
+          top-to-bottom (default) or bottom-to-top, as represented by
+          self.vertical_ttb
+        - The x0, top, x1, and bottom attributes of prev_char and
+          curr_char
+        - The self.x_tolerance and self.y_tolerance settings. Note: In
+          this case, x/y refer to those directions for non-rotated text.
+          For vertical text, they are flipped. A more accurate terminology
+          might be "*intra*line character distance tolerance" and
+          "*inter*line character distance tolerance"
+
+        An important note: The *intra*line distance is measured from the
+        *end* of the previous character to the *beginning* of the current
+        character, while the *inter*line distance is measured from the
+        *top* of the previous character to the *top* of the next
+        character. The reasons for this are partly repository-historical,
+        and partly logical, as successive text lines' bounding boxes often
+        overlap slightly (and we don't want that overlap to be interpreted
+        as the two lines being the same line).
+
+        The upright-ness of the character determines the attributes to
+        compare, while horizontal_ltr/vertical_ttb determine the direction
+        of the comparison.
+        """
+
+        # Note: Due to the grouping step earlier in the process,
+        # curr_char["upright"] will always equal prev_char["upright"].
+        if curr_char["upright"]:
+            inter_tol = self.y_tolerance
+            intra_tol = self.x_tolerance
+
+            inter_attr = "top"
+            intra_attr_min = "x0"
+            intra_attr_max = "x1"
+
+            if self.horizontal_ltr:
+                char_min = prev_char
+                char_max = curr_char
+            else:
+                char_min = curr_char
+                char_max = prev_char
+        else:
+            inter_tol = self.x_tolerance
+            intra_tol = self.y_tolerance
+
+            inter_attr = "x0"
+            intra_attr_min = "top"
+            intra_attr_max = "bottom"
+
+            if self.vertical_ttb:
+                char_min = curr_char
+                char_max = prev_char
+            else:
+                char_min = prev_char
+                char_max = curr_char
 
         return bool(
-            (next_char["x0"] > prev_char["x1"] + intraline_tol)
-            or (next_char["x1"] < prev_char["x0"] - intraline_tol)
-            or (next_char["top"] > prev_char["bottom"] + interline_tol)
-            or (next_char["bottom"] < prev_char["top"] - interline_tol)
+            # Intraline test
+            (char_max[intra_attr_min] > char_min[intra_attr_max] + intra_tol)
+            # Interline test
+            or (char_max[inter_attr] > char_min[inter_attr] + inter_tol)
         )
 
     def iter_chars_to_words(
