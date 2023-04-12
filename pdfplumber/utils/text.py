@@ -26,22 +26,42 @@ class TextMap:
         self.tuples = tuples
         self.as_string = "".join(map(itemgetter(0), tuples))
 
+    def match_to_dict(
+        self,
+        m: Match[str],
+        main_group: int = 0,
+        return_groups: bool = True,
+        return_chars: bool = True,
+    ) -> Dict[str, Any]:
+        subset = self.tuples[m.start(main_group) : m.end(main_group)]
+        chars = [c for (text, c) in subset if c is not None]
+        x0, top, x1, bottom = objects_to_bbox(chars)
+
+        result = {
+            "text": m.group(main_group),
+            "x0": x0,
+            "top": top,
+            "x1": x1,
+            "bottom": bottom,
+        }
+
+        if return_groups:
+            result["groups"] = m.groups()
+
+        if return_chars:
+            result["chars"] = chars
+
+        return result
+
     def search(
-        self, pattern: Union[str, Pattern[str]], regex: bool = True, case: bool = True
+        self,
+        pattern: Union[str, Pattern[str]],
+        regex: bool = True,
+        case: bool = True,
+        return_groups: bool = True,
+        return_chars: bool = True,
+        main_group: int = 0,
     ) -> List[Dict[str, Any]]:
-        def match_to_dict(m: Match[str]) -> Dict[str, Any]:
-            subset = self.tuples[m.start() : m.end()]
-            chars = [c for (text, c) in subset if c is not None]
-            x0, top, x1, bottom = objects_to_bbox(chars)
-            return {
-                "text": m.group(0),
-                "groups": m.groups(),
-                "x0": x0,
-                "top": top,
-                "x1": x1,
-                "bottom": bottom,
-                "chars": chars,
-            }
 
         if isinstance(pattern, Pattern):
             if regex is False:
@@ -63,8 +83,36 @@ class TextMap:
         gen = re.finditer(compiled, self.as_string)
         # Remove zero-length matches (can happen, e.g., with optional
         # patterns in regexes) and whitespace-only matches
-        filtered = filter(lambda m: bool(m.group(0).strip()), gen)
-        return list(map(match_to_dict, filtered))
+        filtered = filter(lambda m: bool(m.group(main_group).strip()), gen)
+        return [
+            self.match_to_dict(
+                m,
+                return_groups=return_groups,
+                return_chars=return_chars,
+                main_group=main_group,
+            )
+            for m in filtered
+        ]
+
+    def extract_text_lines(
+        self, strip: bool = True, return_chars: bool = True
+    ) -> List[Dict[str, Any]]:
+        """
+        `strip` is analogous to Python's `str.strip()` method, and returns
+        `text` attributes without their surrounding whitespace. Only
+        relevant when the relevant TextMap is created with `layout` = True
+
+        Setting `return_chars` to False will exclude the individual
+        character objects from the returned text-line dicts.
+        """
+        if strip:
+            pat = r" *([^\n]+?) *(\n|$)"
+        else:
+            pat = r"([^\n]+)"
+
+        return self.search(
+            pat, main_group=1, return_chars=return_chars, return_groups=False
+        )
 
 
 class WordMap:

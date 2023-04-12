@@ -331,10 +331,20 @@ class Page(Container):
         pattern: Union[str, Pattern[str]],
         regex: bool = True,
         case: bool = True,
+        main_group: int = 0,
+        return_chars: bool = True,
+        return_groups: bool = True,
         **kwargs: Any,
     ) -> List[Dict[str, Any]]:
         textmap = self.get_textmap(**kwargs)
-        return textmap.search(pattern, regex=regex, case=case)
+        return textmap.search(
+            pattern,
+            regex=regex,
+            case=case,
+            main_group=main_group,
+            return_chars=return_chars,
+            return_groups=return_groups,
+        )
 
     def extract_text(self, **kwargs: Any) -> str:
         return self.get_textmap(**kwargs).as_string
@@ -344,6 +354,13 @@ class Page(Container):
 
     def extract_words(self, **kwargs: Any) -> T_obj_list:
         return utils.extract_words(self.chars, **kwargs)
+
+    def extract_text_lines(
+        self, strip: bool = True, return_chars: bool = True, **kwargs: Any
+    ) -> T_obj_list:
+        return self.get_textmap(**kwargs).extract_text_lines(
+            strip=strip, return_chars=return_chars
+        )
 
     def crop(
         self, bbox: T_bbox, relative: bool = False, strict: bool = True
