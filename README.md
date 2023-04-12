@@ -230,7 +230,9 @@ my_char_rotation = my_char_ctm.skew_x
 |`non_stroking_color`|The curve’s fill color.|
 |`object_type`| "curve"|
 
-Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to two derived lists of objects: `.rect_edges` (which decomposes each rectangle into its four lines) and `.edges` (which combines `.rect_edges` with `.lines`). 
+#### Derived properties
+
+Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to several derived lists of objects: `.rect_edges` (which decomposes each rectangle into its four lines), `.curve_edges` (which does the same for `curve` objects), and `.edges` (which combines `.rect_edges`, `.curve_edges`, and `.lines`). 
 
 #### `image` properties
 

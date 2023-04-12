@@ -211,3 +211,16 @@ class Test(unittest.TestCase):
             }
             assert page.extract_table(table_settings)
             assert page.extract_tables(table_settings)
+
+    def test_table_curves(self):
+        # See https://github.com/jsvine/pdfplumber/discussions/808
+        path = os.path.join(HERE, "pdfs/table-curves-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            assert len(page.curves)
+            tables = page.extract_tables()
+            assert len(tables) == 1
+            t = tables[0]
+            assert t[-2][-2] == "Uncommon"
+
+            assert len(page.extract_tables({"vertical_strategy": "lines_strict"})) == 0

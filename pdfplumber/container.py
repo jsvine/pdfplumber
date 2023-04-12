@@ -10,7 +10,7 @@ from .convert import CSV_COLS_REQUIRED, CSV_COLS_TO_PREPEND, Serializer
 
 
 class Container(object):
-    cached_properties = ["_rect_edges", "_edges", "_objects"]
+    cached_properties = ["_rect_edges", "_curve_edges", "_edges", "_objects"]
 
     @property
     def pages(self) -> Optional[List[Any]]:
@@ -74,11 +74,19 @@ class Container(object):
         return self._rect_edges
 
     @property
+    def curve_edges(self) -> T_obj_list:
+        if hasattr(self, "_curve_edges"):
+            return self._curve_edges
+        curve_edges_gen = (utils.curve_to_edges(r) for r in self.curves)
+        self._curve_edges: T_obj_list = list(chain(*curve_edges_gen))
+        return self._curve_edges
+
+    @property
     def edges(self) -> T_obj_list:
         if hasattr(self, "_edges"):
             return self._edges
         line_edges = list(map(utils.line_to_edge, self.lines))
-        self._edges: T_obj_list = self.rect_edges + line_edges
+        self._edges: T_obj_list = line_edges + self.rect_edges + self.curve_edges
         return self._edges
 
     @property

@@ -17,10 +17,14 @@ class Test(unittest.TestCase):
     def setup_class(self):
         path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
         self.pdf = pdfplumber.open(path)
+        # via http://www.pdfill.com/example/pdf_drawing_new.pdf
+        path_2 = os.path.join(HERE, "pdfs/pdffill-demo.pdf")
+        self.pdf_2 = pdfplumber.open(path_2)
 
     @classmethod
     def teardown_class(self):
         self.pdf.close()
+        self.pdf_2.close()
 
     def test_metadata(self):
         metadata = self.pdf.metadata
@@ -38,18 +42,18 @@ class Test(unittest.TestCase):
         assert len(self.pdf.rects)
         assert len(self.pdf.lines)
         assert len(self.pdf.rect_edges)
+        assert len(self.pdf_2.curve_edges)
         # Ensure that caching is working:
         assert id(self.pdf._rect_edges) == id(self.pdf.rect_edges)
+        assert id(self.pdf_2._curve_edges) == id(self.pdf_2.curve_edges)
         assert id(self.pdf.pages[0]._layout) == id(self.pdf.pages[0].layout)
 
     def test_annots(self):
-        # via http://www.pdfill.com/example/pdf_drawing_new.pdf
-        path = os.path.join(HERE, "pdfs/pdffill-demo.pdf")
-        with pdfplumber.open(path) as pdf:
-            assert len(pdf.annots)
-            assert len(pdf.hyperlinks) == 17
-            uri = "http://www.pdfill.com/pdf_drawing.html"
-            assert pdf.hyperlinks[0]["uri"] == uri
+        pdf = self.pdf_2
+        assert len(pdf.annots)
+        assert len(pdf.hyperlinks) == 17
+        uri = "http://www.pdfill.com/pdf_drawing.html"
+        assert pdf.hyperlinks[0]["uri"] == uri
 
         path = os.path.join(HERE, "pdfs/annotations.pdf")
         with pdfplumber.open(path) as pdf:
