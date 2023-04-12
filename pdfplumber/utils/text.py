@@ -496,7 +496,6 @@ def extract_text(
     if kwargs.get("layout"):
         return chars_to_textmap(chars, **kwargs).as_string
     else:
-        kwargs.update()
         y_tolerance = kwargs.get("y_tolerance", DEFAULT_Y_TOLERANCE)
         extractor = WordExtractor(
             **{k: kwargs[k] for k in WORD_EXTRACTOR_KWARGS if k in kwargs}
