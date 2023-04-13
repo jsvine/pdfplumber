@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.9.0] - 2023-04-13
+
+### Changed
+
+- Make word segmentation (via `WordExtractor.char_begins_new_word(...)`) more explict and rigorous; should help in catching edge-cases in the future. ([6acd580](https://github.com/jsvine/pdfplumber/commit/6acd580) + [ebb93ea](https://github.com/jsvine/pdfplumber/commit/ebb93ea) + [#840](https://github.com/jsvine/pdfplumber/discussions/840#discussioncomment-5312166))
+- Use `curve_edge` objects (instead of just `line` and `rect_edge` objects) in default table-detection strategy. ([6f6b465](https://github.com/jsvine/pdfplumber/commit/6f6b465) + [#858](https://github.com/jsvine/pdfplumber/discussions/858)) 
+- By default, expand ligatures into their consituent letters (e.g., `ﬃ` to `ffi`), and add the `expand_ligatures` boolean parameter to text-extraction methods. ([86e935d](https://github.com/jsvine/pdfplumber/commit/86e935d) + [#598](https://github.com/jsvine/pdfplumber/issues/598))
+
+### Added
+
+- Add `Page.extract_text_lines(...)` method. ([4b37397](https://github.com/jsvine/pdfplumber/commit/4b37397) + [#852](https://github.com/jsvine/pdfplumber/discussions/852))
+- Add `main_group`, `return_groups`, `return_chars` parameters to `Page.search(...)`. ([4b37397](https://github.com/jsvine/pdfplumber/commit/4b37397))
+- Add `.curve_edges` property to `PDF` and `Page`. ([6f6b465](https://github.com/jsvine/pdfplumber/commit/6f6b465))
+
+### Fixed
+
+- Fix handling of bytes-typed fontnames. ([9441ff7](https://github.com/jsvine/pdfplumber/commit/9441ff7) + [#461](https://github.com/jsvine/pdfplumber/discussions/461) + [#842](https://github.com/jsvine/pdfplumber/discussions/842))
+- Fix handling of whitespace-only and empty results of `Page.search(...)`. ([6f6b465](https://github.com/jsvine/pdfplumber/commit/6f6b465) + [#853](https://github.com/jsvine/pdfplumber/discussions/853))
+
 ## [0.8.1] - 2023-04-08
 ### Fixed
 
