@@ -279,6 +279,48 @@ class Test(unittest.TestCase):
         results = page.search(r"supreme\s+(\w+)", regex=False)
         assert len(results) == 0
 
+        results = page.search(r"10 Tuesday", layout=False)
+        assert len(results) == 1
+
+        results = page.search(r"10 Tuesday", layout=True)
+        assert len(results) == 0
+
+    def test_extract_text_lines(self):
+        page = self.pdf_scotus.pages[0]
+        results = page.extract_text_lines()
+        assert len(results) == 28
+        assert "chars" in results[0]
+        assert results[0]["text"] == "Official - Subject to Final Review"
+
+        alt = page.extract_text_lines(layout=True, strip=False, return_chars=False)
+        assert "chars" not in alt[0]
+        assert (
+            alt[0]["text"]
+            == "                                   Official - Subject to Final Review               "  # noqa: E501
+        )
+
+        assert results[10]["text"] == "10 Tuesday, January 13, 2009"
+        assert (
+            alt[10]["text"]
+            == "            10                          Tuesday, January 13, 2009                   "  # noqa: E501
+        )
+        assert (
+            page.extract_text_lines(layout=True)[10]["text"]
+            == "10                          Tuesday, January 13, 2009"
+        )  # noqa: E501
+
+    def test_handle_empty_and_whitespace_search_results(self):
+        # via https://github.com/jsvine/pdfplumber/discussions/853
+        # The searches below should not raise errors but instead
+        # should return empty result-sets.
+        page = self.pdf_scotus.pages[0]
+        for regex in [True, False]:
+            results = page.search("\n", regex=regex)
+            assert len(results) == 0
+
+        assert len(page.search("(sdfsd)?")) == 0
+        assert len(page.search("")) == 0
+
     def test_intersects_bbox(self):
         objs = [
             # Is same as bbox
@@ -327,6 +369,14 @@ class Test(unittest.TestCase):
         bbox = utils.obj_to_bbox(objs[0])
 
         assert utils.intersects_bbox(objs, bbox) == objs[:4]
+
+    def test_merge_bboxes(self):
+        bboxes = [
+            (0, 10, 20, 20),
+            (10, 5, 10, 30),
+        ]
+        merged = utils.merge_bboxes(bboxes)
+        assert merged == (0, 5, 20, 30)
 
     def test_resize_object(self):
         obj = {

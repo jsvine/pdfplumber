@@ -193,6 +193,7 @@ def curve_to_edges(curve: T_obj) -> T_obj_list:
     point_pairs = zip(curve["pts"], curve["pts"][1:])
     return [
         {
+            "object_type": "curve_edge",
             "x0": min(p0[0], p1[0]),
             "x1": max(p0[0], p1[0]),
             "top": min(p0[1], p1[1]),
@@ -253,12 +254,13 @@ def line_to_edge(line: T_obj) -> T_obj:
 
 
 def obj_to_edges(obj: T_obj) -> T_obj_list:
-    return {
-        "line": lambda x: [line_to_edge(x)],
-        "rect": rect_to_edges,
-        "rect_edge": rect_to_edges,
-        "curve": curve_to_edges,
-    }[obj["object_type"]](obj)
+    t = obj["object_type"]
+    if "_edge" in t:
+        return [obj]
+    elif t == "line":
+        return [line_to_edge(obj)]
+    else:
+        return {"rect": rect_to_edges, "curve": curve_to_edges}[t](obj)
 
 
 def filter_edges(

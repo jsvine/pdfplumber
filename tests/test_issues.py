@@ -190,6 +190,31 @@ class Test(unittest.TestCase):
             chars = (char for char in pdf.chars)
             pdfplumber.utils.extract_text(chars)
 
+    def test_issue_461_and_842(self):
+        """
+        pdfplumber should gracefully handle characters with byte-encoded
+        font names.
+        """
+        before = b"RGJSAP+\xcb\xce\xcc\xe5"
+        after = pdfplumber.page.fix_fontname_bytes(before)
+        assert after == "RGJSAP+SimSun,Regular"
+
+        before = b"\xcb\xce\xcc\xe5"
+        after = pdfplumber.page.fix_fontname_bytes(before)
+        assert after == "SimSun,Regular"
+
+        path = os.path.join(HERE, "pdfs/issue-461-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            assert all(isinstance(c["fontname"], str) for c in page.chars)
+            page.dedupe_chars()
+
+        path = os.path.join(HERE, "pdfs/issue-842-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            assert all(isinstance(c["fontname"], str) for c in page.chars)
+            page.dedupe_chars()
+
     def test_issue_463(self):
         """
         Extracting annotations should not raise UnicodeDecodeError on utf-16 text
@@ -198,6 +223,24 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             annots = pdf.annots
             annots[0]["contents"] == "日本語"
+
+    def test_issue_598(self):
+        """
+        Ligatures should be translated by default.
+        """
+        path = os.path.join(HERE, "pdfs/issue-598-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            a = page.extract_text()
+            assert "fiction" in a
+            assert "ﬁction" not in a
+
+            b = page.extract_text(expand_ligatures=False)
+            assert "ﬁction" in b
+            assert "fiction" not in b
+
+            assert page.extract_words()[53]["text"] == "fiction"
+            assert page.extract_words(expand_ligatures=False)[53]["text"] == "ﬁction"
 
     def test_issue_683(self):
         """
