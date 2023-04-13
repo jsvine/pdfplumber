@@ -224,6 +224,24 @@ class Test(unittest.TestCase):
             annots = pdf.annots
             annots[0]["contents"] == "日本語"
 
+    def test_issue_598(self):
+        """
+        Ligatures should be translated by default.
+        """
+        path = os.path.join(HERE, "pdfs/issue-598-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            a = page.extract_text()
+            assert "fiction" in a
+            assert "ﬁction" not in a
+
+            b = page.extract_text(expand_ligatures=False)
+            assert "ﬁction" in b
+            assert "fiction" not in b
+
+            assert page.extract_words()[53]["text"] == "fiction"
+            assert page.extract_words(expand_ligatures=False)[53]["text"] == "ﬁction"
+
     def test_issue_683(self):
         """
         Page.search ValueError: min() arg is an empty sequence

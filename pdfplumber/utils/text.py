@@ -15,6 +15,16 @@ DEFAULT_Y_TOLERANCE = 3
 DEFAULT_X_DENSITY = 7.25
 DEFAULT_Y_DENSITY = 13
 
+LIGATURES = {
+    "ﬀ": "ff",
+    "ﬃ": "ffi",
+    "ﬄ": "ffl",
+    "ﬁ": "fi",
+    "ﬂ": "fl",
+    "ﬆ": "st",
+    "ﬅ": "st",
+}
+
 
 class TextMap:
     """
@@ -136,6 +146,7 @@ class WordMap:
         y_shift: T_num = 0,
         y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
         presorted: bool = False,
+        expand_ligatures: bool = True,
     ) -> TextMap:
         """
         Given a list of (word, chars) tuples (i.e., a WordMap), return a list of
@@ -176,6 +187,8 @@ class WordMap:
 
         if not len(self.tuples):
             return TextMap(_textmap)
+
+        expansions = LIGATURES if expand_ligatures else {}
 
         if layout:
             if layout_width_chars:
@@ -236,10 +249,13 @@ class WordMap:
                 x_dist = (word["x0"] - x_shift) / x_density if layout else 0
                 num_spaces_prepend = max(min(1, line_len), round(x_dist) - line_len)
                 _textmap += [(" ", None)] * num_spaces_prepend
+                line_len += num_spaces_prepend
+
                 for c in chars:
-                    for letter in c["text"]:
+                    letters = expansions.get(c["text"], c["text"])
+                    for letter in letters:
                         _textmap.append((letter, c))
-                line_len += num_spaces_prepend + len(word["text"])
+                        line_len += 1
 
             # Append spaces at end of line
             if layout:
@@ -271,6 +287,7 @@ class WordExtractor:
         vertical_ttb: bool = True,  # Should vertical words be read top-to-bottom?
         extra_attrs: Optional[List[str]] = None,
         split_at_punctuation: Union[bool, str] = False,
+        expand_ligatures: bool = True,
     ):
         self.x_tolerance = x_tolerance
         self.y_tolerance = y_tolerance
@@ -287,6 +304,8 @@ class WordExtractor:
             else (split_at_punctuation or "")
         )
 
+        self.expansions = LIGATURES if expand_ligatures else {}
+
     def merge_chars(self, ordered_chars: T_obj_list) -> T_obj:
         x0, top, x1, bottom = objects_to_bbox(ordered_chars)
         doctop_adj = ordered_chars[0]["doctop"] - ordered_chars[0]["top"]
@@ -295,7 +314,9 @@ class WordExtractor:
         direction = 1 if (self.horizontal_ltr if upright else self.vertical_ttb) else -1
 
         word = {
-            "text": "".join(map(itemgetter("text"), ordered_chars)),
+            "text": "".join(
+                self.expansions.get(c["text"], c["text"]) for c in ordered_chars
+            ),
             "x0": x0,
             "x1": x1,
             "top": top,
