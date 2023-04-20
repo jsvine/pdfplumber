@@ -91,8 +91,10 @@ class Test(unittest.TestCase):
         png = self.im._repr_png_()
         assert isinstance(png, bytes)
         assert len(png) in (
-            71939,
             61247,
+            71939,
+            71983,
+            72168,
         )  # PNG encoder seems to work differently on different setups
 
     def test_decompression_bomb(self):
