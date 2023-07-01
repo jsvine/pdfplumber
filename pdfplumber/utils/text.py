@@ -381,39 +381,39 @@ class WordExtractor:
         # Note: Due to the grouping step earlier in the process,
         # curr_char["upright"] will always equal prev_char["upright"].
         if curr_char["upright"]:
-            inter_tol = self.y_tolerance
-            intra_tol = self.x_tolerance
-
-            inter_attr = "top"
-            intra_attr_min = "x0"
-            intra_attr_max = "x1"
-
+            x = self.x_tolerance
+            y = self.y_tolerance
+            ay = prev_char["top"]
+            cy = curr_char["top"]
             if self.horizontal_ltr:
-                char_min = prev_char
-                char_max = curr_char
+                ax = prev_char["x0"]
+                bx = prev_char["x1"]
+                cx = curr_char["x0"]
             else:
-                char_min = curr_char
-                char_max = prev_char
+                ax = -prev_char["x1"]
+                bx = -prev_char["x0"]
+                cx = -curr_char["x1"]
+
         else:
-            inter_tol = self.x_tolerance
-            intra_tol = self.y_tolerance
-
-            inter_attr = "x0"
-            intra_attr_min = "top"
-            intra_attr_max = "bottom"
-
+            x = self.y_tolerance
+            y = self.x_tolerance
+            ay = prev_char["x0"]
+            cy = curr_char["x0"]
             if self.vertical_ttb:
-                char_min = curr_char
-                char_max = prev_char
+                ax = prev_char["top"]
+                bx = prev_char["bottom"]
+                cx = curr_char["top"]
             else:
-                char_min = prev_char
-                char_max = curr_char
+                ax = -prev_char["bottom"]
+                bx = -prev_char["top"]
+                cx = -curr_char["bottom"]
 
         return bool(
             # Intraline test
-            (char_max[intra_attr_min] > char_min[intra_attr_max] + intra_tol)
+            (cx < ax)
+            or (cx > bx + x)
             # Interline test
-            or (char_max[inter_attr] > char_min[inter_attr] + inter_tol)
+            or (cy > ay + y)
         )
 
     def iter_chars_to_words(
