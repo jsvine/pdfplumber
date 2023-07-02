@@ -383,13 +383,9 @@ class Page(Container):
         """
         Same as .crop, except only includes objects fully within the bbox
         """
-        p = CroppedPage(
+        return CroppedPage(
             self, bbox, relative=relative, strict=strict, crop_fn=utils.outside_bbox
         )
-
-        # Reset, because this operation should not actually change bbox
-        p.bbox = self.bbox
-        return p
 
     def filter(self, test_function: Callable[[T_obj], bool]) -> "FilteredPage":
         return FilteredPage(self, test_function)
@@ -490,27 +486,31 @@ class CroppedPage(DerivedPage):
     def __init__(
         self,
         parent_page: Page,
-        bbox: T_bbox,
+        crop_bbox: T_bbox,
         crop_fn: Callable[[T_obj_list, T_bbox], T_obj_list] = utils.crop_to_bbox,
         relative: bool = False,
         strict: bool = True,
     ):
         if relative:
             o_x0, o_top, _, _ = parent_page.bbox
-            x0, top, x1, bottom = bbox
-            self.bbox = (x0 + o_x0, top + o_top, x1 + o_x0, bottom + o_top)
-        else:
-            self.bbox = bbox
+            x0, top, x1, bottom = crop_bbox
+            crop_bbox = (x0 + o_x0, top + o_top, x1 + o_x0, bottom + o_top)
 
         if strict:
-            test_proposed_bbox(self.bbox, parent_page.bbox)
+            test_proposed_bbox(crop_bbox, parent_page.bbox)
 
         def _crop_fn(objs: T_obj_list) -> T_obj_list:
-            return crop_fn(objs, bbox)
+            return crop_fn(objs, crop_bbox)
+
+        super().__init__(parent_page)
 
         self._crop_fn = _crop_fn
 
-        super().__init__(parent_page)
+        # Note: testing for original function passed, not _crop_fn
+        if crop_fn is utils.outside_bbox:
+            self.bbox = parent_page.bbox
+        else:
+            self.bbox = crop_bbox
 
     @property
     def objects(self) -> Dict[str, T_obj_list]:
