@@ -158,7 +158,7 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`bottom`| Distance of bottom of the character from top of page.|
 |`doctop`| Distance of top of character from top of document.|
 |`matrix`| The "current transformation matrix" for this character. (See below for details.)|
-|`stroking_color`|The color of the character's outline (i.e., stroke), expressed as a tuple or integer, depending on the “color space” used.|
+|`stroking_color`|The color of the character's outline (i.e., stroke), expressed as a tuple, with length determined by the “color space” used (1 for grayscale, 3 for RBG, 4 for CMYK).|
 |`non_stroking_color`|The character's interior color.|
 |`object_type`| "char"|
 
@@ -186,7 +186,7 @@ my_char_rotation = my_char_ctm.skew_x
 |`bottom`| Distance of bottom of the line from top of page.|
 |`doctop`| Distance of top of line from top of document.|
 |`linewidth`| Thickness of line.|
-|`stroking_color`|The color of the line, expressed as a tuple or integer, depending on the “color space” used.|
+|`stroking_color`|The color of the line, expressed as a tuple, with length determined by the “color space” used (1 for grayscale, 3 for RBG, 4 for CMYK).|
 |`non_stroking_color`|The non-stroking color specified for the line’s path.|
 |`object_type`| "line"|
 
@@ -205,7 +205,7 @@ my_char_rotation = my_char_ctm.skew_x
 |`bottom`| Distance of bottom of the rectangle from top of page.|
 |`doctop`| Distance of top of rectangle from top of document.|
 |`linewidth`| Thickness of line.|
-|`stroking_color`|The color of the rectangle's outline, expressed as a tuple or integer, depending on the “color space” used.|
+|`stroking_color`|The color of the rectangle's outline, expressed as a tuple, with length determined by the “color space” used (1 for grayscale, 3 for RBG, 4 for CMYK).|
 |`non_stroking_color`|The rectangle’s fill color.|
 |`object_type`| "rect"|
 
@@ -226,7 +226,7 @@ my_char_rotation = my_char_ctm.skew_x
 |`doctop`| Distance of curve's highest point from top of document.|
 |`linewidth`| Thickness of line.|
 |`fill`| Whether the shape defined by the curve's path is filled.|
-|`stroking_color`|The color of the curve's outline, expressed as a tuple or integer, depending on the “color space” used.|
+|`stroking_color`|The color of the curve's outline, expressed as a tuple, with length determined by the “color space” used (1 for grayscale, 3 for RBG, 4 for CMYK).|
 |`non_stroking_color`|The curve’s fill color.|
 |`object_type`| "curve"|
 

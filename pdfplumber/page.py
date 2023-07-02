@@ -93,6 +93,13 @@ def fix_fontname_bytes(fontname: bytes) -> str:
     return str(prefix)[2:-1] + suffix_new
 
 
+def normalize_color(color: Any) -> Optional[tuple[Union[float, int], ...]]:
+    if color is None:
+        return None
+    else:
+        return tuple(color) if isinstance(color, (tuple, list)) else (color,)
+
+
 class Page(Container):
     cached_properties: List[str] = Container.cached_properties + ["_layout"]
     is_original: bool = True
@@ -234,13 +241,20 @@ class Page(Container):
         attr["object_type"] = kind
         attr["page_number"] = self.page_number
 
+        for color_attr in ["stroking_color", "non_stroking_color"]:
+            if color_attr in attr:
+                attr[color_attr] = normalize_color(attr[color_attr])
+
         if isinstance(obj, (LTChar, LTTextContainer)):
             attr["text"] = obj.get_text()
 
         if isinstance(obj, LTChar):
+            # pdfminer.six (at least as of v20221105) does not
+            # directly expose .stroking_color and .non_stroking_color
+            # for LTChar objects (unlike, e.g., LTRect objects).
             gs = obj.graphicstate
-            attr["stroking_color"] = gs.scolor
-            attr["non_stroking_color"] = gs.ncolor
+            attr["stroking_color"] = normalize_color(gs.scolor)
+            attr["non_stroking_color"] = normalize_color(gs.ncolor)
 
             # Handle (rare) byte-encoded fontnames
             if isinstance(attr["fontname"], bytes):
