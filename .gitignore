@@ -65,3 +65,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+.zcg-pdf/
+.wakatime-project/
