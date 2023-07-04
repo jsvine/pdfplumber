@@ -346,8 +346,9 @@ If you're using `pdfplumber` on a Debian-based system and encounter a `PolicyErr
 | Method | Description |
 |--------|-------------|
 |`.find_tables(table_settings={})`|Returns a list of `Table` objects. The `Table` object provides access to the `.cells`, `.rows`, and `.bbox` properties, as well as the `.extract(x_tolerance=3, y_tolerance=3)` method.|
+|`.find_table(table_settings={})`|Similar to `.find_tables(...)`, but returns the *largest* table on the page, as a `Table` object. If multiple tables have the same size — as measured by the number of cells — this method returns the table closest to the top of the page.|
 |`.extract_tables(table_settings={})`|Returns the text extracted from *all* tables found on the page, represented as a list of lists of lists, with the structure `table -> row -> cell`.|
-|`.extract_table(table_settings={})`|Returns the text extracted from the *largest* table on the page, represented as a list of lists, with the structure `row -> cell`. (If multiple tables have the same size — as measured by the number of cells — this method returns the table closest to the top of the page.)|
+|`.extract_table(table_settings={})`|Returns the text extracted from the *largest* table on the page (see `.find_table(...)` above), represented as a list of lists, with the structure `row -> cell`.|
 |`.debug_tablefinder(table_settings={})`|Returns an instance of the `TableFinder` class, with access to the `.edges`, `.intersections`, `.cells`, and `.tables` properties.|
 
 For example:

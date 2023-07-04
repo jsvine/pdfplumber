@@ -307,16 +307,9 @@ class Page(Container):
         tset = TableSettings.resolve(table_settings)
         return TableFinder(self, tset).tables
 
-    def extract_tables(
+    def find_table(
         self, table_settings: Optional[T_table_settings] = None
-    ) -> List[List[List[Optional[str]]]]:
-        tset = TableSettings.resolve(table_settings)
-        tables = self.find_tables(tset)
-        return [table.extract(**(tset.text_settings or {})) for table in tables]
-
-    def extract_table(
-        self, table_settings: Optional[T_table_settings] = None
-    ) -> Optional[List[List[Optional[str]]]]:
+    ) -> Optional[Table]:
         tset = TableSettings.resolve(table_settings)
         tables = self.find_tables(tset)
 
@@ -329,7 +322,24 @@ class Page(Container):
 
         largest = list(sorted(tables, key=sorter))[0]
 
-        return largest.extract(**(tset.text_settings or {}))
+        return largest
+
+    def extract_tables(
+        self, table_settings: Optional[T_table_settings] = None
+    ) -> List[List[List[Optional[str]]]]:
+        tset = TableSettings.resolve(table_settings)
+        tables = self.find_tables(tset)
+        return [table.extract(**(tset.text_settings or {})) for table in tables]
+
+    def extract_table(
+        self, table_settings: Optional[T_table_settings] = None
+    ) -> Optional[List[List[Optional[str]]]]:
+        tset = TableSettings.resolve(table_settings)
+        table = self.find_table(tset)
+        if table is None:
+            return None
+        else:
+            return table.extract(**(tset.text_settings or {}))
 
     def _get_textmap(self, **kwargs: Any) -> TextMap:
         defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])
