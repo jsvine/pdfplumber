@@ -24,12 +24,13 @@ from pdfminer.layout import (
 )
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
+from pdfminer.psparser import PSLiteral
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
 from .table import T_table_settings, Table, TableFinder, TableSettings
-from .utils import resolve_all
+from .utils import decode_text, resolve_all, resolve_and_decode
 from .utils.text import TextMap
 
 lt_pat = re.compile(r"^LT")
@@ -93,11 +94,27 @@ def fix_fontname_bytes(fontname: bytes) -> str:
     return str(prefix)[2:-1] + suffix_new
 
 
-def normalize_color(color: Any) -> Optional[tuple[Union[float, int], ...]]:
-    if color is None:
-        return None
+def separate_pattern(
+    color: tuple[Any, ...]
+) -> tuple[Optional[tuple[Union[float, int], ...]], Optional[str]]:
+    if isinstance(color[-1], PSLiteral):
+        return (color[:-1] or None), decode_text(color[-1].name)
     else:
-        return tuple(color) if isinstance(color, (tuple, list)) else (color,)
+        return color, None
+
+
+def normalize_color(
+    color: Any,
+) -> tuple[Optional[tuple[Union[float, int], ...]], Optional[str]]:
+    if color is None:
+        return (None, None)
+    elif isinstance(color, tuple):
+        tuplefied = color
+    elif isinstance(color, list):
+        tuplefied = tuple(color)
+    else:
+        tuplefied = (color,)
+    return separate_pattern(tuplefied)
 
 
 class Page(Container):
@@ -241,9 +258,21 @@ class Page(Container):
         attr["object_type"] = kind
         attr["page_number"] = self.page_number
 
-        for color_attr in ["stroking_color", "non_stroking_color"]:
+        for cs in ["ncs", "scs"]:
+            # Note: As of pdfminer.six v20221105, that library only
+            # exposes ncs for LTChars, and neither attribute for
+            # other objects. Keeping this code here, though,
+            # for ease of addition if color spaces become
+            # more available via pdfminer.six
+            if hasattr(obj, cs):
+                attr[cs] = resolve_and_decode(getattr(obj, cs).name)
+
+        for color_attr, pattern_attr in [
+            ("stroking_color", "stroking_pattern"),
+            ("non_stroking_color", "non_stroking_pattern"),
+        ]:
             if color_attr in attr:
-                attr[color_attr] = normalize_color(attr[color_attr])
+                attr[color_attr], attr[pattern_attr] = normalize_color(attr[color_attr])
 
         if isinstance(obj, (LTChar, LTTextContainer)):
             attr["text"] = obj.get_text()
@@ -253,8 +282,12 @@ class Page(Container):
             # directly expose .stroking_color and .non_stroking_color
             # for LTChar objects (unlike, e.g., LTRect objects).
             gs = obj.graphicstate
-            attr["stroking_color"] = normalize_color(gs.scolor)
-            attr["non_stroking_color"] = normalize_color(gs.ncolor)
+            attr["stroking_color"], attr["stroking_pattern"] = normalize_color(
+                gs.scolor
+            )
+            attr["non_stroking_color"], attr["non_stroking_pattern"] = normalize_color(
+                gs.ncolor
+            )
 
             # Handle (rare) byte-encoded fontnames
             if isinstance(attr["fontname"], bytes):
