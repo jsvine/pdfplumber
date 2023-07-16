@@ -1,10 +1,10 @@
 from io import BufferedReader, BytesIO
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 import PIL.Image
 import PIL.ImageDraw
-from wand.image import Color as WandColor  # type: ignore
-from wand.image import Image as WandImage
+import pypdfium2  # type: ignore
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list, T_point, T_seq
@@ -34,66 +34,53 @@ T_contains_points = Union[Tuple[T_point, ...], List[T_point], T_obj]
 
 
 def get_page_image(
-    stream: Union[BufferedReader, BytesIO], page_no: int, resolution: Union[int, float]
-) -> WandImage:
+    stream: Union[BufferedReader, BytesIO],
+    page_ix: int,
+    resolution: Union[int, float],
+    password: Optional[str],
+) -> PIL.Image.Image:
     # If we are working with a file object saved to disk
     if hasattr(stream, "name"):
-        filename = f"{stream.name}[{page_no}]"
-        file = None
-
-        def postprocess(img: WandImage) -> WandImage:
-            return img
+        src = stream.name
 
     # If we instead are working with a BytesIO stream
     else:
         stream.seek(0)
-        filename = None
-        file = stream
+        src = stream
 
-        def postprocess(img: WandImage) -> WandImage:
-            return WandImage(image=img.sequence[page_no])
+    img: PIL.Image.Image = pypdfium2.PdfDocument._process_page(
+        # Modifiable arguments
+        page_ix,
+        input_data=src,
+        password=password,
+        scale=resolution / 72,
+        no_smoothtext=True,
+        # Non-modifiable arguments
+        renderer=pypdfium2._helpers.page.PdfPage.render,
+        converter=pypdfium2.PdfBitmap.to_pil,
+        prefer_bgrx=True,
+        pass_info=False,
+        need_formenv=False,
+        mk_formconfig=None,
+    )
 
-    with WandImage(
-        resolution=resolution,
-        filename=filename,
-        file=file,
-        colorspace="rgb",
-        format="pdf",
-    ) as img_init:
-        img = postprocess(img_init)
-        with WandImage(
-            width=img.width,
-            height=img.height,
-            background=WandColor("white"),
-            colorspace="rgb",
-        ) as bg:
-            bg.composite(img, 0, 0)
-            try:
-                im = PIL.Image.open(BytesIO(bg.make_blob("png")))
-            except PIL.Image.DecompressionBombError:
-                raise PIL.Image.DecompressionBombError(
-                    "Image conversion raised a DecompressionBombError. "
-                    "PIL.Image.MAX_IMAGE_PIXELS is currently set to "
-                    f"{PIL.Image.MAX_IMAGE_PIXELS}. "
-                    "If you trust this PDF, you can try setting "
-                    "PIL.Image.MAX_IMAGE_PIXELS to a higher value. "
-                    "See https://github.com/jsvine/pdfplumber/issues/413"
-                    "#issuecomment-1190650404 for more information."
-                )
-        return im.convert("RGB")
+    return img.convert("RGB")
 
 
 class PageImage:
     def __init__(
         self,
         page: "Page",
-        original: Optional[WandImage] = None,
+        original: Optional[PIL.Image.Image] = None,
         resolution: Union[int, float] = DEFAULT_RESOLUTION,
     ):
         self.page = page
         if original is None:
             self.original = get_page_image(
-                page.pdf.stream, page.page_number - 1, resolution
+                stream=page.pdf.stream,
+                page_ix=page.page_number - 1,
+                resolution=resolution,
+                password=page.pdf.password,
             )
         else:
             self.original = original
@@ -104,15 +91,18 @@ class PageImage:
         else:
             self.root = page.root_page
             cropped = page.root_page.bbox != page.bbox
+
+        self.resolution = resolution
         self.scale = self.original.size[0] / self.root.width
+
         if cropped:
             cropbox = (
-                (page.bbox[0] - page.root_page.bbox[0]) * self.scale,
-                (page.bbox[1] - page.root_page.bbox[1]) * self.scale,
-                (page.bbox[2] - page.root_page.bbox[0]) * self.scale,
-                (page.bbox[3] - page.root_page.bbox[1]) * self.scale,
+                int((page.bbox[0] - page.root_page.bbox[0]) * self.scale),
+                int((page.bbox[1] - page.root_page.bbox[1]) * self.scale),
+                int((page.bbox[2] - page.root_page.bbox[0]) * self.scale),
+                int((page.bbox[3] - page.root_page.bbox[1]) * self.scale),
             )
-            self.original = self.original.crop(tuple(map(int, cropbox)))
+            self.original = self.original.crop(cropbox)
         self.reset()
 
     def _reproject_bbox(self, bbox: T_bbox) -> T_bbox:
@@ -134,11 +124,34 @@ class PageImage:
         return (_x0, _top)
 
     def reset(self) -> "PageImage":
-        self.annotated = PIL.Image.new(self.original.mode, self.original.size)
+        self.annotated = PIL.Image.new("RGB", self.original.size)
         self.annotated.paste(self.original)
         self.draw = PIL.ImageDraw.Draw(self.annotated, "RGBA")
-        self.save = self.annotated.save
         return self
+
+    def save(
+        self,
+        dest: Union[str, Path, BytesIO],
+        format: str = "PNG",
+        quantize: bool = True,
+        colors: int = 256,
+        bits: int = 8,
+        **kwargs: Any,
+    ) -> None:
+        if quantize:
+            out = self.annotated.quantize(colors, method=PIL.Image.FASTOCTREE).convert(
+                "P"
+            )
+        else:
+            out = self.annotated
+
+        out.save(
+            dest,
+            format=format,
+            bits=bits,
+            dpi=(self.resolution, self.resolution),
+            **kwargs,
+        )
 
     def copy(self) -> "PageImage":
         return self.__class__(self.page, self.original)
@@ -358,7 +371,7 @@ class PageImage:
 
     def _repr_png_(self) -> bytes:
         b = BytesIO()
-        self.annotated.save(b, "PNG")
+        self.save(b, "PNG")
         return b.getvalue()
 
     def show(self) -> None:  # pragma: no cover

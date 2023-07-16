@@ -90,16 +90,21 @@ class Test(unittest.TestCase):
     def test__repr_png_(self):
         png = self.im._repr_png_()
         assert isinstance(png, bytes)
-        assert len(png) in (
-            61247,
-            71939,
-            71983,
-            72168,
-        )  # PNG encoder seems to work differently on different setups
+        assert 40000 < len(png) < 80000
+
+    def test_no_quantize(self):
+        b = io.BytesIO()
+        self.im.save(b, "PNG", quantize=False)
+        assert len(b.getvalue()) > 100000
 
     def test_decompression_bomb(self):
         original_max = PIL.Image.MAX_IMAGE_PIXELS
         PIL.Image.MAX_IMAGE_PIXELS = 10
-        with pytest.raises(PIL.Image.DecompressionBombError):
-            self.pdf.pages[0].to_image()
+        # Previously, this raised PIL.Image.DecompressionBombError
+        self.pdf.pages[0].to_image()
         PIL.Image.MAX_IMAGE_PIXELS = original_max
+
+    def test_password(self):
+        path = os.path.join(HERE, "pdfs/password-example.pdf")
+        with pdfplumber.open(path, password="test") as pdf:
+            pdf.pages[0].to_image()

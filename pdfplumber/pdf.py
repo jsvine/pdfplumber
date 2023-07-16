@@ -29,15 +29,16 @@ class PDF(Container):
         stream_is_external: bool = False,
         pages: Optional[Union[List[int], Tuple[int]]] = None,
         laparams: Optional[Dict[str, Any]] = None,
-        password: str = "",
+        password: Optional[str] = None,
         strict_metadata: bool = False,
     ):
         self.stream = stream
         self.stream_is_external = stream_is_external
         self.pages_to_parse = pages
         self.laparams = None if laparams is None else LAParams(**laparams)
+        self.password = password
 
-        self.doc = PDFDocument(PDFParser(stream), password=password)
+        self.doc = PDFDocument(PDFParser(stream), password=password or "")
         self.rsrcmgr = PDFResourceManager()
         self.metadata = {}
 

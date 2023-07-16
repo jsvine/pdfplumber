@@ -250,17 +250,12 @@ If you pass the `pdfminer.six`-handling `laparams` parameter to `pdfplumber.open
 
 `pdfplumber`'s visual debugging tools can be helpful in understanding the structure of a PDF and the objects that have been extracted from it.
 
-__Note:__ To use this feature, you'll also need to have two additional pieces of software installed on your computer:
-
-- [`ImageMagick`](https://www.imagemagick.org/). [Installation instructions here](http://docs.wand-py.org/en/latest/guide/install.html#install-imagemagick-debian).
-- [`ghostscript`](https://www.ghostscript.com). [Installation instructions here](https://ghostscript.readthedocs.io/en/latest/Install.html), or simply `apt install ghostscript` (Ubuntu) / `brew install ghostscript` (Mac).
-
 
 ### Creating a `PageImage` with `.to_image()`
 
 To turn any page (including cropped pages) into an `PageImage` object, call `my_page.to_image()`. You can optionally pass *one* of the  following keyword arguments:
 
-- `resolution`: The desired number pixels per inch. Defaults to 72. See note below.
+- `resolution`: The desired number pixels per inch. Defaults to 72.
 - `width`: The desired image width in pixels.
 - `height`: The desired image width in pixels.
 
@@ -270,11 +265,9 @@ For instance:
 im = my_pdf.pages[0].to_image(resolution=150)
 ```
 
-From a script or REPL, `im.show()` will open the image in your local image viewer. But `PageImage` objects also play nicely with IPython/Jupyter notebooks; they automatically render as cell outputs. For example:
+From a script or REPL, `im.show()` will open the image in your local image viewer. But `PageImage` objects also play nicely with Jupyter notebooks; they automatically render as cell outputs. For example:
 
 ![Visual debugging in Jupyter](examples/screenshots/visual-debugging-in-jupyter.png "Visual debugging in Jupyter")
-
-*Note*: `pdfplumber` passes the `resolution` parameter to [Wand](https://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image), the Python library we use for image conversion. Wand will create the image with the desired number of total pixels of height/width, but does not fully respect the `resolution` in the strict sense of that word: Although PNGs are capable of storing an image's resolution density as metadata, Wand's PNGs do not.
 
 *Note*: `.to_image(...)` works as expected with `Page.crop(...)`/`CroppedPage` instances, but is unable to incorporate changes made via `Page.filter(...)`/`FilteredPage` instances.
 
@@ -286,7 +279,7 @@ From a script or REPL, `im.show()` will open the image in your local image viewe
 |`im.reset()`| Clears anything you've drawn so far.|
 |`im.copy()`| Copies the image to a new `PageImage` object.|
 |`im.show()`| Opens the image in your local image viewer.|
-|`im.save(path_or_fileobject, format="PNG")`| Saves the annotated image.|
+|`im.save(path_or_fileobject, format="PNG", quantize=True, colors=256, bits=8)`| Saves the annotated image as a PNG file. The default arguments quantize the image to a palette of 256 colors, saving the PNG with 8-bit color depth. You can disable quantization by passing `quantize=False` or adjust the size of the color palette by passing `colors=N`.|
 
 ### Drawing methods
 
