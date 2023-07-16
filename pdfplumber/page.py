@@ -93,8 +93,8 @@ def fix_fontname_bytes(fontname: bytes) -> str:
 
 
 def separate_pattern(
-    color: tuple[Any, ...]
-) -> tuple[Optional[tuple[Union[float, int], ...]], Optional[str]]:
+    color: Tuple[Any, ...]
+) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
     if isinstance(color[-1], PSLiteral):
         return (color[:-1] or None), decode_text(color[-1].name)
     else:
@@ -103,7 +103,7 @@ def separate_pattern(
 
 def normalize_color(
     color: Any,
-) -> tuple[Optional[tuple[Union[float, int], ...]], Optional[str]]:
+) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
     if color is None:
         return (None, None)
     elif isinstance(color, tuple):
