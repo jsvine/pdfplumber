@@ -6,7 +6,7 @@ Plumb a PDF for detailed information about each text character, rectangle, and l
 
 Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer.six`](https://github.com/goulu/pdfminer). 
 
-Currently [tested](tests/) on [Python 3.7, 3.8, 3.9, 3.10](.github/workflows/tests.yml).
+Currently [tested](tests/) on [Python 3.8, 3.9, 3.10, 3.11](.github/workflows/tests.yml).
 
 Translations of this document are available in: [Chinese (by @hbh112233abc)](https://github.com/hbh112233abc/pdfplumber/blob/stable/README-CN.md).
 
@@ -158,8 +158,11 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`bottom`| Distance of bottom of the character from top of page.|
 |`doctop`| Distance of top of character from top of document.|
 |`matrix`| The "current transformation matrix" for this character. (See below for details.)|
-|`stroking_color`|The color of the character's outline (i.e., stroke), expressed as a tuple or integer, depending on the “color space” used.|
-|`non_stroking_color`|The character's interior color.|
+|`ncs`|TKTK|
+|`stroking_pattern`|TKTK|
+|`non_stroking_pattern`|TKTK|
+|`stroking_color`|The color of the character's outline (i.e., stroke). See [docs/colors.md](docs/colors.md) for details.|
+|`non_stroking_color`|The character's interior color. See [docs/colors.md](docs/colors.md) for details.|
 |`object_type`| "char"|
 
 __Note__: A character’s `matrix` property represents the “current transformation matrix,” as described in Section 4.2.2 of the [PDF Reference](https://ghostscript.com/~robin/pdf_reference17.pdf) (6th Ed.). The matrix controls the character’s scale, skew, and positional translation. Rotation is a combination of scale and skew, but in most cases can be considered equal to the x-axis skew. The `pdfplumber.ctm` submodule defines a class, `CTM`, that assists with these calculations. For instance:
@@ -186,8 +189,8 @@ my_char_rotation = my_char_ctm.skew_x
 |`bottom`| Distance of bottom of the line from top of page.|
 |`doctop`| Distance of top of line from top of document.|
 |`linewidth`| Thickness of line.|
-|`stroking_color`|The color of the line, expressed as a tuple or integer, depending on the “color space” used.|
-|`non_stroking_color`|The non-stroking color specified for the line’s path.|
+|`stroking_color`|The color of the line. See [docs/colors.md](docs/colors.md) for details.|
+|`non_stroking_color`|The non-stroking color specified for the line’s path. See [docs/colors.md](docs/colors.md) for details.|
 |`object_type`| "line"|
 
 #### `rect` properties
@@ -205,8 +208,8 @@ my_char_rotation = my_char_ctm.skew_x
 |`bottom`| Distance of bottom of the rectangle from top of page.|
 |`doctop`| Distance of top of rectangle from top of document.|
 |`linewidth`| Thickness of line.|
-|`stroking_color`|The color of the rectangle's outline, expressed as a tuple or integer, depending on the “color space” used.|
-|`non_stroking_color`|The rectangle’s fill color.|
+|`stroking_color`|The color of the rectangle's outline. See [docs/colors.md](docs/colors.md) for details.|
+|`non_stroking_color`|The rectangle’s fill color. See [docs/colors.md](docs/colors.md) for details.|
 |`object_type`| "rect"|
 
 #### `curve` properties
@@ -226,8 +229,8 @@ my_char_rotation = my_char_ctm.skew_x
 |`doctop`| Distance of curve's highest point from top of document.|
 |`linewidth`| Thickness of line.|
 |`fill`| Whether the shape defined by the curve's path is filled.|
-|`stroking_color`|The color of the curve's outline, expressed as a tuple or integer, depending on the “color space” used.|
-|`non_stroking_color`|The curve’s fill color.|
+|`stroking_color`|The color of the curve's outline. See [docs/colors.md](docs/colors.md) for details.|
+|`non_stroking_color`|The curve’s fill color. See [docs/colors.md](docs/colors.md) for details.|
 |`object_type`| "curve"|
 
 #### Derived properties
@@ -247,17 +250,12 @@ If you pass the `pdfminer.six`-handling `laparams` parameter to `pdfplumber.open
 
 `pdfplumber`'s visual debugging tools can be helpful in understanding the structure of a PDF and the objects that have been extracted from it.
 
-__Note:__ To use this feature, you'll also need to have two additional pieces of software installed on your computer:
-
-- [`ImageMagick`](https://www.imagemagick.org/). [Installation instructions here](http://docs.wand-py.org/en/latest/guide/install.html#install-imagemagick-debian).
-- [`ghostscript`](https://www.ghostscript.com). [Installation instructions here](https://ghostscript.readthedocs.io/en/latest/Install.html), or simply `apt install ghostscript` (Ubuntu) / `brew install ghostscript` (Mac).
-
 
 ### Creating a `PageImage` with `.to_image()`
 
 To turn any page (including cropped pages) into an `PageImage` object, call `my_page.to_image()`. You can optionally pass *one* of the  following keyword arguments:
 
-- `resolution`: The desired number pixels per inch. Defaults to 72. See note below.
+- `resolution`: The desired number pixels per inch. Defaults to 72.
 - `width`: The desired image width in pixels.
 - `height`: The desired image width in pixels.
 
@@ -267,11 +265,9 @@ For instance:
 im = my_pdf.pages[0].to_image(resolution=150)
 ```
 
-From a script or REPL, `im.show()` will open the image in your local image viewer. But `PageImage` objects also play nicely with IPython/Jupyter notebooks; they automatically render as cell outputs. For example:
+From a script or REPL, `im.show()` will open the image in your local image viewer. But `PageImage` objects also play nicely with Jupyter notebooks; they automatically render as cell outputs. For example:
 
 ![Visual debugging in Jupyter](examples/screenshots/visual-debugging-in-jupyter.png "Visual debugging in Jupyter")
-
-*Note*: `pdfplumber` passes the `resolution` parameter to [Wand](https://docs.wand-py.org/en/latest/wand/image.html#wand.image.Image), the Python library we use for image conversion. Wand will create the image with the desired number of total pixels of height/width, but does not fully respect the `resolution` in the strict sense of that word: Although PNGs are capable of storing an image's resolution density as metadata, Wand's PNGs do not.
 
 *Note*: `.to_image(...)` works as expected with `Page.crop(...)`/`CroppedPage` instances, but is unable to incorporate changes made via `Page.filter(...)`/`FilteredPage` instances.
 
@@ -283,7 +279,7 @@ From a script or REPL, `im.show()` will open the image in your local image viewe
 |`im.reset()`| Clears anything you've drawn so far.|
 |`im.copy()`| Copies the image to a new `PageImage` object.|
 |`im.show()`| Opens the image in your local image viewer.|
-|`im.save(path_or_fileobject, format="PNG")`| Saves the annotated image.|
+|`im.save(path_or_fileobject, format="PNG", quantize=True, colors=256, bits=8)`| Saves the annotated image as a PNG file. The default arguments quantize the image to a palette of 256 colors, saving the PNG with 8-bit color depth. You can disable quantization by passing `quantize=False` or adjust the size of the color palette by passing `colors=N`.|
 
 ### Drawing methods
 
@@ -322,7 +318,7 @@ If you're using `pdfplumber` on a Debian-based system and encounter a `PolicyErr
 
 | Method | Description |
 |--------|-------------|
-|`.extract_text(x_tolerance=3, y_tolerance=3, layout=False, x_density=7.25, y_density=13, **kwargs)`| Collates all of the page's character objects into a single string.<ul><li><p>When `layout=False`: Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.</p></li><li><p>When `layout=True` (*experimental feature*): Attempts to mimic the structural layout of the text on the page(s), using `x_density` and `y_density` to determine the minimum number of characters/newlines per "point," the PDF unit of measurement. All remaining `**kwargs` are passed to `.extract_words(...)` (see above), the first step in calculating the layout.</p></li></ul>|
+|`.extract_text(x_tolerance=3, y_tolerance=3, layout=False, x_density=7.25, y_density=13, **kwargs)`| Collates all of the page's character objects into a single string.<ul><li><p>When `layout=False`: Adds spaces where the difference between the `x1` of one character and the `x0` of the next is greater than `x_tolerance`. Adds newline characters where the difference between the `doctop` of one character and the `doctop` of the next is greater than `y_tolerance`.</p></li><li><p>When `layout=True` (*experimental feature*): Attempts to mimic the structural layout of the text on the page(s), using `x_density` and `y_density` to determine the minimum number of characters/newlines per "point," the PDF unit of measurement. All remaining `**kwargs` are passed to `.extract_words(...)` (see below), the first step in calculating the layout.</p></li></ul>|
 |`.extract_text_simple(x_tolerance=3, y_tolerance=3)`| A slightly faster but less flexible version of `.extract_text(...)`, using a simpler logic.|
 |`.extract_words(x_tolerance=3, y_tolerance=3, keep_blank_chars=False, use_text_flow=False, horizontal_ltr=True, vertical_ttb=True, extra_attrs=[], split_at_punctuation=False, expand_ligatures=True)`| Returns a list of all word-looking things and their bounding boxes. Words are considered to be sequences of characters where (for "upright" characters) the difference between the `x1` of one character and the `x0` of the next is less than or equal to `x_tolerance` *and* where the `doctop` of one character and the `doctop` of the next is less than or equal to `y_tolerance`. A similar approach is taken for non-upright characters, but instead measuring the vertical, rather than horizontal, distances between them. The parameters `horizontal_ltr` and `vertical_ttb` indicate whether the words should be read from left-to-right (for horizontal words) / top-to-bottom (for vertical words). Changing `keep_blank_chars` to `True` will mean that blank characters are treated as part of a word, not as a space between words. Changing `use_text_flow` to `True` will use the PDF's underlying flow of characters as a guide for ordering and segmenting the words, rather than presorting the characters by x/y position. (This mimics how dragging a cursor highlights text in a PDF; as with that, the order does not always appear to be logical.) Passing a list of `extra_attrs`  (e.g., `["fontname", "size"]` will restrict each words to characters that share exactly the same value for each of those [attributes](#char-properties), and the resulting word dicts will indicate those attributes. Setting `split_at_punctuation` to `True` will enforce breaking tokens at punctuations specified by `string.punctuation`; or you can specify the list of separating punctuation by pass a string, e.g., <code>split_at_punctuation='!"&\'()*+,.:;<=>?@[\]^\`\{\|\}~'</code>. Unless you set `expand_ligatures=False`, ligatures such as `ﬁ` will be expanded into their constituent letters (e.g., `fi`).|
 |`.extract_text_lines(layout=False, strip=True, return_chars=True, **kwargs)`|*Experimental feature* that returns a list of dictionaries representing the lines of text on the page. The `strip` parameter works analogously to Python's `str.strip()` method, and returns `text` attributes without their surrounding whitespace. (Only relevant when `layout = True`.) Setting `return_chars` to `False` will exclude the individual character objects from the returned text-line dicts. The remaining `**kwargs` are those you would pass to `.extract_text(layout=True, ...)`.|
@@ -346,8 +342,9 @@ If you're using `pdfplumber` on a Debian-based system and encounter a `PolicyErr
 | Method | Description |
 |--------|-------------|
 |`.find_tables(table_settings={})`|Returns a list of `Table` objects. The `Table` object provides access to the `.cells`, `.rows`, and `.bbox` properties, as well as the `.extract(x_tolerance=3, y_tolerance=3)` method.|
+|`.find_table(table_settings={})`|Similar to `.find_tables(...)`, but returns the *largest* table on the page, as a `Table` object. If multiple tables have the same size — as measured by the number of cells — this method returns the table closest to the top of the page.|
 |`.extract_tables(table_settings={})`|Returns the text extracted from *all* tables found on the page, represented as a list of lists of lists, with the structure `table -> row -> cell`.|
-|`.extract_table(table_settings={})`|Returns the text extracted from the *largest* table on the page, represented as a list of lists, with the structure `row -> cell`. (If multiple tables have the same size — as measured by the number of cells — this method returns the table closest to the top of the page.)|
+|`.extract_table(table_settings={})`|Returns the text extracted from the *largest* table on the page (see `.find_table(...)` above), represented as a list of lists, with the structure `row -> cell`.|
 |`.debug_tablefinder(table_settings={})`|Returns an instance of the `TableFinder` class, with access to the `.edges`, `.intersections`, `.cells`, and `.tables` properties.|
 
 For example:

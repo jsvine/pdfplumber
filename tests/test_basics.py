@@ -102,6 +102,14 @@ class Test(unittest.TestCase):
             (0.5 * float(bottom.width), 0, bottom.width, bottom.height), relative=True
         )
 
+        # An extra test for issue #914, in which relative crops were
+        # using the the wrong bboxes for cropping, leading to empty object-lists
+        crop_right = page.crop((page.width / 2, 0, page.width, page.height))
+        crop_right_again_rel = crop_right.crop(
+            (0, 0, crop_right.width / 2, page.height), relative=True
+        )
+        assert len(crop_right_again_rel.chars)
+
     def test_invalid_crops(self):
         page = self.pdf.pages[0]
         with pytest.raises(ValueError):
@@ -150,11 +158,11 @@ class Test(unittest.TestCase):
 
     def test_colors(self):
         rect = self.pdf.pages[0].rects[0]
-        assert rect["non_stroking_color"] == [0.8, 1, 1]
+        assert rect["non_stroking_color"] == (0.8, 1, 1)
 
     def test_text_colors(self):
         char = self.pdf.pages[0].chars[3358]
-        assert char["non_stroking_color"] == [1, 0, 0]
+        assert char["non_stroking_color"] == (1, 0, 0)
 
     def test_load_with_custom_laparams(self):
         # See https://github.com/jsvine/pdfplumber/issues/168

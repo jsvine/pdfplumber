@@ -145,6 +145,7 @@ class WordMap:
         x_shift: T_num = 0,
         y_shift: T_num = 0,
         y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+        use_text_flow: bool = False,
         presorted: bool = False,
         expand_ligatures: bool = True,
     ) -> TextMap:
@@ -213,17 +214,19 @@ class WordMap:
 
         num_newlines = 0
 
-        words_sorted = (
+        words_sorted_doctop = (
             self.tuples
-            if presorted
-            else sorted(self.tuples, key=lambda x: (x[0]["doctop"], x[0]["x0"]))
+            if presorted or use_text_flow
+            else sorted(self.tuples, key=lambda x: float(x[0]["doctop"]))
         )
 
-        first_word = words_sorted[0][0]
+        first_word = words_sorted_doctop[0][0]
         doctop_start = first_word["doctop"] - first_word["top"]
 
         for i, ws in enumerate(
-            cluster_objects(words_sorted, lambda x: float(x[0]["doctop"]), y_tolerance)
+            cluster_objects(
+                words_sorted_doctop, lambda x: float(x[0]["doctop"]), y_tolerance
+            )
         ):
             y_dist = (
                 (ws[0][0]["doctop"] - (doctop_start + y_shift)) / y_density
@@ -245,7 +248,14 @@ class WordMap:
             num_newlines += num_newlines_prepend
 
             line_len = 0
-            for word, chars in sorted(ws, key=lambda x: float(x[0]["x0"])):
+
+            line_words_sorted_x0 = (
+                ws
+                if presorted or use_text_flow
+                else sorted(ws, key=lambda x: float(x[0]["x0"]))
+            )
+
+            for word, chars in line_words_sorted_x0:
                 x_dist = (word["x0"] - x_shift) / x_density if layout else 0
                 num_spaces_prepend = max(min(1, line_len), round(x_dist) - line_len)
                 _textmap += [(" ", None)] * num_spaces_prepend
@@ -371,39 +381,39 @@ class WordExtractor:
         # Note: Due to the grouping step earlier in the process,
         # curr_char["upright"] will always equal prev_char["upright"].
         if curr_char["upright"]:
-            inter_tol = self.y_tolerance
-            intra_tol = self.x_tolerance
-
-            inter_attr = "top"
-            intra_attr_min = "x0"
-            intra_attr_max = "x1"
-
+            x = self.x_tolerance
+            y = self.y_tolerance
+            ay = prev_char["top"]
+            cy = curr_char["top"]
             if self.horizontal_ltr:
-                char_min = prev_char
-                char_max = curr_char
+                ax = prev_char["x0"]
+                bx = prev_char["x1"]
+                cx = curr_char["x0"]
             else:
-                char_min = curr_char
-                char_max = prev_char
+                ax = -prev_char["x1"]
+                bx = -prev_char["x0"]
+                cx = -curr_char["x1"]
+
         else:
-            inter_tol = self.x_tolerance
-            intra_tol = self.y_tolerance
-
-            inter_attr = "x0"
-            intra_attr_min = "top"
-            intra_attr_max = "bottom"
-
+            x = self.y_tolerance
+            y = self.x_tolerance
+            ay = prev_char["x0"]
+            cy = curr_char["x0"]
             if self.vertical_ttb:
-                char_min = curr_char
-                char_max = prev_char
+                ax = prev_char["top"]
+                bx = prev_char["bottom"]
+                cx = curr_char["top"]
             else:
-                char_min = prev_char
-                char_max = curr_char
+                ax = -prev_char["bottom"]
+                bx = -prev_char["top"]
+                cx = -curr_char["bottom"]
 
         return bool(
             # Intraline test
-            (char_max[intra_attr_min] > char_min[intra_attr_max] + intra_tol)
+            (cx < ax)
+            or (cx > bx + x)
             # Interline test
-            or (char_max[inter_attr] > char_min[inter_attr] + inter_tol)
+            or (cy > ay + y)
         )
 
     def iter_chars_to_words(

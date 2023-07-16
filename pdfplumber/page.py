@@ -24,12 +24,13 @@ from pdfminer.layout import (
 )
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
+from pdfminer.psparser import PSLiteral
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
 from .table import T_table_settings, Table, TableFinder, TableSettings
-from .utils import resolve_all
+from .utils import decode_text, resolve_all, resolve_and_decode
 from .utils.text import TextMap
 
 lt_pat = re.compile(r"^LT")
@@ -50,9 +51,7 @@ ALL_ATTRS = set(
         "bits",
         "matrix",
         "upright",
-        "font",
         "fontname",
-        "name",
         "text",
         "imagemask",
         "colorspace",
@@ -91,6 +90,29 @@ def fix_fontname_bytes(fontname: bytes) -> str:
 
     suffix_new = CP936_FONTNAMES.get(suffix, str(suffix)[2:-1])
     return str(prefix)[2:-1] + suffix_new
+
+
+def separate_pattern(
+    color: Tuple[Any, ...]
+) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
+    if isinstance(color[-1], PSLiteral):
+        return (color[:-1] or None), decode_text(color[-1].name)
+    else:
+        return color, None
+
+
+def normalize_color(
+    color: Any,
+) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
+    if color is None:
+        return (None, None)
+    elif isinstance(color, tuple):
+        tuplefied = color
+    elif isinstance(color, list):
+        tuplefied = tuple(color)
+    else:
+        tuplefied = (color,)
+    return separate_pattern(tuplefied)
 
 
 class Page(Container):
@@ -234,13 +256,36 @@ class Page(Container):
         attr["object_type"] = kind
         attr["page_number"] = self.page_number
 
+        for cs in ["ncs", "scs"]:
+            # Note: As of pdfminer.six v20221105, that library only
+            # exposes ncs for LTChars, and neither attribute for
+            # other objects. Keeping this code here, though,
+            # for ease of addition if color spaces become
+            # more available via pdfminer.six
+            if hasattr(obj, cs):
+                attr[cs] = resolve_and_decode(getattr(obj, cs).name)
+
+        for color_attr, pattern_attr in [
+            ("stroking_color", "stroking_pattern"),
+            ("non_stroking_color", "non_stroking_pattern"),
+        ]:
+            if color_attr in attr:
+                attr[color_attr], attr[pattern_attr] = normalize_color(attr[color_attr])
+
         if isinstance(obj, (LTChar, LTTextContainer)):
             attr["text"] = obj.get_text()
 
         if isinstance(obj, LTChar):
+            # pdfminer.six (at least as of v20221105) does not
+            # directly expose .stroking_color and .non_stroking_color
+            # for LTChar objects (unlike, e.g., LTRect objects).
             gs = obj.graphicstate
-            attr["stroking_color"] = gs.scolor
-            attr["non_stroking_color"] = gs.ncolor
+            attr["stroking_color"], attr["stroking_pattern"] = normalize_color(
+                gs.scolor
+            )
+            attr["non_stroking_color"], attr["non_stroking_pattern"] = normalize_color(
+                gs.ncolor
+            )
 
             # Handle (rare) byte-encoded fontnames
             if isinstance(attr["fontname"], bytes):
@@ -293,16 +338,9 @@ class Page(Container):
         tset = TableSettings.resolve(table_settings)
         return TableFinder(self, tset).tables
 
-    def extract_tables(
+    def find_table(
         self, table_settings: Optional[T_table_settings] = None
-    ) -> List[List[List[Optional[str]]]]:
-        tset = TableSettings.resolve(table_settings)
-        tables = self.find_tables(tset)
-        return [table.extract(**(tset.text_settings or {})) for table in tables]
-
-    def extract_table(
-        self, table_settings: Optional[T_table_settings] = None
-    ) -> Optional[List[List[Optional[str]]]]:
+    ) -> Optional[Table]:
         tset = TableSettings.resolve(table_settings)
         tables = self.find_tables(tset)
 
@@ -315,7 +353,24 @@ class Page(Container):
 
         largest = list(sorted(tables, key=sorter))[0]
 
-        return largest.extract(**(tset.text_settings or {}))
+        return largest
+
+    def extract_tables(
+        self, table_settings: Optional[T_table_settings] = None
+    ) -> List[List[List[Optional[str]]]]:
+        tset = TableSettings.resolve(table_settings)
+        tables = self.find_tables(tset)
+        return [table.extract(**(tset.text_settings or {})) for table in tables]
+
+    def extract_table(
+        self, table_settings: Optional[T_table_settings] = None
+    ) -> Optional[List[List[Optional[str]]]]:
+        tset = TableSettings.resolve(table_settings)
+        table = self.find_table(tset)
+        if table is None:
+            return None
+        else:
+            return table.extract(**(tset.text_settings or {}))
 
     def _get_textmap(self, **kwargs: Any) -> TextMap:
         defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])
@@ -383,13 +438,9 @@ class Page(Container):
         """
         Same as .crop, except only includes objects fully within the bbox
         """
-        p = CroppedPage(
+        return CroppedPage(
             self, bbox, relative=relative, strict=strict, crop_fn=utils.outside_bbox
         )
-
-        # Reset, because this operation should not actually change bbox
-        p.bbox = self.bbox
-        return p
 
     def filter(self, test_function: Callable[[T_obj], bool]) -> "FilteredPage":
         return FilteredPage(self, test_function)
@@ -490,27 +541,31 @@ class CroppedPage(DerivedPage):
     def __init__(
         self,
         parent_page: Page,
-        bbox: T_bbox,
+        crop_bbox: T_bbox,
         crop_fn: Callable[[T_obj_list, T_bbox], T_obj_list] = utils.crop_to_bbox,
         relative: bool = False,
         strict: bool = True,
     ):
         if relative:
             o_x0, o_top, _, _ = parent_page.bbox
-            x0, top, x1, bottom = bbox
-            self.bbox = (x0 + o_x0, top + o_top, x1 + o_x0, bottom + o_top)
-        else:
-            self.bbox = bbox
+            x0, top, x1, bottom = crop_bbox
+            crop_bbox = (x0 + o_x0, top + o_top, x1 + o_x0, bottom + o_top)
 
         if strict:
-            test_proposed_bbox(self.bbox, parent_page.bbox)
+            test_proposed_bbox(crop_bbox, parent_page.bbox)
 
         def _crop_fn(objs: T_obj_list) -> T_obj_list:
-            return crop_fn(objs, bbox)
+            return crop_fn(objs, crop_bbox)
+
+        super().__init__(parent_page)
 
         self._crop_fn = _crop_fn
 
-        super().__init__(parent_page)
+        # Note: testing for original function passed, not _crop_fn
+        if crop_fn is utils.outside_bbox:
+            self.bbox = parent_page.bbox
+        else:
+            self.bbox = crop_bbox
 
     @property
     def objects(self) -> Dict[str, T_obj_list]:

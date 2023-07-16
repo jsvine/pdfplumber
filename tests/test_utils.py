@@ -168,6 +168,22 @@ class Test(unittest.TestCase):
         assert target_text in words_to_text(using_flow)
         assert target_text not in words_to_text(not_using_flow)
 
+    def test_text_flow_overlapping(self):
+        path = os.path.join(HERE, "pdfs/issue-912.pdf")
+
+        with pdfplumber.open(path) as pdf:
+            p0 = pdf.pages[0]
+            using_flow = p0.extract_text(use_text_flow=True, layout=True, x_tolerance=1)
+            not_using_flow = p0.extract_text(layout=True, x_tolerance=1)
+
+        assert re.search("2015 RICE PAYMENT 26406576 0 1207631 Cr", using_flow)
+        assert re.search("124644,06155766", using_flow) is None
+
+        assert re.search("124644,06155766", not_using_flow)
+        assert (
+            re.search("2015 RICE PAYMENT 26406576 0 1207631 Cr", not_using_flow) is None
+        )
+
     def test_extract_text(self):
         text = self.pdf.pages[0].extract_text()
         goal_lines = [
