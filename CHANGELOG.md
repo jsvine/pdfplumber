@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Removed
 
+- Remove support for Python 3.7 ([EOL'ed June 2023](https://endoflife.date/python)). ([c9d24d5](https://github.com/jsvine/pdfplumber/commit/c9d24d5)
 - Remove vestigial 'font' and 'name' properties from PDF objects. ([6d62054](https://github.com/jsvine/pdfplumber/commit/6d62054)
 
 ### Fixed
