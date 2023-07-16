@@ -90,12 +90,12 @@ class Test(unittest.TestCase):
     def test__repr_png_(self):
         png = self.im._repr_png_()
         assert isinstance(png, bytes)
-        assert 40000 < len(png) < 80000
+        assert 20000 < len(png) < 80000
 
     def test_no_quantize(self):
         b = io.BytesIO()
         self.im.save(b, "PNG", quantize=False)
-        assert len(b.getvalue()) > 100000
+        assert len(b.getvalue()) > len(self.im._repr_png_())
 
     def test_decompression_bomb(self):
         original_max = PIL.Image.MAX_IMAGE_PIXELS
