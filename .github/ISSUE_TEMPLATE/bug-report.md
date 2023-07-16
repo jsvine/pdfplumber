@@ -11,6 +11,11 @@ assignees: ''
 *A clear and concise description of what the bug is.*
 
 
+## Have you tried [repairing](../../docs/repairing.md) the PDF?
+
+*Please try running your code with `pdfplumber.open(..., repair=True)` before submitting a bug report.*
+
+
 ## Code to reproduce the problem
 
 *Paste it here, or attach a Python file.*
