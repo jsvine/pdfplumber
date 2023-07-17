@@ -11,7 +11,7 @@ assignees: ''
 *A clear and concise description of what the bug is.*
 
 
-## Have you tried [repairing](../../docs/repairing.md) the PDF?
+## Have you tried [repairing](https://github.com/jsvine/pdfplumber/blob/stable/docs/repairing.md) the PDF?
 
 *Please try running your code with `pdfplumber.open(..., repair=True)` before submitting a bug report.*
 
