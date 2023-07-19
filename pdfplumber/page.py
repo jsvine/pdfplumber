@@ -18,11 +18,13 @@ from pdfminer.layout import (
     LTChar,
     LTComponent,
     LTContainer,
+    LTFigure,
+    LTImage,
     LTItem,
     LTPage,
     LTTextContainer,
 )
-from pdfminer.pdfinterp import PDFPageInterpreter
+from pdfminer.pdfinterp import PDFPageInterpreter, PDFStackT
 from pdfminer.pdfpage import PDFPage
 from pdfminer.psparser import PSLiteral
 
@@ -63,6 +65,7 @@ ALL_ATTRS = set(
         "stream",
         "stroke",
         "stroking_color",
+        "mcid",
     ]
 )
 
@@ -114,6 +117,45 @@ def normalize_color(
     else:
         tuplefied = (color,)
     return separate_pattern(tuplefied)
+
+
+class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
+    """Extract layout from a specific page, adding marked-content IDs to
+    objects where found."""
+
+    tagstack: List[Tuple[PSLiteral, int]] = []
+
+    def begin_tag(self, tag: PSLiteral, props: Optional[PDFStackT] = None) -> None:
+        if props is not None and "MCID" in props:
+            self.tagstack.append((tag, props["MCID"]))
+        else:
+            self.tagstack.append((tag, None))
+
+    def end_tag(self) -> None:
+        self.tagstack.pop()
+
+    def tag_cur_item(self, item_type: Any):
+        if self.tagstack:
+            # Implementation Inheritance Considered Harmful
+            cur_obj = self.cur_item._objs[-1]
+            assert isinstance(cur_obj, item_type)
+            tag, mcid = self.tagstack[-1]
+            # Hackery, which would not be necessary if pdfminer.six supported MCIDs
+            if mcid is not None:
+                cur_obj.mcid = mcid
+
+    def render_char(self, *args, **kwargs) -> float:
+        adv = super().render_char(*args, **kwargs)
+        self.tag_cur_item(LTChar)
+        return adv
+
+    def render_image(self, *args, **kwargs) -> None:
+        super().render_image(*args, **kwargs)
+        self.tag_cur_item(LTImage)
+
+    def end_figure(self, *args, **kwargs) -> None:
+        super().end_figure(*args, **kwargs)
+        self.tag_cur_item(LTFigure)
 
 
 class Page(Container):
@@ -182,7 +224,7 @@ class Page(Container):
     def layout(self) -> LTPage:
         if hasattr(self, "_layout"):
             return self._layout
-        device = PDFPageAggregator(
+        device = PDFPageAggregatorWithMarkedContent(
             self.pdf.rsrcmgr,
             pageno=self.page_number,
             laparams=self.pdf.laparams,
