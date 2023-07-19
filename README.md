@@ -255,9 +255,10 @@ If you pass the `pdfminer.six`-handling `laparams` parameter to `pdfplumber.open
 
 To turn any page (including cropped pages) into an `PageImage` object, call `my_page.to_image()`. You can optionally pass *one* of the  following keyword arguments:
 
-- `resolution`: The desired number pixels per inch. Defaults to 72.
-- `width`: The desired image width in pixels.
-- `height`: The desired image width in pixels.
+- `resolution`: The desired number pixels per inch. Default: `72`. Type: `int`.
+- `width`: The desired image width in pixels. Default: unset, determined by `resolution`. Type: `int`.
+- `height`: The desired image width in pixels. Default: unset, determined by `resolution`. Type: `int`.
+- `antialias`: Whether to use antialiasing when creating the image. Setting to `True` creates images with less-jagged text and graphics, but with larger file sizes. Default: `False`. Type: `bool`.
 
 For instance:
 

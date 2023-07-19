@@ -97,6 +97,10 @@ class Test(unittest.TestCase):
         self.im.save(b, "PNG", quantize=False)
         assert len(b.getvalue()) > len(self.im._repr_png_())
 
+    def test_antialias(self):
+        aa = self.pdf.pages[0].to_image(antialias=True)
+        assert len(aa._repr_png_()) > len(self.im._repr_png_())
+
     def test_decompression_bomb(self):
         original_max = PIL.Image.MAX_IMAGE_PIXELS
         PIL.Image.MAX_IMAGE_PIXELS = 10

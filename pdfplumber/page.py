@@ -460,6 +460,7 @@ class Page(Container):
         resolution: Optional[Union[int, float]] = None,
         width: Optional[Union[int, float]] = None,
         height: Optional[Union[int, float]] = None,
+        antialias: bool = False,
     ) -> "PageImage":
         """
         You can pass a maximum of 1 of the following:
@@ -479,7 +480,9 @@ class Page(Container):
         elif height is not None:
             resolution = 72 * height / self.height
 
-        return PageImage(self, resolution=resolution or DEFAULT_RESOLUTION)
+        return PageImage(
+            self, resolution=resolution or DEFAULT_RESOLUTION, antialias=antialias
+        )
 
     def to_dict(self, object_types: Optional[List[str]] = None) -> Dict[str, Any]:
         if object_types is None:

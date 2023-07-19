@@ -38,6 +38,7 @@ def get_page_image(
     page_ix: int,
     resolution: Union[int, float],
     password: Optional[str],
+    antialias: bool = False,
 ) -> PIL.Image.Image:
     # If we are working with a file object saved to disk
     if hasattr(stream, "name"):
@@ -54,7 +55,9 @@ def get_page_image(
         input_data=src,
         password=password,
         scale=resolution / 72,
-        no_smoothtext=True,
+        no_smoothtext=not antialias,
+        no_smoothpath=not antialias,
+        no_smoothimage=not antialias,
         # Non-modifiable arguments
         renderer=pypdfium2._helpers.page.PdfPage.render,
         converter=pypdfium2.PdfBitmap.to_pil,
@@ -73,6 +76,7 @@ class PageImage:
         page: "Page",
         original: Optional[PIL.Image.Image] = None,
         resolution: Union[int, float] = DEFAULT_RESOLUTION,
+        antialias: bool = False,
     ):
         self.page = page
         if original is None:
@@ -80,6 +84,7 @@ class PageImage:
                 stream=page.pdf.stream,
                 page_ix=page.page_number - 1,
                 resolution=resolution,
+                antialias=antialias,
                 password=page.pdf.password,
             )
         else:
