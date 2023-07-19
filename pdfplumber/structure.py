@@ -1,67 +1,82 @@
-import pypdfium2 as pdfium
-import pypdfium2.raw as pdfium_c
 import ctypes
-import json
-from typing import Union, Optional
 from io import BufferedReader, BytesIO
+from typing import TYPE_CHECKING, Callable, Iterator, Optional, Union
 
+import pypdfium2  # type: ignore
+import pypdfium2.raw as pdfium_c  # type: ignore
 
-class PdfStructAttr:
-    def __init__(self, raw):
-        self.raw = raw
+from ._typing import T_obj
+
+# https://stackoverflow.com/questions/71054602/python-type-hinting-ctypes-pointer-to-x-types-in-a-way-that-mypy-accepts
+if TYPE_CHECKING:  # pragma: nocover
+    fpdf_structelement_t = ctypes.pointer[pdfium_c.fpdf_structelement_t__]
+    fpdf_structtree_t = ctypes.pointer[pdfium_c.fpdf_structtree_t__]
+else:
+    fpdf_structelement_t = ctypes.pointer
+    fpdf_structtree_t = ctypes.pointer
 
 
 class PdfStructElement:
-    def __init__(self, raw):
+    def __init__(self, raw: fpdf_structelement_t):
         self.raw = raw
 
     @property
-    def children(self):
+    def children(self) -> Iterator["PdfStructElement"]:
         n_children = pdfium_c.FPDF_StructElement_CountChildren(self.raw)
         for idx in range(n_children):
             child = pdfium_c.FPDF_StructElement_GetChildAtIndex(self.raw, idx)
             yield PdfStructElement(child)
 
-    def string_accessor(self, pdffunc):
+    def string_accessor(
+        self,
+        pdffunc: Callable[
+            [
+                fpdf_structelement_t,
+                Optional[ctypes.c_char],
+                int,
+            ],
+            int,
+        ],
+    ) -> str:
         n_bytes = pdffunc(self.raw, None, 0)
         buffer = ctypes.create_string_buffer(n_bytes)
         pdfium_c.FPDF_StructElement_GetType(self.raw, buffer, n_bytes)
         return buffer.raw[: n_bytes - 2].decode("utf-16-le")
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self.string_accessor(pdfium_c.FPDF_StructElement_GetID)
 
     @property
-    def lang(self):
+    def lang(self) -> str:
         return self.string_accessor(pdfium_c.FPDF_StructElement_GetLang)
 
     @property
-    def title(self):
+    def title(self) -> str:
         return self.string_accessor(pdfium_c.FPDF_StructElement_GetTitle)
 
     @property
-    def type(self):
+    def type(self) -> str:
         return self.string_accessor(pdfium_c.FPDF_StructElement_GetType)
 
     @property
-    def alt_text(self):
+    def alt_text(self) -> str:
         return self.string_accessor(pdfium_c.FPDF_StructElement_GetAltText)
 
     @property
-    def actual_text(self):
+    def actual_text(self) -> str:
         return self.string_accessor(pdfium_c.FPDF_StructElement_GetActualText)
 
     @property
-    def mcid(self):
-        mcid = pdfium_c.FPDF_StructElement_GetMarkedContentID(self.raw)
+    def mcid(self) -> Optional[int]:
+        mcid: int = pdfium_c.FPDF_StructElement_GetMarkedContentID(self.raw)
         if mcid == -1:
             return None
         else:
             return mcid
 
     @property
-    def mcids(self):
+    def mcids(self) -> Iterator[int]:
         mcid_count = pdfium_c.FPDF_StructElement_GetMarkedContentIdCount(self.raw)
         if mcid_count == -1:
             return
@@ -73,16 +88,8 @@ class PdfStructElement:
                 if mcid != -1:
                     yield mcid
 
-    @property
-    def attrs(self):
-        attr_count = pdfium_c.FPDF_StructElement_GetAttributeCount(self.raw)
-        for idx in range(attr_count):
-            yield PdfStructAttr(
-                pdfium_c.FPDF_StructElement_GetAttributeAtIndex(self.raw, idx)
-            )
-
-    def to_dict(self):
-        eldict = {}
+    def to_dict(self) -> T_obj:
+        eldict: T_obj = {}
         if self.id:
             eldict["id"] = self.id
         if self.lang:
@@ -111,16 +118,16 @@ class PdfStructElement:
 
 
 class PdfStructTree:
-    def __init__(self, raw):
+    def __init__(self, raw: fpdf_structtree_t):
         self.raw = raw
 
     @classmethod
-    def from_page(self, page):
+    def from_page(self, page: pypdfium2.PdfPage) -> "PdfStructTree":
         raw = pdfium_c.FPDF_StructTree_GetForPage(page)
         return PdfStructTree(raw)
 
     @property
-    def children(self):
+    def children(self) -> Iterator[PdfStructElement]:
         n_children = pdfium_c.FPDF_StructTree_CountChildren(self.raw)
         for idx in range(n_children):
             yield PdfStructElement(
@@ -140,5 +147,5 @@ def get_page_structure(
     else:
         stream.seek(0)
         src = stream
-    pdf = pdfium.PdfDocument(src)
+    pdf = pypdfium2.PdfDocument(src)
     return PdfStructTree.from_page(pdf[page_ix])

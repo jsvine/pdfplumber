@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import unittest
-import pdfplumber
 import os
+import unittest
 from io import BytesIO
+
+import pdfplumber
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 TREE = [

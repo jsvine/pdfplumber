@@ -29,10 +29,10 @@ from pdfminer.psparser import PSLiteral
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
+from .structure import get_page_structure
 from .table import T_table_settings, Table, TableFinder, TableSettings
 from .utils import decode_text, resolve_all, resolve_and_decode
 from .utils.text import TextMap
-from .structure import get_page_structure
 
 lt_pat = re.compile(r"^LT")
 
@@ -173,9 +173,11 @@ class Page(Container):
 
     @property
     def structure_tree(self) -> T_obj_list:
-        tree = get_page_structure(self.pdf.stream, self.page_number - 1, self.pdf.password)
+        tree = get_page_structure(
+            self.pdf.stream, self.page_number - 1, self.pdf.password
+        )
         return [child.to_dict() for child in tree.children]
-        
+
     @property
     def layout(self) -> LTPage:
         if hasattr(self, "_layout"):
