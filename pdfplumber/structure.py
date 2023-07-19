@@ -32,7 +32,7 @@ class PdfStructElement:
         pdffunc: Callable[
             [
                 fpdf_structelement_t,
-                Optional[ctypes.c_char],
+                Optional[ctypes.Array[ctypes.c_char]],
                 int,
             ],
             int,
