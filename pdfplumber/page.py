@@ -123,10 +123,10 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
     """Extract layout from a specific page, adding marked-content IDs to
     objects where found."""
 
-    tagstack: List[Tuple[PSLiteral, int]] = []
+    tagstack: List[Tuple[PSLiteral, Optional[int]]] = []
 
     def begin_tag(self, tag: PSLiteral, props: Optional[PDFStackT] = None) -> None:
-        if props is not None and "MCID" in props:
+        if isinstance(props, dict) and "MCID" in props:
             self.tagstack.append((tag, props["MCID"]))
         else:
             self.tagstack.append((tag, None))
@@ -134,7 +134,7 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
     def end_tag(self) -> None:
         self.tagstack.pop()
 
-    def tag_cur_item(self, item_type: Any):
+    def tag_cur_item(self, item_type: Any) -> None:
         if self.tagstack:
             # Implementation Inheritance Considered Harmful
             cur_obj = self.cur_item._objs[-1]
@@ -144,16 +144,16 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
             if mcid is not None:
                 cur_obj.mcid = mcid
 
-    def render_char(self, *args, **kwargs) -> float:
+    def render_char(self, *args, **kwargs) -> float:  # type: ignore
         adv = super().render_char(*args, **kwargs)
         self.tag_cur_item(LTChar)
         return adv
 
-    def render_image(self, *args, **kwargs) -> None:
+    def render_image(self, *args, **kwargs) -> None:  # type: ignore
         super().render_image(*args, **kwargs)
         self.tag_cur_item(LTImage)
 
-    def end_figure(self, *args, **kwargs) -> None:
+    def end_figure(self, *args, **kwargs) -> None:  # type: ignore
         super().end_figure(*args, **kwargs)
         self.tag_cur_item(LTFigure)
 
