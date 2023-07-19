@@ -25,7 +25,8 @@ class PdfStructElement:
         n_children = pdfium_c.FPDF_StructElement_CountChildren(self.raw)
         for idx in range(n_children):
             child = pdfium_c.FPDF_StructElement_GetChildAtIndex(self.raw, idx)
-            yield PdfStructElement(child)
+            if child.type:
+                yield PdfStructElement(child)
 
     def string_accessor(
         self,
@@ -130,9 +131,11 @@ class PdfStructTree:
     def children(self) -> Iterator[PdfStructElement]:
         n_children = pdfium_c.FPDF_StructTree_CountChildren(self.raw)
         for idx in range(n_children):
-            yield PdfStructElement(
+            child = PdfStructElement(
                 pdfium_c.FPDF_StructTree_GetChildAtIndex(self.raw, idx)
             )
+            if child.type:
+                yield child
 
 
 def get_page_structure(
