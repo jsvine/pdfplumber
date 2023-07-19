@@ -324,6 +324,8 @@ WORDS = {
 
 
 class Test(unittest.TestCase):
+    """Test a PDF specifically created to show structure."""
+
     @classmethod
     def setup_class(self):
         path = os.path.join(HERE, "pdfs/pdf_structure.pdf")
@@ -345,13 +347,194 @@ class Test(unittest.TestCase):
     def test_mcids_chars(self):
         marked_chars = defaultdict(str)
         for c in self.pdf.pages[0].chars:
-            if "mcid" in c:
+            if c.get("mcid") is not None:
                 marked_chars[c["mcid"]] += c["text"]
         assert marked_chars == TEXT
 
     def test_mcids_words(self):
         marked_words = defaultdict(list)
         for w in self.pdf.pages[0].extract_words(extra_attrs=["mcid"]):
-            if "mcid" in w:
+            if w.get("mcid") is not None:
                 marked_words[w["mcid"]].append(w["text"])
         assert marked_words == WORDS
+
+
+SCOTUS = {
+    1: [
+        "IN",
+        "THE",
+        "SUPREME",
+        "COURT",
+        "OF",
+        "THE",
+        "UNITED",
+        "STATES",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "x",
+        "MICHAEL",
+        "A.",
+        "KNOWLES,",
+        ":",
+        "WARDEN,",
+        ":",
+    ],
+    2: ["Petitioner", ":"],
+    3: ["v."],
+    4: [
+        ":",
+        "No.",
+        "07-1315",
+        "ALEXANDRE",
+        "MIRZAYANCE.",
+        ":",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        "x",
+    ],
+    5: ["Washington,", "D.C.", "Tuesday,", "January", "13,", "2009"],
+    6: [
+        "The",
+        "above-entitled",
+        "matter",
+        "came",
+        "on",
+        "for",
+        "oral",
+        "argument",
+        "before",
+        "the",
+        "Supreme",
+        "Court",
+        "of",
+        "the",
+        "United",
+        "States",
+        "at",
+        "1:01",
+        "p.m.",
+        "APPEARANCES:",
+        "STEVEN",
+        "E.",
+        "MERCER,",
+        "ESQ.,",
+        "Deputy",
+        "Attorney",
+        "General,",
+        "Los",
+    ],
+    7: [
+        "Angeles,",
+        "Cal.;",
+        "on",
+        "behalf",
+        "of",
+        "the",
+        "Petitioner.",
+        "CHARLES",
+        "M.",
+        "SEVILLA,",
+        "ESQ.,",
+        "San",
+        "Diego,",
+        "Cal.;",
+        "on",
+        "behalf",
+        "of",
+        "the",
+        "Respondent.",
+    ],
+    8: ["1"],
+    9: ["Alderson", "Reporting", "Company"],
+}
+
+
+PVSTRUCT1 = [
+    {
+        "type": "Sect",
+        "children": [
+            {"lang": "FR-CA", "type": "P", "mcids": [0]},
+            {"lang": "FR-CA", "type": "P", "mcids": [1]},
+            {"lang": "FR-CA", "type": "P", "mcids": [2]},
+            {"lang": "FR-CA", "type": "P", "mcids": [3]},
+            {"lang": "FR-CA", "type": "P", "mcids": [4]},
+            {"lang": "FR-CA", "type": "P", "mcids": [5]},
+            {"lang": "FR-CA", "type": "P", "mcids": [6]},
+            {
+                "type": "L",
+                "children": [
+                    {
+                        "type": "LI",
+                        "children": [
+                            {
+                                "lang": "FR-CA",
+                                "type": "LBody",
+                                "mcids": [9, 11],
+                                "children": [
+                                    {"lang": "FR-FR", "type": "Span", "mcids": [10]}
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            {"lang": "FR-CA", "type": "P", "mcids": [14]},
+            {"lang": "FR-CA", "type": "P", "mcids": [15]},
+            {"lang": "FR-CA", "type": "P", "mcids": [16]},
+            {"lang": "FR-FR", "type": "P", "mcids": [17]},
+            {"lang": "FR-FR", "type": "P", "mcids": [18]},
+            {"lang": "FR-FR", "type": "P", "mcids": [19]},
+        ],
+    }
+]
+
+
+class TestMany(unittest.TestCase):
+    """Test various PDFs."""
+
+    def test_scotus(self):
+        path = os.path.join(HERE, "pdfs/scotus-transcript-p1.pdf")
+        pdf = pdfplumber.open(path)
+        marked_words = defaultdict(list)
+        page = pdf.pages[0]
+        for w in page.extract_words(extra_attrs=["mcid"]):
+            if w.get("mcid") is not None:
+                marked_words[w["mcid"]].append(w["text"])
+        assert marked_words == SCOTUS
+
+    def test_proces_verbal(self):
+        path = os.path.join(HERE, "pdfs/2023-06-20-PV.pdf")
+
+        pdf = pdfplumber.open(path)
+        page = pdf.pages[1]
+        assert page.structure_tree == PVSTRUCT1

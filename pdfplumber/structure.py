@@ -40,7 +40,7 @@ class PdfStructElement:
     ) -> str:
         n_bytes = pdffunc(self.raw, None, 0)
         buffer = ctypes.create_string_buffer(n_bytes)
-        pdfium_c.FPDF_StructElement_GetType(self.raw, buffer, n_bytes)
+        pdffunc(self.raw, buffer, n_bytes)
         return buffer.raw[: n_bytes - 2].decode("utf-16-le")
 
     @property
@@ -93,7 +93,7 @@ class PdfStructElement:
         if self.id:
             eldict["id"] = self.id  # pragma: nocover
         if self.lang:
-            eldict["lang"] = self.lang  # pragma: nocover
+            eldict["lang"] = self.lang
         if self.title:
             eldict["title"] = self.title  # pragma: nocover
         if self.type:
