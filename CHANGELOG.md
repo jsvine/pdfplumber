@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.10.1] - 2023-07-19
+
+### Added
+
+- Add `antialias` boolean parameter to `Page.to_image(...)` and associated methods (h/t @cmdlineluser). ([7e28931](https://github.com/jsvine/pdfplumber/commit/7e28931))
+
 ## [0.10.0] - 2023-07-16
 
 ### Changed
