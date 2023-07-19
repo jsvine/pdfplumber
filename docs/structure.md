@@ -47,3 +47,13 @@ PDF using them to test with yet.
 The structure of a PDF obviously isn't all that useful unless you can,
 minimally, attach some text to the elements.  This is where marked
 content sections come in.
+
+`pdfplumber` adds an optional field called `mcid` to the items in the
+`objects` and `chars` properties of a page, which tells you which
+marked content section a given character or other object belongs to.
+
+You can propagate `mcid` to the words returned by `extract_words` by
+adding it to the `extra_attrs` argument, e.g.:
+
+
+    words = pdf.pages[0].extract_words(extra_attrs=["mcid"])

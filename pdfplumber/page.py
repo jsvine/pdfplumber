@@ -215,6 +215,19 @@ class Page(Container):
 
     @property
     def structure_tree(self) -> T_obj_list:
+        """Return the structure tree for a page.
+
+        This consists of a list of dictionaries each of which
+        minimally contains the keys `type` and `mcids`, which give the
+        type of the structure element (see
+        https://ghostscript.com/~robin/pdf_reference17.pdf#page=898)
+        and the marked content IDs for its contents, if any.
+
+        It may also contain the key `children` with child elements,
+        and possibly some other keys like `id`, `lang`, `title`,
+        `alt_text`, and `actual_text` if the PDF is very recent.
+
+        """
         tree = get_page_structure(
             self.pdf.stream, self.page_number - 1, self.pdf.password
         )
