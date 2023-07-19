@@ -504,6 +504,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Shannon Shen](https://github.com/lolipopshock)
 - [Matsumoto Toshi](https://github.com/toshi1127)
 - [John West](https://github.com/jwestwsj)
+- [David Huggins-Daines](https://github.com/dhdaines)
 
 ## Contributing
 
