@@ -141,8 +141,7 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
             assert isinstance(cur_obj, item_type)
             tag, mcid = self.tagstack[-1]
             # Hackery, which would not be necessary if pdfminer.six supported MCIDs
-            if mcid is not None:
-                cur_obj.mcid = mcid
+            cur_obj.mcid = mcid
 
     def render_char(self, *args, **kwargs) -> float:  # type: ignore
         adv = super().render_char(*args, **kwargs)
