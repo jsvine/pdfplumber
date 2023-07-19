@@ -123,25 +123,23 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
     """Extract layout from a specific page, adding marked-content IDs to
     objects where found."""
 
-    tagstack: List[Tuple[PSLiteral, Optional[int]]] = []
+    cur_mcid: Optional[int]
 
     def begin_tag(self, tag: PSLiteral, props: Optional[PDFStackT] = None) -> None:
         if isinstance(props, dict) and "MCID" in props:
-            self.tagstack.append((tag, props["MCID"]))
+            self.cur_mcid = props["MCID"]
         else:
-            self.tagstack.append((tag, None))
+            self.cur_mcid = None
 
     def end_tag(self) -> None:
-        self.tagstack.pop()
+        self.cur_mcid = None
 
     def tag_cur_item(self, item_type: Any) -> None:
-        if self.tagstack:
-            # Implementation Inheritance Considered Harmful
-            cur_obj = self.cur_item._objs[-1]
-            assert isinstance(cur_obj, item_type)
-            tag, mcid = self.tagstack[-1]
-            # Hackery, which would not be necessary if pdfminer.six supported MCIDs
-            cur_obj.mcid = mcid
+        # Implementation Inheritance Considered Harmful
+        cur_obj = self.cur_item._objs[-1]
+        assert isinstance(cur_obj, item_type)
+        # Hackery, which would not be necessary if pdfminer.six supported MCIDs
+        cur_obj.mcid = self.cur_mcid
 
     def render_char(self, *args, **kwargs) -> float:  # type: ignore
         adv = super().render_char(*args, **kwargs)
