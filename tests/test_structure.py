@@ -518,6 +518,22 @@ PVSTRUCT1 = [
     }
 ]
 
+IMAGESTRUCT = [
+    {
+        "type": "Document",
+        "children": [
+            {"type": "P", "mcids": [0]},
+            {"type": "P", "mcids": [1]},
+            {
+                "type": "Figure",
+                "alt_text": "pdfplumber on github\n\n"
+                "a screen capture of the github page for pdfplumber",
+                "mcids": [2],
+            },
+        ],
+    }
+]
+
 
 class TestMany(unittest.TestCase):
     """Test various PDFs."""
@@ -538,3 +554,11 @@ class TestMany(unittest.TestCase):
         pdf = pdfplumber.open(path)
         page = pdf.pages[1]
         assert page.structure_tree == PVSTRUCT1
+
+    def test_image_structure(self):
+        path = os.path.join(HERE, "pdfs/image_structure.pdf")
+
+        pdf = pdfplumber.open(path)
+        page = pdf.pages[0]
+        assert page.structure_tree == IMAGESTRUCT
+        assert page.objects["image"][0]["mcid"] == 2

@@ -36,14 +36,16 @@ to words or characters using the API described below.
 The `lang` field is often present as well, and contains a language
 code for the text content, e.g. `"EN-US"` or `"FR-CA"`.
 
-There are a number of other fields which may be present, but probably
-are not, including `id`, `title`, `alt_text`, and `actual_text`.
-These are *probably* only found on images.  Support for these is
-uncertain until I find some PDFs that actually contain them.
+The `alt_text` field will be present if the author has helpfully added
+alternate text to an image.  In theory, `title` and `actual_text` may
+also be present, but not all tools seem to support these.
+
+The `id` field is of unknown origin and use.  Please find a PDF that
+contains it so we can test it.
 
 Likewise, attributes for structure elements (which, confusingly, come
-as a *list* of dictionaries) are not supported because I haven't got a
-PDF using them to test with yet.
+as a *list* of dictionaries) are not supported because I haven't found
+a PDF using them to test with yet.
 
 # Marked Content Sections
 
@@ -57,6 +59,5 @@ marked content section a given character or other object belongs to.
 
 You can propagate `mcid` to the words returned by `extract_words` by
 adding it to the `extra_attrs` argument, e.g.:
-
 
     words = pdf.pages[0].extract_words(extra_attrs=["mcid"])
