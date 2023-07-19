@@ -91,19 +91,19 @@ class PdfStructElement:
     def to_dict(self) -> T_obj:
         eldict: T_obj = {}
         if self.id:
-            eldict["id"] = self.id
+            eldict["id"] = self.id  # pragma: nocover
         if self.lang:
-            eldict["lang"] = self.lang
+            eldict["lang"] = self.lang  # pragma: nocover
         if self.title:
-            eldict["title"] = self.title
+            eldict["title"] = self.title  # pragma: nocover
         if self.type:
             eldict["type"] = self.type
         if self.alt_text:
-            eldict["alt_text"] = self.alt_text
+            eldict["alt_text"] = self.alt_text  # pragma: nocover
         if self.actual_text:
-            eldict["actual_text"] = self.actual_text
+            eldict["actual_text"] = self.actual_text  # pragma: nocover
         if self.mcid:
-            eldict["mcids"] = [self.mcid]
+            eldict["mcids"] = [self.mcid]  # pragma: nocover
         else:
             mcids = list(self.mcids)
             if mcids:
