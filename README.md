@@ -108,6 +108,7 @@ The `pdfplumber.Page` class is at the core of `pdfplumber`. Most things you'll d
 |`.width`| The page's width.|
 |`.height`| The page's height.|
 |`.objects` / `.chars` / `.lines` / `.rects` / `.curves` / `.images`| Each of these properties is a list, and each list contains one dictionary for each such object embedded on the page. For more detail, see "[Objects](#objects)" below.|
+|`.structure_tree` | A list of `dict` representing structural elements and associated marked content IDs.|
 
 ... and these main methods:
 
@@ -158,6 +159,7 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`bottom`| Distance of bottom of the character from top of page.|
 |`doctop`| Distance of top of character from top of document.|
 |`matrix`| The "current transformation matrix" for this character. (See below for details.)|
+|`mcid`| The marked content section ID for this character if any (otherwise None)|
 |`ncs`|TKTK|
 |`stroking_pattern`|TKTK|
 |`non_stroking_pattern`|TKTK|
