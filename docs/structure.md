@@ -33,10 +33,13 @@ The `mcids` field contains the list of marked content section IDs
 corresponding to this element.  You can use this to match the element
 to words or characters using the API described below.
 
+The `lang` field is often present as well, and contains a language
+code for the text content, e.g. `"EN-US"` or `"FR-CA"`.
+
 There are a number of other fields which may be present, but probably
 are not, including `id`, `title`, `alt_text`, and `actual_text`.
-Support for these is uncertain until I find some PDFs that actually
-contain them.
+These are *probably* only found on images.  Support for these is
+uncertain until I find some PDFs that actually contain them.
 
 Likewise, attributes for structure elements (which, confusingly, come
 as a *list* of dictionaries) are not supported because I haven't got a
