@@ -123,7 +123,7 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
     """Extract layout from a specific page, adding marked-content IDs to
     objects where found."""
 
-    cur_mcid: Optional[int]
+    cur_mcid: Optional[int] = None
 
     def begin_tag(self, tag: PSLiteral, props: Optional[PDFStackT] = None) -> None:
         if isinstance(props, dict) and "MCID" in props:
