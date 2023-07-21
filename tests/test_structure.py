@@ -535,8 +535,114 @@ IMAGESTRUCT = [
 ]
 
 
+WORD365 = [
+    {
+        "type": "Document",
+        "children": [
+            {
+                "type": "H1",
+                "children": [
+                    {"type": "Span", "mcids": [0]},
+                    {"type": "Span", "actual_text": " ", "mcids": [1]},
+                ],
+            },
+            {"type": "P", "mcids": [2]},
+            {
+                "type": "L",
+                "children": [
+                    {"type": "LI", "children": [{"type": "LBody", "mcids": [3]}]},
+                    {"type": "LI", "children": [{"type": "LBody", "mcids": [4]}]},
+                    {"type": "LI", "children": [{"type": "LBody", "mcids": [5]}]},
+                ],
+            },
+            {"type": "P", "mcids": [6]},
+            {
+                "type": "L",
+                "children": [
+                    {"type": "LI", "children": [{"type": "LBody", "mcids": [7]}]},
+                    {"type": "LI", "children": [{"type": "LBody", "mcids": [8]}]},
+                ],
+            },
+            {
+                "type": "Table",
+                "children": [
+                    {
+                        "type": "THead",
+                        "children": [
+                            {
+                                "type": "TR",
+                                "children": [
+                                    {
+                                        "type": "TH",
+                                        "children": [{"type": "P", "mcids": [9, 10]}],
+                                    },
+                                    {
+                                        "type": "TH",
+                                        "children": [{"type": "P", "mcids": [11, 12]}],
+                                    },
+                                    {
+                                        "type": "TH",
+                                        "children": [{"type": "P", "mcids": [13, 14]}],
+                                    },
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "TBody",
+                        "children": [
+                            {
+                                "type": "TR",
+                                "children": [
+                                    {
+                                        "type": "TD",
+                                        "children": [{"type": "P", "mcids": [15, 16]}],
+                                    },
+                                    {
+                                        "type": "TD",
+                                        "children": [{"type": "P", "mcids": [17, 18]}],
+                                    },
+                                    {
+                                        "type": "TD",
+                                        "children": [{"type": "P", "mcids": [19, 20]}],
+                                    },
+                                ],
+                            },
+                            {
+                                "type": "TR",
+                                "children": [
+                                    {
+                                        "type": "TD",
+                                        "children": [{"type": "P", "mcids": [21, 22]}],
+                                    },
+                                    {
+                                        "type": "TD",
+                                        "children": [{"type": "P", "mcids": [23, 24]}],
+                                    },
+                                    {
+                                        "type": "TD",
+                                        "children": [{"type": "P", "mcids": [25, 26]}],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            {"type": "P", "mcids": [27]},
+        ],
+    }
+]
+
+
 class TestMany(unittest.TestCase):
     """Test various PDFs."""
+
+    def test_word365(self):
+        path = os.path.join(HERE, "pdfs/word365_structure.pdf")
+        pdf = pdfplumber.open(path)
+        page = pdf.pages[0]
+        assert page.structure_tree == WORD365
 
     def test_scotus(self):
         path = os.path.join(HERE, "pdfs/scotus-transcript-p1.pdf")
