@@ -102,11 +102,11 @@ class PdfStructElement:
         if self.type:
             eldict["type"] = self.type
         if self.alt_text:
-            eldict["alt_text"] = self.alt_text  # pragma: nocover
+            eldict["alt_text"] = self.alt_text
         if self.actual_text:
-            eldict["actual_text"] = self.actual_text  # pragma: nocover
+            eldict["actual_text"] = self.actual_text
         if self.mcid:
-            eldict["mcids"] = [self.mcid]  # pragma: nocover
+            eldict["mcids"] = [self.mcid]
         else:
             mcids = list(self.mcids)
             if mcids:
