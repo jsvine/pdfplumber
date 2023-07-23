@@ -49,23 +49,20 @@ def get_page_image(
         stream.seek(0)
         src = stream
 
-    img: PIL.Image.Image = pypdfium2.PdfDocument._process_page(
-        # Modifiable arguments
-        page_ix,
-        input_data=src,
+    pdfium_page = pypdfium2.PdfDocument(
+        src,
         password=password,
+    ).get_page(page_ix)
+
+    img: PIL.Image.Image = pdfium_page.render(
+        # Modifiable arguments
         scale=resolution / 72,
         no_smoothtext=not antialias,
         no_smoothpath=not antialias,
         no_smoothimage=not antialias,
         # Non-modifiable arguments
-        renderer=pypdfium2._helpers.page.PdfPage.render,
-        converter=pypdfium2.PdfBitmap.to_pil,
         prefer_bgrx=True,
-        pass_info=False,
-        need_formenv=False,
-        mk_formconfig=None,
-    )
+    ).to_pil()
 
     return img.convert("RGB")
 
