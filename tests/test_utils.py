@@ -7,11 +7,10 @@ from itertools import groupby
 from operator import itemgetter
 
 import pandas as pd
+import pdfplumber
 import pytest
 from pdfminer.pdfparser import PDFObjRef
 from pdfminer.psparser import PSLiteral
-
-import pdfplumber
 from pdfplumber import utils
 
 logging.disable(logging.ERROR)
@@ -385,6 +384,7 @@ class Test(unittest.TestCase):
         bbox = utils.obj_to_bbox(objs[0])
 
         assert utils.intersects_bbox(objs, bbox) == objs[:4]
+        assert utils.intersects_bbox(iter(objs), bbox) == objs[:4]
 
     def test_merge_bboxes(self):
         bboxes = [
@@ -392,6 +392,8 @@ class Test(unittest.TestCase):
             (10, 5, 10, 30),
         ]
         merged = utils.merge_bboxes(bboxes)
+        assert merged == (0, 5, 20, 30)
+        merged = utils.merge_bboxes(iter(bboxes))
         assert merged == (0, 5, 20, 30)
 
     def test_resize_object(self):
@@ -494,6 +496,8 @@ class Test(unittest.TestCase):
 
         a_new, b_new, c_new = utils.snap_objects([a, b, c], "x0", 1)
         assert a_new == b_new == c_new
+        a_new, b_new, c_new = utils.snap_objects(iter([a, b, c]), "x0", 1)
+        assert a_new == b_new == c_new
 
     def test_filter_edges(self):
         with pytest.raises(ValueError):
@@ -515,6 +519,7 @@ class Test(unittest.TestCase):
             },
         ]
         assert utils.to_list(objs) == objs
+        assert utils.to_list(iter(objs)) == objs
         assert utils.to_list(tuple(objs)) == objs
         assert utils.to_list((o for o in objs)) == objs
         assert utils.to_list(pd.DataFrame(objs)) == objs
