@@ -7,10 +7,11 @@ from itertools import groupby
 from operator import itemgetter
 
 import pandas as pd
-import pdfplumber
 import pytest
 from pdfminer.pdfparser import PDFObjRef
 from pdfminer.psparser import PSLiteral
+
+import pdfplumber
 from pdfplumber import utils
 
 logging.disable(logging.ERROR)
