@@ -5,7 +5,7 @@ flake8==4.0.1
 black==22.3.0
 isort==5.10.1
 pandas==2.0.3
-mypy==0.942
+mypy==0.981
 pandas-stubs==1.2.0.58
 types-Pillow==9.0.14
 jupyterlab==3.4.2
