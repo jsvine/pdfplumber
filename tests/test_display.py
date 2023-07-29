@@ -3,6 +3,7 @@ import io
 import logging
 import os
 import unittest
+from zipfile import ZipFile
 
 import PIL.Image
 import pytest
@@ -112,3 +113,13 @@ class Test(unittest.TestCase):
         path = os.path.join(HERE, "pdfs/password-example.pdf")
         with pdfplumber.open(path, password="test") as pdf:
             pdf.pages[0].to_image()
+
+    def test_zip(self):
+        # See https://github.com/jsvine/pdfplumber/issues/948
+        # reproducer.py
+        path = os.path.join(HERE, "pdfs/issue-948.zip")
+        with ZipFile(path) as zip_file:
+            with zip_file.open("dummy.pdf") as pdf_file:
+                with pdfplumber.open(pdf_file) as pdf:
+                    page = pdf.pages[0]
+                    page.to_image()

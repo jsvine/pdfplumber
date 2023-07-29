@@ -1,5 +1,5 @@
+import pathlib
 from io import BufferedReader, BytesIO
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 import PIL.Image
@@ -35,14 +35,18 @@ T_contains_points = Union[Tuple[T_point, ...], List[T_point], T_obj]
 
 def get_page_image(
     stream: Union[BufferedReader, BytesIO],
+    path: Optional[pathlib.Path],
     page_ix: int,
     resolution: Union[int, float],
     password: Optional[str],
     antialias: bool = False,
 ) -> PIL.Image.Image:
+
+    src: Union[pathlib.Path, BufferedReader, BytesIO]
+
     # If we are working with a file object saved to disk
-    if hasattr(stream, "name"):
-        src = stream.name
+    if path:
+        src = path
 
     # If we instead are working with a BytesIO stream
     else:
@@ -79,6 +83,7 @@ class PageImage:
         if original is None:
             self.original = get_page_image(
                 stream=page.pdf.stream,
+                path=page.pdf.path,
                 page_ix=page.page_number - 1,
                 resolution=resolution,
                 antialias=antialias,
@@ -133,7 +138,7 @@ class PageImage:
 
     def save(
         self,
-        dest: Union[str, Path, BytesIO],
+        dest: Union[str, pathlib.Path, BytesIO],
         format: str = "PNG",
         quantize: bool = True,
         colors: int = 256,
