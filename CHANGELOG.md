@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.10.2] - 2023-07-29
+
+- Add `PDF.path`: A `Path` object for PDFs loaded by passing a path (unless `repair=True`), and `None` otherwise. ([30a52cb](https://github.com/jsvine/pdfplumber/commit/30a52cb) + [#948](https://github.com/jsvine/pdfplumber/issues/948))
+
+### Added
+
+- Accept `Iterable` objects for geometry utils (h/t @dhdaines). ([53bee23](https://github.com/jsvine/pdfplumber/commit/53bee23) + [#945](https://github.com/jsvine/pdfplumber/pulls/945))
+
+### Changed
+
+- Use pypdfium2's *public* (not private) `.render(...)` method (h/t @mara004). ([28f4ebe](https://github.com/jsvine/pdfplumber/commit/28f4ebe) + [#899](https://github.com/jsvine/pdfplumber/discussions/899#discussioncomment-6520928))
+
+### Fixed
+
+- Fix `.to_image()` for `ZipExtFile`s (h/t @Urbener). ([30a52cb](https://github.com/jsvine/pdfplumber/commit/30a52cb) + [#948](https://github.com/jsvine/pdfplumber/issues/948))
+
 ## [0.10.1] - 2023-07-19
 
 ### Added
