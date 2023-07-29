@@ -28,6 +28,7 @@ class PDF(Container):
         self,
         stream: Union[BufferedReader, BytesIO],
         stream_is_external: bool = False,
+        path: Optional[pathlib.Path] = None,
         pages: Optional[Union[List[int], Tuple[int]]] = None,
         laparams: Optional[Dict[str, Any]] = None,
         password: Optional[str] = None,
@@ -35,6 +36,7 @@ class PDF(Container):
     ):
         self.stream = stream
         self.stream_is_external = stream_is_external
+        self.path = path
         self.pages_to_parse = pages
         self.laparams = None if laparams is None else LAParams(**laparams)
         self.password = password
@@ -70,20 +72,27 @@ class PDF(Container):
         repair: bool = False,
     ) -> "PDF":
 
-        stream: Union[str, pathlib.Path, BufferedReader, BytesIO]
+        stream: Union[BufferedReader, BytesIO]
+
         if repair:
             stream = _repair(path_or_fp, password=password)
             stream_is_external = False
+            # Although the original file has a path,
+            # the repaired version does not
+            path = None
         elif isinstance(path_or_fp, (str, pathlib.Path)):
             stream = open(path_or_fp, "rb")
             stream_is_external = False
+            path = pathlib.Path(path_or_fp)
         else:
             stream = path_or_fp
             stream_is_external = True
+            path = None
 
         try:
             return cls(
                 stream,
+                path=path,
                 pages=pages,
                 laparams=laparams,
                 password=password,
