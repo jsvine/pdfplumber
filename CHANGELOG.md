@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.10.3] - [Unreleased]
+
+### Added
+
+- Add `gs_path` argument to `pdfplumber.open(...)` and `pdfplumber.repair(...)`, to allow passing a custom Ghostscript path to be used for repairing. ([#953](https://github.com/jsvine/pdfplumber/issues/953))
+
 ## [0.10.2] - 2023-07-29
 
 ### Added
