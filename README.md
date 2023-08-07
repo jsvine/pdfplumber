@@ -439,7 +439,7 @@ def parse_field_helper(form_data, field, prefix=None):
         prepended to the child's field name.
     """
     resolved_field = field.resolve()
-    field_name = b'.'.join(filter(lambda x: x, [prefix, resolved_field.get("T")]))
+    field_name = b'.'.join([prefix, resolved_field.get("T")]) if prefix and resolved_field.get("T") else resolved_field.get("T")
     if "Kids" in resolved_field:
         for kid_field in resolved_field["Kids"]:
             parse_field_helper(form_data, kid_field, prefix=field_name)
