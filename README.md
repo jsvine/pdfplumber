@@ -432,13 +432,30 @@ For example, this snippet will retrieve form field names and values and store th
 pdf = pdfplumber.open("document_with_form.pdf")
 
 fields = pdf.doc.catalog["AcroForm"].resolve()["Fields"]
+def parse_field_helper(form_data, field, prefix=None):
+    """ appends form data in `field` to provided `form_data` list as tuples of `(field_name, alternate_field_name, field_value)`
 
-form_data = {}
+        if `field` has child fields, those will be parsed recursively, with the parent's field name
+        prepended to the child's field name.
+    """
+    resolved_field = field.resolve()
+    field_name = b'.'.join(filter(lambda x: x, [prefix, resolved_field.get("T")]))
+    if "Kids" in resolved_field:
+        for kid_field in resolved_field["Kids"]:
+            parse_field_helper(form_data, kid_field, prefix=field_name)
+    if "T" in resolved_field or "TU" in resolved_field:
+        # "T" is a field-name, but it's sometimes absent.
+        # "TU" is the "alternate field name" and is often more human-readable
+        # your PDF may have one, the other, or both.
+        alternate_field_name  = resolved_field.get("TU")
+        field_value = resolved_field["V"] if 'V' in resolved_field else None
+        form_data.append([field_name, alternate_field_name, field_value])
+
+
+form_data = []
 
 for field in fields:
-    field_name = field.resolve()["T"]
-    field_value = field.resolve()["V"]
-    form_data[field_name] = field_value
+    parse_field_helper(form_data, field)
 ```
 
 
