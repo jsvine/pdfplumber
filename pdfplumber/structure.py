@@ -7,7 +7,7 @@ import pypdfium2.raw as pdfium_c  # type: ignore
 
 from ._typing import T_obj
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: nocover
     fpdf_structelement_t = ctypes._Pointer[pdfium_c.fpdf_structelement_t__]
     fpdf_structtree_t = ctypes._Pointer[pdfium_c.fpdf_structtree_t__]
     c_char_array = ctypes.Array[ctypes.c_char]

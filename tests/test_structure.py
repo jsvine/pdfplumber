@@ -2,7 +2,7 @@
 
 import os
 import unittest
-from collections import defaultdict
+from collections import defaultdict, deque
 from io import BytesIO
 
 import pdfplumber
@@ -668,3 +668,25 @@ class TestMany(unittest.TestCase):
         page = pdf.pages[0]
         assert page.structure_tree == IMAGESTRUCT
         assert page.objects["image"][0]["mcid"] == 2
+
+    def test_figure_mcids(self):
+        path = os.path.join(HERE, "pdfs/figure_structure.pdf")
+
+        pdf = pdfplumber.open(path)
+        page = pdf.pages[0]
+        d = deque(page.structure_tree)
+        while d:
+            el = d.popleft()
+            if el["type"] == "Figure":
+                break
+            if "children" in el:
+                d.extend(el["children"])
+        # We found a Figure
+        assert el["type"] == "Figure"
+        # It has these MCIDS
+        assert el["mcids"] == [1, 14]
+        # These are the same MCIDS as lines and curves
+        line_mcids = set(x["mcid"] for x in page.lines)
+        curve_mcids = set(x["mcid"] for x in page.curves)
+        assert line_mcids == {1}
+        assert curve_mcids == {1, 14}

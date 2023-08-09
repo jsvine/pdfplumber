@@ -18,8 +18,6 @@ from pdfminer.layout import (
     LTChar,
     LTComponent,
     LTContainer,
-    LTFigure,
-    LTImage,
     LTItem,
     LTPage,
     LTTextContainer,
@@ -126,33 +124,43 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
     cur_mcid: Optional[int] = None
 
     def begin_tag(self, tag: PSLiteral, props: Optional[PDFStackT] = None) -> None:
+        """Handle beginning of tag, setting current MCID if any."""
         if isinstance(props, dict) and "MCID" in props:
             self.cur_mcid = props["MCID"]
         else:
             self.cur_mcid = None
 
     def end_tag(self) -> None:
+        """Handle beginning of tag, clearing current MCID."""
         self.cur_mcid = None
 
-    def tag_cur_item(self, item_type: Any) -> None:
-        # Implementation Inheritance Considered Harmful
+    def tag_cur_item(self) -> None:
+        """Add current MCID to what we hope to be the most recent object created
+        by pdfminer.six."""
+        # This is somewhat hacky and would not be necessary if
+        # pdfminer.six supported MCIDs.  In reading the code it's
+        # clear that the `render_*` methods methods will only ever
+        # create one object, but that is far from being guaranteed.
+        # Even if pdfminer.six's API would just return the objects it
+        # creates, we wouldn't have to do this.
         cur_obj = self.cur_item._objs[-1]
-        assert isinstance(cur_obj, item_type)
-        # Hackery, which would not be necessary if pdfminer.six supported MCIDs
-        cur_obj.mcid = self.cur_mcid
+        cur_obj.mcid = self.cur_mcid  # type: ignore
 
     def render_char(self, *args, **kwargs) -> float:  # type: ignore
+        """Hook for rendering characters, adding the `mcid` attribute."""
         adv = super().render_char(*args, **kwargs)
-        self.tag_cur_item(LTChar)
+        self.tag_cur_item()
         return adv
 
     def render_image(self, *args, **kwargs) -> None:  # type: ignore
+        """Hook for rendering images, adding the `mcid` attribute."""
         super().render_image(*args, **kwargs)
-        self.tag_cur_item(LTImage)
+        self.tag_cur_item()
 
-    def end_figure(self, *args, **kwargs) -> None:  # type: ignore
-        super().end_figure(*args, **kwargs)
-        self.tag_cur_item(LTFigure)
+    def paint_path(self, *args, **kwargs) -> None:  # type: ignore
+        """Hook for rendering lines and curves, adding the `mcid` attribute."""
+        super().paint_path(*args, **kwargs)
+        self.tag_cur_item()
 
 
 class Page(Container):
