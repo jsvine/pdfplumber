@@ -23,6 +23,12 @@ def parse_args(args_raw: List[str]) -> argparse.Namespace:
         "infile", nargs="?", type=argparse.FileType("rb"), default=sys.stdin.buffer
     )
 
+    parser.add_argument(
+        "--structure",
+        help="Write the structure tree as JSON.  "
+        "All arguments except --pages, --laparams, and --indent will be ignored",
+        action="store_true",
+    )
     parser.add_argument("--format", choices=["csv", "json"], default="csv")
 
     parser.add_argument("--types", nargs="+")
@@ -59,7 +65,9 @@ def main(args_raw: List[str] = sys.argv[1:]) -> None:
     args = parse_args(args_raw)
 
     with PDF.open(args.infile, pages=args.pages, laparams=args.laparams) as pdf:
-        if args.format == "csv":
+        if args.structure:
+            json.dump(pdf.structure_tree, sys.stdout, indent=args.indent)
+        elif args.format == "csv":
             pdf.to_csv(
                 sys.stdout,
                 args.types,

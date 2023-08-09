@@ -83,6 +83,12 @@ class Test(unittest.TestCase):
         c = self.pdf.to_csv(object_types=None)
         assert c.split("\r\n")[1].split(",")[0] == "line"
 
+    def test_cli_structure(self):
+        res = run([sys.executable, "-m", "pdfplumber.cli", self.path, "--structure"])
+        c = json.loads(res)
+        # lol no structure
+        assert c == []
+
     def test_cli_json(self):
         res = run(
             [
