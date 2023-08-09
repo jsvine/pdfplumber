@@ -458,6 +458,15 @@ for field in fields:
     parse_field_helper(form_data, field)
 ```
 
+Once you run this script, `form_data` is a list containing a three-element tuple for each form element. For instance, a PDF form with a city and state field might look like this.
+```
+[
+ [b'STATE.0', b'enter STATE', b'CA'],
+ [b'section 2  accident infoRmation.1.0',
+  b'enter city of accident',
+  b'SAN FRANCISCO']
+]
+```
 
 ## Demonstrations
 
