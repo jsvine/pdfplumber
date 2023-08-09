@@ -48,6 +48,8 @@ class TestMCIDs(unittest.TestCase):
         # Check line and curve MCIDs
         line_mcids = set(x["mcid"] for x in page.lines)
         curve_mcids = set(x["mcid"] for x in page.curves)
+        assert all(x["tag"] == "Figure" for x in page.lines)
+        assert all(x["tag"] == "Figure" for x in page.curves)
         assert line_mcids & {1, 14}
         assert curve_mcids & {1, 14}
         # No rects to test unfortunately!
