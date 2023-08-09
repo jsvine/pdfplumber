@@ -1,19 +1,20 @@
 import ctypes
 from io import BufferedReader, BytesIO
-from typing import TYPE_CHECKING, Callable, Iterator, Optional, Union
+from typing import TYPE_CHECKING, Callable, Iterator, Optional, TypeAlias, Union
 
 import pypdfium2  # type: ignore
 import pypdfium2.raw as pdfium_c  # type: ignore
 
 from ._typing import T_obj
 
-# https://stackoverflow.com/questions/71054602/python-type-hinting-ctypes-pointer-to-x-types-in-a-way-that-mypy-accepts
-if TYPE_CHECKING:  # pragma: nocover
-    fpdf_structelement_t = ctypes.pointer[pdfium_c.fpdf_structelement_t__]
-    fpdf_structtree_t = ctypes.pointer[pdfium_c.fpdf_structtree_t__]
+if TYPE_CHECKING:
+    fpdf_structelement_t: TypeAlias = ctypes._Pointer[pdfium_c.fpdf_structelement_t__]
+    fpdf_structtree_t: TypeAlias = ctypes._Pointer[pdfium_c.fpdf_structtree_t__]
+    c_char_array: TypeAlias = ctypes.Array[ctypes.c_char]
 else:
-    fpdf_structelement_t = ctypes.pointer
-    fpdf_structtree_t = ctypes.pointer
+    fpdf_structelement_t: TypeAlias = ctypes._Pointer
+    fpdf_structtree_t: TypeAlias = ctypes._Pointer
+    c_char_array: TypeAlias = ctypes.Array
 
 
 class PdfStructElement:
@@ -35,7 +36,7 @@ class PdfStructElement:
         pdffunc: Callable[
             [
                 fpdf_structelement_t,
-                Optional[ctypes.Array[ctypes.c_char]],
+                Optional[c_char_array],
                 int,
             ],
             int,
