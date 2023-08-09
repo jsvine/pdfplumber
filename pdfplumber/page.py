@@ -63,6 +63,7 @@ ALL_ATTRS = set(
         "stroke",
         "stroking_color",
         "mcid",
+        "tag",
     ]
 )
 
@@ -121,16 +122,20 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
     objects where found."""
 
     cur_mcid: Optional[int] = None
+    cur_tag: Optional[str] = None
 
     def begin_tag(self, tag: PSLiteral, props: Optional[PDFStackT] = None) -> None:
         """Handle beginning of tag, setting current MCID if any."""
         if isinstance(props, dict) and "MCID" in props:
+            self.cur_tag = decode_text(tag.name)
             self.cur_mcid = props["MCID"]
         else:
+            self.cur_tag = None
             self.cur_mcid = None
 
     def end_tag(self) -> None:
         """Handle beginning of tag, clearing current MCID."""
+        self.cur_tag = None
         self.cur_mcid = None
 
     def tag_cur_item(self) -> None:
@@ -144,6 +149,7 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
         # creates, we wouldn't have to do this.
         cur_obj = self.cur_item._objs[-1]
         cur_obj.mcid = self.cur_mcid  # type: ignore
+        cur_obj.tag = self.cur_tag  # type: ignore
 
     def render_char(self, *args, **kwargs) -> float:  # type: ignore
         """Hook for rendering characters, adding the `mcid` attribute."""

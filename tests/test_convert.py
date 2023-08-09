@@ -70,7 +70,7 @@ class Test(unittest.TestCase):
         assert c.split("\r\n")[9] == (
             "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
             '18.0,12.996,,,,,,TimesNewRomanPSMT,,,"(1, 0, 0, 1, 45.83, 660.69)"'
-            ',,DeviceRGB,"(0, 0, 0)",,,18.0,,,,,,Y,,1,'
+            ',,DeviceRGB,"(0, 0, 0)",,,18.0,,,,,,,Y,,1,'
         )
 
         io = StringIO()
@@ -125,7 +125,7 @@ class Test(unittest.TestCase):
         assert res.decode("utf-8").split("\r\n")[9] == (
             "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
             '18.0,12.996,,,,,,TimesNewRomanPSMT,,,"(1, 0, 0, 1, 45.83, 660.69)"'
-            ',,DeviceRGB,"(0, 0, 0)",,,18.0,,,,,,Y,,1,'
+            ',,DeviceRGB,"(0, 0, 0)",,,18.0,,,,,,,Y,,1,'
         )
 
     def test_cli_csv_exclude(self):
@@ -151,7 +151,7 @@ class Test(unittest.TestCase):
         assert res.decode("utf-8").split("\r\n")[9] == (
             "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
             "18.0,12.996,,,,,,TimesNewRomanPSMT,"
-            ',,"(0, 0, 0)",,18.0,,,,,Y,,1,'
+            ',,"(0, 0, 0)",,18.0,,,,,,Y,,1,'
         )
 
     def test_cli_csv_include(self):

@@ -22,26 +22,28 @@ class TestMCIDs(unittest.TestCase):
             if "mcid" in c:
                 while len(mcids) <= c["mcid"]:
                     mcids.append("")
+                if not mcids[c["mcid"]]:
+                    mcids[c["mcid"]] = c["tag"] + ": "
                 mcids[c["mcid"]] += c["text"]
         assert mcids == [
-            "Test of figures",
+            "Standard: Test of figures",
             "",
-            "1 ligne",
-            "2 ligne",
-            "3 ligne",
-            "4 ligne",
-            "0",
-            "2",
-            "4",
-            "6",
-            "8",
-            "10",
-            "12",
-            "Figure 1: Chart",
+            "P: 1 ligne",
+            "P: 2 ligne",
+            "P: 3 ligne",
+            "P: 4 ligne",
+            "P: 0",
+            "P: 2",
+            "P: 4",
+            "P: 6",
+            "P: 8",
+            "P: 10",
+            "P: 12",
+            "P: Figure 1: Chart",
             "",
-            "1 colonne",
-            "2 colonne",
-            "3 colonne",
+            "P: 1 colonne",
+            "P: 2 colonne",
+            "P: 3 colonne",
         ]
         # Check line and curve MCIDs
         line_mcids = set(x["mcid"] for x in page.lines)
