@@ -1,6 +1,6 @@
 import ctypes
 from io import BufferedReader, BytesIO
-from typing import TYPE_CHECKING, Callable, Iterator, Optional, TypeAlias, Union
+from typing import TYPE_CHECKING, Callable, Iterator, Optional, Union
 
 import pypdfium2  # type: ignore
 import pypdfium2.raw as pdfium_c  # type: ignore
@@ -8,13 +8,13 @@ import pypdfium2.raw as pdfium_c  # type: ignore
 from ._typing import T_obj
 
 if TYPE_CHECKING:
-    fpdf_structelement_t: TypeAlias = ctypes._Pointer[pdfium_c.fpdf_structelement_t__]
-    fpdf_structtree_t: TypeAlias = ctypes._Pointer[pdfium_c.fpdf_structtree_t__]
-    c_char_array: TypeAlias = ctypes.Array[ctypes.c_char]
+    fpdf_structelement_t = ctypes._Pointer[pdfium_c.fpdf_structelement_t__]
+    fpdf_structtree_t = ctypes._Pointer[pdfium_c.fpdf_structtree_t__]
+    c_char_array = ctypes.Array[ctypes.c_char]
 else:
-    fpdf_structelement_t: TypeAlias = ctypes._Pointer
-    fpdf_structtree_t: TypeAlias = ctypes._Pointer
-    c_char_array: TypeAlias = ctypes.Array
+    fpdf_structelement_t = ctypes._Pointer
+    fpdf_structtree_t = ctypes._Pointer
+    c_char_array = ctypes.Array
 
 
 class PdfStructElement:
