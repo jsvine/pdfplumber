@@ -159,6 +159,7 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`doctop`| Distance of top of character from top of document.|
 |`matrix`| The "current transformation matrix" for this character. (See below for details.)|
 |`mcid`| The marked content section ID for this character if any (otherwise None)|
+|`tag`| The marked content section tag for this character if any (otherwise None)|
 |`ncs`|TKTK|
 |`stroking_pattern`|TKTK|
 |`non_stroking_pattern`|TKTK|
@@ -193,6 +194,7 @@ my_char_rotation = my_char_ctm.skew_x
 |`stroking_color`|The color of the line. See [docs/colors.md](docs/colors.md) for details.|
 |`non_stroking_color`|The non-stroking color specified for the line’s path. See [docs/colors.md](docs/colors.md) for details.|
 |`mcid`| The marked content section ID for this line if any (otherwise None)|
+|`tag`| The marked content section tag for this line if any (otherwise None)|
 |`object_type`| "line"|
 
 #### `rect` properties
@@ -213,6 +215,7 @@ my_char_rotation = my_char_ctm.skew_x
 |`stroking_color`|The color of the rectangle's outline. See [docs/colors.md](docs/colors.md) for details.|
 |`non_stroking_color`|The rectangle’s fill color. See [docs/colors.md](docs/colors.md) for details.|
 |`mcid`| The marked content section ID for this rect if any (otherwise None)|
+|`tag`| The marked content section tag for this rect if any (otherwise None)|
 |`object_type`| "rect"|
 
 #### `curve` properties
@@ -235,6 +238,7 @@ my_char_rotation = my_char_ctm.skew_x
 |`stroking_color`|The color of the curve's outline. See [docs/colors.md](docs/colors.md) for details.|
 |`non_stroking_color`|The curve’s fill color. See [docs/colors.md](docs/colors.md) for details.|
 |`mcid`| The marked content section ID for this curve if any (otherwise None)|
+|`tag`| The marked content section tag for this curve if any (otherwise None)|
 |`object_type`| "curve"|
 
 #### Derived properties
