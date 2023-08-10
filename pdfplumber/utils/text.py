@@ -2,6 +2,7 @@ import inspect
 import itertools
 import re
 import string
+from copy import deepcopy
 from operator import itemgetter
 from typing import Any, Dict, Generator, List, Match, Optional, Pattern, Tuple, Union
 
@@ -455,6 +456,18 @@ class WordExtractor:
         def upright_key(x: T_obj) -> int:
             return -int(x["upright"])
 
+        def remove_overlapped_blank_char(sub_cluster):
+            sc_cpy = deepcopy(sub_cluster)
+            for idx, c in enumerate(sc_cpy):
+                if c["text"] == " ":
+                    for next_char in sc_cpy[idx:]:
+                        if next_char["text"] != " ":
+                            if next_char["x0"] < c["x0"]:
+                                # this blank char is overlapped with the following chars
+                                sub_cluster.remove(c)
+                                break
+            return sub_cluster
+
         for upright_cluster in cluster_objects(list(chars), upright_key, 0):
             upright = upright_cluster[0]["upright"]
             cluster_key = "doctop" if upright else "x0"
@@ -467,6 +480,9 @@ class WordExtractor:
             for sc in subclusters:
                 # Sort within line
                 sort_key = "x0" if upright else "doctop"
+                if upright:
+                    sc = remove_overlapped_blank_char(sc)
+
                 to_yield = sorted(sc, key=itemgetter(sort_key))
 
                 # Reverse order if necessary

@@ -257,3 +257,13 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             page = pdf.pages[0]
             page.search(r"\d+", regex=True)
+
+    def test_issue_964(self):
+        """
+        extracted word is broken due to multi overlapped blank chars
+        """
+        path = os.path.join(HERE, "pdfs/issue-964-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            lines = page.extract_text().splitlines()
+            assert lines[5].startswith("VLHDU8SHRR Homeowner Discount")
