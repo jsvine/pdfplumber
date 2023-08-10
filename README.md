@@ -429,17 +429,17 @@ Sometimes PDF files can contain forms that include inputs that people can fill o
 For example, this snippet will retrieve form field names and values and store them in a dictionary.
 
 ```python
+from pdfplumber.utils.pdfinternals import resolve_and_decode
+
 pdf = pdfplumber.open("document_with_form.pdf")
 
-fields = pdf.doc.catalog["AcroForm"].resolve()["Fields"]
 def parse_field_helper(form_data, field, prefix=None):
-    """ appends form data in `field` to provided `form_data` list as tuples of `(field_name, alternate_field_name, field_value)`
+    """ appends any PDF AcroForm field/value pairs in `field` to provided `form_data` list
 
-        if `field` has child fields, those will be parsed recursively, with the parent's field name
-        prepended to the child's field name.
+        if `field` has child fields, those will be parsed recursively.
     """
     resolved_field = field.resolve()
-    field_name = b'.'.join([prefix, resolved_field.get("T")]) if prefix and resolved_field.get("T") else resolved_field.get("T")
+    field_name = '.'.join(filter(lambda x: x, [prefix, resolve_and_decode(resolved_field.get("T"))]))
     if "Kids" in resolved_field:
         for kid_field in resolved_field["Kids"]:
             parse_field_helper(form_data, kid_field, prefix=field_name)
@@ -447,8 +447,8 @@ def parse_field_helper(form_data, field, prefix=None):
         # "T" is a field-name, but it's sometimes absent.
         # "TU" is the "alternate field name" and is often more human-readable
         # your PDF may have one, the other, or both.
-        alternate_field_name  = resolved_field.get("TU")
-        field_value = resolved_field["V"] if 'V' in resolved_field else None
+        alternate_field_name  = resolve_and_decode(resolved_field.get("TU")) if resolved_field.get("TU") else None
+        field_value = resolve_and_decode(resolved_field["V"]) if 'V' in resolved_field else None
         form_data.append([field_name, alternate_field_name, field_value])
 
 
