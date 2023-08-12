@@ -453,7 +453,7 @@ def parse_field_helper(form_data, field, prefix=None):
 
 
 form_data = []
-
+fields = pdf.doc.catalog["AcroForm"].resolve()["Fields"]
 for field in fields:
     parse_field_helper(form_data, field)
 ```
