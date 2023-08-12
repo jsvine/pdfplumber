@@ -426,21 +426,48 @@ Sometimes PDF files can contain forms that include inputs that people can fill o
 
 `pdfplumber` doesn't have an interface for working with form data, but you can access it using `pdfplumber`'s wrappers around `pdfminer`.
 
-For example, this snippet will retrieve form field names and values and store them in a dictionary. You may have to modify this script to handle cases like nested fields (see page 676 of the specification).
+For example, this snippet will retrieve form field names and values and store them in a dictionary.
 
 ```python
+import pdfplumber
+from pdfplumber.utils.pdfinternals import resolve_and_decode, resolve
+
 pdf = pdfplumber.open("document_with_form.pdf")
 
-fields = pdf.doc.catalog["AcroForm"].resolve()["Fields"]
+def parse_field_helper(form_data, field, prefix=None):
+    """ appends any PDF AcroForm field/value pairs in `field` to provided `form_data` list
 
-form_data = {}
+        if `field` has child fields, those will be parsed recursively.
+    """
+    resolved_field = field.resolve()
+    field_name = '.'.join(filter(lambda x: x, [prefix, resolve_and_decode(resolved_field.get("T"))]))
+    if "Kids" in resolved_field:
+        for kid_field in resolved_field["Kids"]:
+            parse_field_helper(form_data, kid_field, prefix=field_name)
+    if "T" in resolved_field or "TU" in resolved_field:
+        # "T" is a field-name, but it's sometimes absent.
+        # "TU" is the "alternate field name" and is often more human-readable
+        # your PDF may have one, the other, or both.
+        alternate_field_name  = resolve_and_decode(resolved_field.get("TU")) if resolved_field.get("TU") else None
+        field_value = resolve_and_decode(resolved_field["V"]) if 'V' in resolved_field else None
+        form_data.append([field_name, alternate_field_name, field_value])
 
+
+form_data = []
+fields = resolve(pdf.doc.catalog["AcroForm"])["Fields"]
 for field in fields:
-    field_name = field.resolve()["T"]
-    field_value = field.resolve()["V"]
-    form_data[field_name] = field_value
+    parse_field_helper(form_data, field)
 ```
 
+Once you run this script, `form_data` is a list containing a three-element tuple for each form element. For instance, a PDF form with a city and state field might look like this.
+```
+[
+ ['STATE.0', 'enter STATE', 'CA'],
+ ['section 2  accident infoRmation.1.0',
+  'enter city of accident',
+  'SAN FRANCISCO']
+]
+```
 
 ## Demonstrations
 
