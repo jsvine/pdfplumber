@@ -429,7 +429,8 @@ Sometimes PDF files can contain forms that include inputs that people can fill o
 For example, this snippet will retrieve form field names and values and store them in a dictionary.
 
 ```python
-from pdfplumber.utils.pdfinternals import resolve_and_decode
+import pdfplumber
+from pdfplumber.utils.pdfinternals import resolve_and_decode, resolve
 
 pdf = pdfplumber.open("document_with_form.pdf")
 
@@ -453,7 +454,7 @@ def parse_field_helper(form_data, field, prefix=None):
 
 
 form_data = []
-fields = pdf.doc.catalog["AcroForm"].resolve()["Fields"]
+fields = resolve(pdf.doc.catalog["AcroForm"])["Fields"]
 for field in fields:
     parse_field_helper(form_data, field)
 ```
