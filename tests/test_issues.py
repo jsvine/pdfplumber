@@ -266,4 +266,12 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             page = pdf.pages[0]
             lines = page.extract_text().splitlines()
+            assert lines[5].startswith("VLHDU8SHRR H o m e o w ner Discount")
+            lines = (
+                page.remove_whitespace(only_overlapping=True)
+                .extract_text()
+                .splitlines()
+            )
             assert lines[5].startswith("VLHDU8SHRR Homeowner Discount")
+            lines = page.remove_whitespace().extract_text().splitlines()
+            assert lines[5].startswith("VLHDU8SHRR HomeownerDiscount")

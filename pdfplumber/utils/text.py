@@ -456,18 +456,6 @@ class WordExtractor:
         def upright_key(x: T_obj) -> int:
             return -int(x["upright"])
 
-        def remove_overlapped_blank_char(sub_cluster):
-            sc_cpy = deepcopy(sub_cluster)
-            for idx, c in enumerate(sc_cpy):
-                if c["text"] == " ":
-                    for next_char in sc_cpy[idx:]:
-                        if next_char["text"] != " ":
-                            if next_char["x0"] < c["x0"]:
-                                # this blank char is overlapped with the following chars
-                                sub_cluster.remove(c)
-                                break
-            return sub_cluster
-
         for upright_cluster in cluster_objects(list(chars), upright_key, 0):
             upright = upright_cluster[0]["upright"]
             cluster_key = "doctop" if upright else "x0"
@@ -480,9 +468,6 @@ class WordExtractor:
             for sc in subclusters:
                 # Sort within line
                 sort_key = "x0" if upright else "doctop"
-                if upright:
-                    sc = remove_overlapped_blank_char(sc)
-
                 to_yield = sorted(sc, key=itemgetter(sort_key))
 
                 # Reverse order if necessary
@@ -596,3 +581,33 @@ def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
 
     deduped = yield_unique_chars(chars)
     return sorted(deduped, key=chars.index)
+
+
+def remove_overlapped_whitespace(
+    chars: T_obj_list, y_tolerance: T_num = DEFAULT_Y_TOLERANCE
+) -> T_obj_list:
+    """
+    Remove the whitespace chars in lines which are overlapped with the following non whitespace chars.
+    """
+
+    def upright_key(x: T_obj) -> int:
+        return -int(x["upright"])
+
+    for upright_cluster in cluster_objects(list(chars), upright_key, 0):
+        upright = upright_cluster[0]["upright"]
+        if upright:
+            # Cluster by line
+            subclusters = cluster_objects(
+                upright_cluster, itemgetter("doctop"), y_tolerance
+            )
+            for sc in subclusters:
+                sc_cpy = deepcopy(sc)
+                for idx, c in enumerate(sc_cpy):
+                    if c["text"] == " ":
+                        for next_char in sc_cpy[idx:]:
+                            if next_char["text"] != " ":
+                                if next_char["x0"] < c["x0"]:
+                                    # this whitespace char is overlapped with the following chars
+                                    sc.remove(c)
+                                    break
+                yield from sc
