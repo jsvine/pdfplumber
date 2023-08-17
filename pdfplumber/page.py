@@ -126,11 +126,10 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
 
     def begin_tag(self, tag: PSLiteral, props: Optional[PDFStackT] = None) -> None:
         """Handle beginning of tag, setting current MCID if any."""
+        self.cur_tag = decode_text(tag.name)
         if isinstance(props, dict) and "MCID" in props:
-            self.cur_tag = decode_text(tag.name)
             self.cur_mcid = props["MCID"]
         else:
-            self.cur_tag = None
             self.cur_mcid = None
 
     def end_tag(self) -> None:
