@@ -70,9 +70,7 @@ def parse_args(args_raw: List[str]) -> argparse.Namespace:
 
 
 def add_text_to_mcids(pdf: PDF, data: List[Dict[str, Any]]) -> None:
-    page_contents: DefaultDict[int, [DefaultDict[int, str]]] = defaultdict(
-        lambda: defaultdict(str)
-    )
+    page_contents: DefaultDict[int, Any] = defaultdict(lambda: defaultdict(str))
     for page in pdf.pages:
         text_contents = page_contents[page.page_number]
         for c in page.chars:
