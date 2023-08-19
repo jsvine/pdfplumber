@@ -158,6 +158,8 @@ Each object is represented as a simple Python `dict`, with the following propert
 |`bottom`| Distance of bottom of the character from top of page.|
 |`doctop`| Distance of top of character from top of document.|
 |`matrix`| The "current transformation matrix" for this character. (See below for details.)|
+|`mcid`| The marked content section ID for this character if any (otherwise None)|
+|`tag`| The marked content section tag for this character if any (otherwise None)|
 |`ncs`|TKTK|
 |`stroking_pattern`|TKTK|
 |`non_stroking_pattern`|TKTK|
@@ -191,6 +193,8 @@ my_char_rotation = my_char_ctm.skew_x
 |`linewidth`| Thickness of line.|
 |`stroking_color`|The color of the line. See [docs/colors.md](docs/colors.md) for details.|
 |`non_stroking_color`|The non-stroking color specified for the line’s path. See [docs/colors.md](docs/colors.md) for details.|
+|`mcid`| The marked content section ID for this line if any (otherwise None)|
+|`tag`| The marked content section tag for this line if any (otherwise None)|
 |`object_type`| "line"|
 
 #### `rect` properties
@@ -210,6 +214,8 @@ my_char_rotation = my_char_ctm.skew_x
 |`linewidth`| Thickness of line.|
 |`stroking_color`|The color of the rectangle's outline. See [docs/colors.md](docs/colors.md) for details.|
 |`non_stroking_color`|The rectangle’s fill color. See [docs/colors.md](docs/colors.md) for details.|
+|`mcid`| The marked content section ID for this rect if any (otherwise None)|
+|`tag`| The marked content section tag for this rect if any (otherwise None)|
 |`object_type`| "rect"|
 
 #### `curve` properties
@@ -231,6 +237,8 @@ my_char_rotation = my_char_ctm.skew_x
 |`fill`| Whether the shape defined by the curve's path is filled.|
 |`stroking_color`|The color of the curve's outline. See [docs/colors.md](docs/colors.md) for details.|
 |`non_stroking_color`|The curve’s fill color. See [docs/colors.md](docs/colors.md) for details.|
+|`mcid`| The marked content section ID for this curve if any (otherwise None)|
+|`tag`| The marked content section tag for this curve if any (otherwise None)|
 |`object_type`| "curve"|
 
 #### Derived properties
@@ -531,6 +539,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Shannon Shen](https://github.com/lolipopshock)
 - [Matsumoto Toshi](https://github.com/toshi1127)
 - [John West](https://github.com/jwestwsj)
+- [David Huggins-Daines](https://github.com/dhdaines)
 - [Jeremy B. Merrill](https://github.com/jeremybmerrill)
 
 ## Contributing
