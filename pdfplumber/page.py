@@ -507,6 +507,24 @@ class Page(Container):
         p._objects["char"] = utils.dedupe_chars(self.chars, **kwargs)
         return p
 
+    def remove_whitespace(
+        self, only_overlapping: bool = False, **kwargs: Any
+    ) -> "FilteredPage":
+        """
+        Removes all the whitespace chars.
+        When `only_overlapping=True`: only remove the whitespace chars in lines
+        which are overlapped with the following non whitespace chars.
+        """
+        if only_overlapping:
+            p = FilteredPage(self, lambda x: True)
+            p._objects = {kind: objs for kind, objs in self.objects.items()}
+            p._objects["char"] = utils.remove_overlapped_whitespace(
+                self.chars, **kwargs
+            )
+        else:
+            p = FilteredPage(self, lambda obj: obj.get("text") != " ")
+        return p
+
     def to_image(
         self,
         resolution: Optional[Union[int, float]] = None,

@@ -40,4 +40,5 @@ from .text import (  # noqa: F401
     extract_text,
     extract_text_simple,
     extract_words,
+    remove_overlapped_whitespace,
 )
