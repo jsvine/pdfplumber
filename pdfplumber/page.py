@@ -456,7 +456,7 @@ class Page(Container):
         return p
 
     def remove_whitespace(
-        self, only_overlapping=False, **kwargs: Any
+        self, only_overlapping: bool = False, **kwargs: Any
     ) -> "FilteredPage":
         """
         Removes all the whitespace chars.
@@ -466,8 +466,8 @@ class Page(Container):
         if only_overlapping:
             p = FilteredPage(self, lambda x: True)
             p._objects = {kind: objs for kind, objs in self.objects.items()}
-            p._objects["char"] = list(
-                utils.remove_overlapped_whitespace(self.chars, **kwargs)
+            p._objects["char"] = utils.remove_overlapped_whitespace(
+                self.chars, **kwargs
             )
         else:
             p = FilteredPage(self, lambda obj: obj.get("text") != " ")
