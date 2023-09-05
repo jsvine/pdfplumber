@@ -801,6 +801,27 @@ SCOTUS = [
 ]
 
 
+HELLO = [
+    {
+        "type": "Document",
+        "children": [
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {"O": "Foo", "A1": 1},
+                "mcids": [1],
+            },
+            {
+                "type": "P",
+                "page_number": 2,
+                "attributes": {"O": "Foo", "A1": 2, "A2": 2},
+                "mcids": [1],
+            },
+        ],
+    }
+]
+
+
 class TestClass(unittest.TestCase):
     """Test the underlying Structure tree class"""
 
@@ -904,3 +925,9 @@ class TestMany(unittest.TestCase):
             if "children" in el1:
                 assert len(el1["children"]) == len(el2["children"])
                 d.extend(zip(el1["children"], el2["children"]))
+
+    def test_hello_structure(self):
+        # Synthetic PDF to test some corner cases
+        path = os.path.join(HERE, "pdfs/hello_structure.pdf")
+        pdf = pdfplumber.open(path)
+        assert pdf.structure_tree == HELLO
