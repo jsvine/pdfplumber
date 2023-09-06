@@ -7,7 +7,7 @@ Not a general purpose tool!!!"""
 import re
 import sys
 
-with open(sys.argv[1], "rb") as infh:
+with open(sys.argv[1], "r+b") as infh:
     pos = 0
     xref = [(0, 65535, "f")]
     for spam in infh:
@@ -17,11 +17,12 @@ with open(sys.argv[1], "rb") as infh:
         elif text.strip() == "xref":
             startxref = pos
         pos = infh.tell()
-    print("xref")
-    print("0", len(xref))
+    infh.seek(startxref)
+    infh.write(b"xref\n")
+    infh.write(("0 %d\n" % len(xref)).encode("ascii"))
     for x in xref:
-        print("%010d %05d %s " % x)
-    print("trailer  << /Size %d /Root 1 0 R >>" % len(xref))
-    print("startxref")
-    print(startxref)
-    print("%%EOF")
+        infh.write(("%010d %05d %s \n" % x).encode("ascii"))
+    infh.write(("trailer  << /Size %d /Root 1 0 R >>\n" % len(xref)).encode("ascii"))
+    infh.write(b"startxref\n")
+    infh.write(("%d\n" % startxref).encode("ascii"))
+    infh.write(b"%%EOF\n")

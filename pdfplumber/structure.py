@@ -1,3 +1,4 @@
+import logging
 from collections import deque
 from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
@@ -9,6 +10,9 @@ from pdfminer.pdftypes import PDFObjRef, resolve1
 from pdfminer.psparser import PSLiteral
 
 from .utils import decode_text
+
+logger = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:  # pragma: nocover
     from .page import Page
@@ -116,6 +120,7 @@ class PDFStructTree:
             if key not in obj:
                 continue
             attr_obj = resolve1(obj[key])
+            # It could be a list of attribute objects (why?)
             if isinstance(attr_obj, list):
                 attr_obj_list.extend(attr_obj)
             else:
@@ -123,11 +128,12 @@ class PDFStructTree:
         attr_objs = []
         prev_obj = None
         for aref in attr_obj_list:
-            # If we find a revision number, which might "follow
-            # the revision object" (the spec is incredibly unclear
-            # about how this actually works), then use it to
-            # decide whether to take the previous object...
-            if isinstance(aref, int):  # pragma: nocover
+            # If we find a revision number, which might "follow the
+            # revision object" (the spec is not clear about what this
+            # should look like but it implies they are simply adjacent
+            # in a flat array), then use it to decide whether to take
+            # the previous object...
+            if isinstance(aref, int):
                 if aref == revision and prev_obj is not None:
                     attr_objs.append(prev_obj)
                 prev_obj = None
@@ -137,14 +143,15 @@ class PDFStructTree:
                 prev_obj = resolve1(aref)
         if prev_obj is not None:
             attr_objs.append(prev_obj)
-        # Now merge all the relevant ones to a single set (FIXME: Not
-        # *really* sure this is how this is supposed to work... OMG)
+        # Now merge all the attribute objects in the collected to a
+        # single set (again, the spec doesn't really explain this but
+        # does say that attributes in /A supersede those in /C)
         attr = {}
         for obj in attr_objs:
-            if isinstance(obj, PSLiteral):  # OMG
+            if isinstance(obj, PSLiteral):
                 key = decode_text(obj.name)
-                # Should be a warning at least!
-                if key not in self.class_map:  # pragma: nocover
+                if key not in self.class_map:
+                    logger.warning("Unknown attribute class %s", key)
                     continue
                 obj = self.class_map[key]
             for k, v in obj.items():
@@ -230,16 +237,22 @@ class PDFStructTree:
         assert found_root
         self._resolve_children(s)
 
+    def on_parsed_page(self, obj: Dict[str, Any]) -> bool:
+        if "Pg" not in obj:
+            return True
+        page_objid = obj["Pg"].objid
+        if self.page_dict is not None:
+            return page_objid in self.page_dict
+        if self.page is not None:
+            # We have to do this to satisfy mypy
+            if page_objid != self.page.pageid:
+                return False
+        return True
+
     def _parse_struct_tree(self) -> None:
         """Populate the structure tree starting from the root, skipping
         unparsed pages and empty elements."""
         root = resolve1(self.root["K"])
-
-        def on_parsed_page(obj: Dict[str, Any]) -> bool:
-            if self.page_dict is not None and "Pg" in obj:  # pragma: nocover
-                page_objid = obj["Pg"].objid
-                return page_objid in self.page_dict
-            return True
 
         # It could just be a single object ... it's in the spec (argh)
         if isinstance(root, dict):
@@ -248,12 +261,13 @@ class PDFStructTree:
         s = {}
         while d:
             ref = d.popleft()
-            if repr(ref) in s:
-                continue  # pragma: nocover
+            # In case the tree is actually a DAG and not a tree...
+            if repr(ref) in s:  # pragma: nocover (shouldn't happen)
+                continue
             obj = resolve1(ref)
             # Deref top-level OBJR skipping refs to unparsed pages
-            if isinstance(obj, dict) and "Obj" in obj:  # pragma: nocover
-                if not on_parsed_page(obj):
+            if isinstance(obj, dict) and "Obj" in obj:
+                if not self.on_parsed_page(obj):
                     continue
                 ref = obj["Obj"]
                 obj = resolve1(ref)
@@ -265,7 +279,7 @@ class PDFStructTree:
                 if isinstance(child, PDFObjRef):
                     d.append(child)
                 elif isinstance(child, dict) and "Obj" in child:
-                    if on_parsed_page(child):
+                    if self.on_parsed_page(child):
                         d.append(child["Obj"])
 
         # Traverse depth-first, removing empty elements (unsure how to
@@ -273,22 +287,17 @@ class PDFStructTree:
         def prune(elements: List[Any]) -> List[Any]:
             next_elements = []
             for ref in elements:
+                obj = resolve1(ref)
                 if isinstance(ref, int):
                     next_elements.append(ref)
                     continue
-                elif isinstance(ref, dict):
-                    if not on_parsed_page(ref):  # pragma: nocover
+                elif isinstance(obj, dict):
+                    if not self.on_parsed_page(obj):
                         continue
-                    if "MCID" in ref:  # pragma: nocover
-                        next_elements.append(ref["MCID"])
+                    if "MCID" in obj:
+                        next_elements.append(obj["MCID"])
                         continue
-                    elif "Obj" in ref:
-                        ref = ref["Obj"]
-                elif isinstance(ref, PDFObjRef):
-                    obj = resolve1(ref)
-                    if isinstance(obj, dict) and "Obj" in obj:  # pragma: nocover
-                        if not on_parsed_page(obj):
-                            continue
+                    elif "Obj" in obj:
                         ref = obj["Obj"]
                 element, children = s[repr(ref)]
                 children = prune(children)
@@ -311,25 +320,30 @@ class PDFStructTree:
         # It could just be a single object ... it's in the spec (argh)
         if isinstance(root, dict):
             root = [self.root["K"]]
-        d = deque(root)
+        self.children = []
+        # Create top-level self.children
+        parsed_root = []
+        for ref in root:
+            obj = resolve1(ref)
+            if isinstance(obj, dict) and "Obj" in obj:
+                if not self.on_parsed_page(obj):
+                    continue
+                ref = obj["Obj"]
+            if repr(ref) in seen:
+                parsed_root.append(ref)
+        d = deque(parsed_root)
         while d:
             ref = d.popleft()
-            # The pruning (or parent tree construction) done above
-            # should ensure we never encounter dangling references,
-            # *but* you never know (should emit warnings...)
-            if repr(ref) not in seen:  # pragma: nocover
-                continue
             element, children = seen[repr(ref)]
             assert element is not None, "Unparsed element"
             for child in children:
                 if isinstance(child, int):
                     element.mcids.append(child)
                 elif isinstance(child, dict):
-                    # Skip out-of-page MCIDS (which are obviously wrong!) and OBJRs
-                    if "Pg" in child and self.page is not None:  # pragma: nocover
-                        if child["Pg"].objid != self.page.pageid:
-                            continue
-                    if "MCID" in child:  # pragma: nocover
+                    # Skip out-of-page MCIDS and OBJRs
+                    if not self.on_parsed_page(child):
+                        continue
+                    if "MCID" in child:
                         element.mcids.append(child["MCID"])
                     elif "Obj" in child:
                         child = child["Obj"]
@@ -339,7 +353,7 @@ class PDFStructTree:
                     if child_element is not None:
                         element.children.append(child_element)
                         d.append(child)
-        self.children = [seen[repr(ref)][0] for ref in root if repr(ref) in seen]
+        self.children = [seen[repr(ref)][0] for ref in parsed_root]
 
     def __iter__(self) -> Iterator[PDFStructElement]:
         return iter(self.children)

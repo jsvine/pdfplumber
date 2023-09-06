@@ -96,11 +96,11 @@ def main(args_raw: List[str] = sys.argv[1:]) -> None:
 
     with PDF.open(args.infile, pages=args.pages, laparams=args.laparams) as pdf:
         if args.structure:
-            json.dump(pdf.structure_tree, sys.stdout, indent=args.indent)
+            print(json.dumps(pdf.structure_tree, indent=args.indent))
         elif args.structure_text:
             tree = pdf.structure_tree
             add_text_to_mcids(pdf, tree)
-            json.dump(tree, sys.stdout, indent=args.indent, ensure_ascii=False)
+            print(json.dumps(tree, indent=args.indent, ensure_ascii=False))
         elif args.format == "csv":
             pdf.to_csv(
                 sys.stdout,

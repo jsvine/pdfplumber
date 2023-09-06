@@ -803,7 +803,8 @@ SCOTUS = [
 
 HELLO = [
     {
-        "type": "Document",
+        "type": "Section",
+        "page_number": 1,
         "children": [
             {
                 "type": "P",
@@ -818,6 +819,33 @@ HELLO = [
                 "mcids": [1],
             },
         ],
+    },
+    {
+        "type": "P",
+        "revision": 1,
+        "page_number": 2,
+        "attributes": {"O": "Foo", "A1": 3, "A2": 3},
+        "mcids": [2],
+    },
+]
+HELLO1 = [
+    {
+        "type": "Section",
+        "page_number": 1,
+        "children": [
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {"O": "Foo", "A1": 1},
+                "mcids": [1],
+            },
+        ],
+    }
+]
+HELLO1P = [
+    {
+        "type": "Section",
+        "children": [{"type": "P", "attributes": {"O": "Foo", "A1": 1}, "mcids": [1]}],
     }
 ]
 
@@ -929,5 +957,8 @@ class TestMany(unittest.TestCase):
     def test_hello_structure(self):
         # Synthetic PDF to test some corner cases
         path = os.path.join(HERE, "pdfs/hello_structure.pdf")
-        pdf = pdfplumber.open(path)
-        assert pdf.structure_tree == HELLO
+        with pdfplumber.open(path) as pdf:
+            assert pdf.structure_tree == HELLO
+            assert pdf.pages[0].structure_tree == HELLO1P
+        with pdfplumber.open(path, pages=[1]) as pdf:
+            assert pdf.structure_tree == HELLO1

@@ -43,7 +43,7 @@ endobj
 6 0 obj
   << /Length 87 >>
 stream
-  /P <</MCID 1>> BDC
+  /H1 <</MCID 1>> BDC
   BT
     /F1 24 Tf
     100 700 Td
@@ -57,24 +57,29 @@ endobj
   << /Type /StructTreeRoot
      /ParentTree 8 0 R
      /RoleMap << /Title /P >>
-     /ClassMap << /C1 << /O /Foo /A1 1 >> >>
-     /K [9 0 R]
+     /ClassMap << /C1 << /O /Foo /A1 1 >>
+                  /C2 << /O /Foo /A1 3 >>
+               >>
+     /K [9 0 R
+         << /Type OBJR /Pg 11 0 R /Obj 14 0 R >>]
   >>
 endobj
 
 8 0 obj
   << /Nums [
             0 [10 0 R]
-            1 [13 0 R]
+            1 [13 0 R 14 0 R]
            ]
   >>
 endobj
 
 9 0 obj
   << /Type /StructElem
-     /S /Document
+     /S /Section
+     /Pg 4 0 R
      /P 7 0 R
-     /K [10 0 R 13 0 R]
+     /K [10 0 R
+         << /Type OBJR /Pg 11 0 R /Obj 13 0 R >>]
   >>
 endobj
 
@@ -84,7 +89,7 @@ endobj
       /P 9 0 R
       /Pg 4 0 R
       /C /C1
-      /K [1]
+      /K [<</Type MCR /MCID 1 /Pg 4 0 R>>]
    >>
 endobj
 
@@ -100,16 +105,22 @@ endobj
 endobj
 
 12 0 obj
-  << /Length 101 >>
+  << /Length 190 >>
 stream
-  /P <</MCID 1>> BDC
+  /H1 <</MCID 1>> BDC
   BT
     /F1 24 Tf
     100 700 Td
-    (Goodbye Cruel World) Tj
+    (Goodbye Cruel World...) Tj
   ET
-  endstream
-EMC
+  /P <</MCID 2>> BDC
+  BT
+    /F1 12 Tf
+    100 600 Td
+    (I'll be back shortly!) Tj
+  ET
+  EMC
+endstream
 endobj
 
 13 0 obj
@@ -123,8 +134,22 @@ endobj
    >>
 endobj
 
+14 0 obj
+   << /Type /StructElem
+      /S /P
+      /P 7 0 R
+      /Pg 11 0 R
+      /K [2]
+      /R 1
+      % /C3 does not exist (coverage)
+      /C [/C1 0 /C2 1 /C3 1]
+      /A [<< /A1 2 /A2 2 >> 0
+          << /A2 3 >> 1]
+   >>
+endobj
+
 xref
-0 14
+0 15
 0000000000 65535 f 
 0000000009 00000 n 
 0000000116 00000 n 
@@ -132,14 +157,18 @@ xref
 0000000280 00000 n 
 0000000481 00000 n 
 0000000581 00000 n 
-0000000720 00000 n 
-0000000882 00000 n 
-0000000975 00000 n 
-0000001075 00000 n 
-0000001195 00000 n 
-0000001398 00000 n 
-0000001547 00000 n 
-trailer  << /Size 14 /Root 1 0 R >>
+0000000721 00000 n 
+0000000989 00000 n 
+0000001089 00000 n 
+0000001245 00000 n 
+0000001395 00000 n 
+0000001598 00000 n 
+0000001842 00000 n 
+0000001990 00000 n 
+trailer  << /Size 15 /Root 1 0 R >>
 startxref
-1695
+2227
+%%EOF
+tartxref
+2292
 %%EOF
