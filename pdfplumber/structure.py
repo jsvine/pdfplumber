@@ -163,19 +163,14 @@ class PDFStructTree:
 
     def _make_element(self, obj: Any) -> Tuple[Optional[PDFStructElement], List[Any]]:
         # We hopefully caught these earlier
-        assert "MCID" not in obj, "Found MCR: %s" % obj
-        assert "Obj" not in obj, "Found OBJR: %s" % obj
-        # Get page number if necessary, also (mostly) exclude unparsed
-        # pages (FIXME: objects on unparsed pages with no explicit
-        # page number will remain)
+        assert "MCID" not in obj, "Uncaught MCR: %s" % obj
+        assert "Obj" not in obj, "Uncaught OBJR: %s" % obj
+        # Get page number if necessary
         page_number = None
         if self.page_dict is not None and "Pg" in obj:
             page_objid = obj["Pg"].objid
-            if page_objid not in self.page_dict:
-                # Stop here, page was not parsed
-                return (None, [])
-            else:
-                page_number = self.page_dict[page_objid]
+            assert page_objid in self.page_dict, "Object on unparsed page: %s" % obj
+            page_number = self.page_dict[page_objid]
         obj_tag = ""
         if "S" in obj:
             obj_tag = decode_text(obj["S"].name)
@@ -276,11 +271,16 @@ class PDFStructTree:
             # tree-recursion.
             s[repr(ref)] = element, children
             for child in children:
+                obj = resolve1(child)
+                if isinstance(obj, dict):
+                    if not self.on_parsed_page(obj):
+                        continue
+                    if "Obj" in obj:
+                        child = obj["Obj"]
+                    elif "MCID" in obj:
+                        continue
                 if isinstance(child, PDFObjRef):
                     d.append(child)
-                elif isinstance(child, dict) and "Obj" in child:
-                    if self.on_parsed_page(child):
-                        d.append(child["Obj"])
 
         # Traverse depth-first, removing empty elements (unsure how to
         # do this non-recursively)
@@ -337,16 +337,17 @@ class PDFStructTree:
             element, children = seen[repr(ref)]
             assert element is not None, "Unparsed element"
             for child in children:
-                if isinstance(child, int):
-                    element.mcids.append(child)
-                elif isinstance(child, dict):
+                obj = resolve1(child)
+                if isinstance(obj, int):
+                    element.mcids.append(obj)
+                elif isinstance(obj, dict):
                     # Skip out-of-page MCIDS and OBJRs
-                    if not self.on_parsed_page(child):
+                    if not self.on_parsed_page(obj):
                         continue
-                    if "MCID" in child:
-                        element.mcids.append(child["MCID"])
-                    elif "Obj" in child:
-                        child = child["Obj"]
+                    if "MCID" in obj:
+                        element.mcids.append(obj["MCID"])
+                    elif "Obj" in obj:
+                        child = obj["Obj"]
                 # NOTE: if, not elif, in case of OBJR above
                 if isinstance(child, PDFObjRef):
                     child_element, _ = seen.get(repr(child), (None, None))
