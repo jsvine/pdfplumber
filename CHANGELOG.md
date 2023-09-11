@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file. The format 
 - Add support for marked-content sequences, represented by `mcid` and `tag` attributes on `char`/`rect`/`line`/`curve`/`image` objects (h/t @dhdaines). ([#961](https://github.com/jsvine/pdfplumber/pulls/961))
 - Add `gs_path` argument to `pdfplumber.open(...)` and `pdfplumber.repair(...)`, to allow passing a custom Ghostscript path to be used for repairing. ([#953](https://github.com/jsvine/pdfplumber/issues/953))
 
+### Fixed
+
+- Respect `use_text_flow` in `extract_text` (h/t @dhdaines). ([#983](https://github.com/jsvine/pdfplumber/pulls/983))
+
 ## [0.10.2] - 2023-07-29
 
 ### Added
