@@ -8,9 +8,10 @@ from typing import Optional, Union
 def _repair(
     path_or_fp: Union[str, pathlib.Path, BufferedReader, BytesIO],
     password: Optional[str] = None,
+    gs_path: Optional[Union[str, pathlib.Path]] = None,
 ) -> BytesIO:
 
-    executable = shutil.which("gs") or shutil.which("gswin32c")
+    executable = gs_path or shutil.which("gs") or shutil.which("gswin32c")
     if executable is None:  # pragma: nocover
         raise Exception(
             "Cannot find Ghostscript, which is required for repairs.\n"
@@ -52,8 +53,9 @@ def repair(
     path_or_fp: Union[str, pathlib.Path, BufferedReader, BytesIO],
     outfile: Optional[Union[str, pathlib.Path]] = None,
     password: Optional[str] = None,
+    gs_path: Optional[Union[str, pathlib.Path]] = None,
 ) -> Optional[BytesIO]:
-    repaired = _repair(path_or_fp, password)
+    repaired = _repair(path_or_fp, password, gs_path=gs_path)
     if outfile:
         with open(outfile, "wb") as f:
             f.write(repaired.read())

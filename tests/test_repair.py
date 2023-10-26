@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -55,4 +56,9 @@ class Test(unittest.TestCase):
     def test_repair_password(self):
         path = os.path.join(HERE, "pdfs/password-example.pdf")
         with pdfplumber.open(path, repair=True, password="test") as pdf:
+            assert len(pdf.pages[0].chars)
+
+    def test_repair_custom_path(self):
+        path = os.path.join(HERE, "pdfs/malformed-from-issue-932.pdf")
+        with pdfplumber.open(path, repair=True, gs_path=shutil.which("gs")) as pdf:
             assert len(pdf.pages[0].chars)

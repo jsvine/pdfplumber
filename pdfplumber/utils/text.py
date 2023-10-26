@@ -225,7 +225,10 @@ class WordMap:
 
         for i, ws in enumerate(
             cluster_objects(
-                words_sorted_doctop, lambda x: float(x[0]["doctop"]), y_tolerance
+                words_sorted_doctop,
+                lambda x: float(x[0]["doctop"]),
+                y_tolerance,
+                preserve_order=presorted or use_text_flow,
             )
         ):
             y_dist = (

@@ -70,12 +70,13 @@ class PDF(Container):
         password: Optional[str] = None,
         strict_metadata: bool = False,
         repair: bool = False,
+        gs_path: Optional[Union[str, pathlib.Path]] = None,
     ) -> "PDF":
 
         stream: Union[BufferedReader, BytesIO]
 
         if repair:
-            stream = _repair(path_or_fp, password=password)
+            stream = _repair(path_or_fp, password=password, gs_path=gs_path)
             stream_is_external = False
             # Although the original file has a path,
             # the repaired version does not

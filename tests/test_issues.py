@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import os
+import re
 import unittest
 
 import pdfplumber
@@ -257,3 +258,20 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path) as pdf:
             page = pdf.pages[0]
             page.search(r"\d+", regex=True)
+
+    def test_issue_982(self):
+        """
+        extract_text(use_text_flow=True) apparently does nothing
+
+        This is because, while we took care not to sort the words by
+        `doctop` in `WordExtractor` and `WordMap`, no such precaution
+        was taken in `cluster_objects`.  We thus add an option to
+        `cluster_objects` to preserve the ordering (which could come
+        from `use_text_flow` or from `presorted`) of the input objects.
+        """
+        path = os.path.join(HERE, "pdfs/issue-982-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            text = re.sub(r"\s+", " ", page.extract_text(use_text_flow=True))
+            words = " ".join(w["text"] for w in page.extract_words(use_text_flow=True))
+            assert text[0:100] == words[0:100]

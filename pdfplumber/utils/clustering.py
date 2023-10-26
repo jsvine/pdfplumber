@@ -40,7 +40,10 @@ R = TypeVar("R")
 
 
 def cluster_objects(
-    xs: List[R], key_fn: Union[Hashable, Callable[[R], T_num]], tolerance: T_num
+    xs: List[R],
+    key_fn: Union[Hashable, Callable[[R], T_num]],
+    tolerance: T_num,
+    preserve_order: bool = False,
 ) -> List[List[R]]:
 
     if not callable(key_fn):
@@ -51,7 +54,12 @@ def cluster_objects(
 
     get_0, get_1 = itemgetter(0), itemgetter(1)
 
-    cluster_tuples = sorted(((x, cluster_dict.get(key_fn(x))) for x in xs), key=get_1)
+    if preserve_order:
+        cluster_tuples = [(x, cluster_dict.get(key_fn(x))) for x in xs]
+    else:
+        cluster_tuples = sorted(
+            ((x, cluster_dict.get(key_fn(x))) for x in xs), key=get_1
+        )
 
     grouped = itertools.groupby(cluster_tuples, key=get_1)
 
