@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: pdfplumber
 type: software
-version: 0.10.2
-date-released: "2023-07-29"
+version: 0.10.3
+date-released: "2023-10-26"
 authors:
   - family-names: "Singer-Vine"
     given-names: "Jeremy"
