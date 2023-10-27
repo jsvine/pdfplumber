@@ -167,6 +167,23 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
         self.tag_cur_item()
 
 
+def textmap_cacher(func: Callable[..., TextMap]) -> Callable[..., TextMap]:
+    """
+    Caches the kwargs to Page._get_textmap
+    and converts list kwargs (which would be unhashable) into tuples.
+    """
+
+    def new_func(**kwargs: Any) -> TextMap:
+        return lru_cache()(func)(
+            **{
+                key: (tuple(value) if isinstance(value, list) else value)
+                for key, value in kwargs.items()
+            }
+        )
+
+    return new_func
+
+
 class Page(Container):
     cached_properties: List[str] = Container.cached_properties + ["_layout"]
     is_original: bool = True
@@ -211,8 +228,8 @@ class Page(Container):
             )
         )
 
-        # https://rednafi.github.io/reflections/dont-wrap-instance-methods-with-functoolslru_cache-decorator-in-python.html
-        self.get_textmap = lru_cache()(self._get_textmap)
+        # https://rednafi.com/python/lru_cache_on_methods/
+        self.get_textmap = textmap_cacher(self._get_textmap)
 
     @property
     def width(self) -> T_num:
@@ -569,7 +586,7 @@ class DerivedPage(Page):
         self.page_obj = parent_page.page_obj
         self.page_number = parent_page.page_number
         self.flush_cache(Container.cached_properties)
-        self.get_textmap = lru_cache()(self._get_textmap)
+        self.get_textmap = textmap_cacher(self._get_textmap)
 
 
 def test_proposed_bbox(bbox: T_bbox, parent_bbox: T_bbox) -> None:

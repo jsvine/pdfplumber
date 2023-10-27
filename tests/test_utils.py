@@ -88,6 +88,27 @@ class Test(unittest.TestCase):
         assert words_rtl[1]["text"] == "baaabaaA/AAA"
         assert words_rtl[1]["direction"] == -1
 
+    def test_extra_attrs(self):
+        path = os.path.join(HERE, "pdfs/extra-attrs-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            assert page.extract_text() == "BlackRedArial"
+            assert (
+                page.extract_text(extra_attrs=["non_stroking_color"])
+                == "Black RedArial"
+            )
+            assert page.extract_text(extra_attrs=["fontname"]) == "BlackRed Arial"
+            assert (
+                page.extract_text(extra_attrs=["non_stroking_color", "fontname"])
+                == "Black Red Arial"
+            )
+            # Should not error
+            assert page.extract_text(
+                layout=True,
+                use_text_flow=True,
+                extra_attrs=["non_stroking_color", "fontname"],
+            )
+
     def test_extract_words_punctuation(self):
         path = os.path.join(HERE, "pdfs/test-punkt.pdf")
         with pdfplumber.open(path) as pdf:

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.10.4] - [Unreleased]
+
+### Fixed
+
+- Fix `Page.get_textmap` caching to allow for `extra_attrs=[...]`, by preconverting list kwargs to tuples. ([#1030](https://github.com/jsvine/pdfplumber/issues/1030))
+
 ## [0.10.3] - 2023-10-26
 
 ### Added
