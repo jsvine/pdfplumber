@@ -11,7 +11,8 @@ def _repair(
     gs_path: Optional[Union[str, pathlib.Path]] = None,
 ) -> BytesIO:
 
-    executable = gs_path or shutil.which("gs") or shutil.which("gswin32c")
+    executable = (gs_path or shutil.which("gs") or shutil.which("gswin32c")
+                  or shutil.which("gswin64c"))
     if executable is None:  # pragma: nocover
         raise Exception(
             "Cannot find Ghostscript, which is required for repairs.\n"
