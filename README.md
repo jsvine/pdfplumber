@@ -541,6 +541,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [John West](https://github.com/jwestwsj)
 - [David Huggins-Daines](https://github.com/dhdaines)
 - [Jeremy B. Merrill](https://github.com/jeremybmerrill)
+- [Echedey Luis](https://github.com/echedey-ls)
 
 ## Contributing
 
