@@ -4,9 +4,14 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.10.4] - [Unreleased]
 
+### Added
+
+- Add "gswin64c" as another possible Ghostscript executable in `repair.py` (h/t @echedey-ls). ([#1032](https://github.com/jsvine/pdfplumber/issues/1030))
+
 ### Fixed
 
 - Fix `Page.get_textmap` caching to allow for `extra_attrs=[...]`, by preconverting list kwargs to tuples. ([#1030](https://github.com/jsvine/pdfplumber/issues/1030))
+
 
 ## [0.10.3] - 2023-10-26
 
