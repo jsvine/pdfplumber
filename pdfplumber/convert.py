@@ -66,7 +66,6 @@ class Serializer:
         include_attrs: Optional[List[str]] = None,
         exclude_attrs: Optional[List[str]] = None,
     ):
-
         self.precision = precision
         self.attr_filter = get_attr_filter(
             include_attrs=include_attrs, exclude_attrs=exclude_attrs

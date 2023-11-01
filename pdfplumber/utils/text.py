@@ -72,7 +72,6 @@ class TextMap:
         return_chars: bool = True,
         main_group: int = 0,
     ) -> List[Dict[str, Any]]:
-
         if isinstance(pattern, Pattern):
             if regex is False:
                 raise ValueError(
@@ -347,8 +346,8 @@ class WordExtractor:
             word[key] = ordered_chars[0][key]
 
         return word
-    
-    def set_tolerances_from_ratio(self, t: T_obj, axis_range: Iterable='x'):
+
+    def set_tolerances_from_ratio(self, t: T_obj, axis_range: Iterable = "x"):
         """
         If there is a `tolerance_ratio` for any axis, overrides the tolerance with ratio * size of `t`. Allows for dynamic tolerances to react to different text sizes within a single call.
 
@@ -359,11 +358,9 @@ class WordExtractor:
         for i in axis_range:
             if self.__getattribute__(f"{i}_tolerance_ratio") is not None:
                 self.__setattr__(
-                    f"{i}_tolerance", 
-                    set_tolerance(
-                        t, self.__getattribute__(f"{i}_tolerance_ratio")
-                        )
-                    )
+                    f"{i}_tolerance",
+                    set_tolerance(t, self.__getattribute__(f"{i}_tolerance_ratio")),
+                )
 
     def char_begins_new_word(
         self,
@@ -607,5 +604,6 @@ def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
     deduped = yield_unique_chars(chars)
     return sorted(deduped, key=chars.index)
 
+
 def set_tolerance(t, tolerance_ratio):
-    return tolerance_ratio*(t['bottom'] - t['top'])
+    return tolerance_ratio * (t["bottom"] - t["top"])

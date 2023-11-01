@@ -66,9 +66,11 @@ class Test(unittest.TestCase):
 
     def test_x_tolerance_ratio(self):
         pdf = pdfplumber.open(os.path.join(HERE, "pdfs/issue-987-test.pdf"))
-        assert pdf.pages[0].extract_text() == 'Big Te xt\nSmall Text'
-        assert pdf.pages[0].extract_text(x_tolerance=4) == 'Big Te xt\nSmallText'
-        assert pdf.pages[0].extract_text(x_tolerance_ratio=0.15) == 'Big Text\nSmall Text'
+        assert pdf.pages[0].extract_text() == "Big Te xt\nSmall Text"
+        assert pdf.pages[0].extract_text(x_tolerance=4) == "Big Te xt\nSmallText"
+        assert (
+            pdf.pages[0].extract_text(x_tolerance_ratio=0.15) == "Big Text\nSmall Text"
+        )
 
     def test_extract_words(self):
         path = os.path.join(HERE, "pdfs/issue-192-example.pdf")
@@ -97,7 +99,6 @@ class Test(unittest.TestCase):
     def test_extract_words_punctuation(self):
         path = os.path.join(HERE, "pdfs/test-punkt.pdf")
         with pdfplumber.open(path) as pdf:
-
             wordsA = pdf.pages[0].extract_words(split_at_punctuation=True)
             wordsB = pdf.pages[0].extract_words(split_at_punctuation=False)
             wordsC = pdf.pages[0].extract_words(

@@ -112,7 +112,6 @@ class Container(object):
         precision: Optional[int] = None,
         indent: Optional[int] = None,
     ) -> Optional[str]:
-
         data = self.to_dict(object_types)
 
         serialized = Serializer(

@@ -45,7 +45,6 @@ def cluster_objects(
     tolerance: T_num,
     preserve_order: bool = False,
 ) -> List[List[R]]:
-
     if not callable(key_fn):
         key_fn = itemgetter(key_fn)
 
