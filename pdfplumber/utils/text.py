@@ -5,7 +5,7 @@ import string
 from operator import itemgetter
 from typing import Any, Dict, Generator, List, Match, Optional, Pattern, Tuple, Union
 
-from .._typing import T_num, T_obj, T_obj_iter, T_obj_list
+from .._typing import T_num, T_obj, T_obj_iter, T_obj_list, Iterable
 from .clustering import cluster_objects
 from .generic import to_list
 from .geometry import objects_to_bbox
@@ -294,6 +294,8 @@ class WordExtractor:
         self,
         x_tolerance: T_num = DEFAULT_X_TOLERANCE,
         y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+        x_tolerance_ratio: T_num = None,
+        y_tolerance_ratio: T_num = None,
         keep_blank_chars: bool = False,
         use_text_flow: bool = False,
         horizontal_ltr: bool = True,  # Should words be read left-to-right?
@@ -303,7 +305,9 @@ class WordExtractor:
         expand_ligatures: bool = True,
     ):
         self.x_tolerance = x_tolerance
+        self.x_tolerance_ratio = x_tolerance_ratio
         self.y_tolerance = y_tolerance
+        self.y_tolerance_ratio = y_tolerance_ratio
         self.keep_blank_chars = keep_blank_chars
         self.use_text_flow = use_text_flow
         self.horizontal_ltr = horizontal_ltr
@@ -343,6 +347,23 @@ class WordExtractor:
             word[key] = ordered_chars[0][key]
 
         return word
+    
+    def set_tolerances_from_ratio(self, t: T_obj, axis_range: Iterable='x'):
+        """
+        If there is a `tolerance_ratio` for any axis, overrides the tolerance with ratio * size of `t`. Allows for dynamic tolerances to react to different text sizes within a single call.
+
+        ie: If `x_tolerance_ratio=0.15`, sets `self.x_tolerance` to `set_tolerance(t, x_tolerance_ratio)`
+
+        `axis_range` is there to restrict this to only `x_tolerance` until `y_tolerance` gets implemented (if ever).
+        """
+        for i in axis_range:
+            if self.__getattribute__(f"{i}_tolerance_ratio") is not None:
+                self.__setattr__(
+                    f"{i}_tolerance", 
+                    set_tolerance(
+                        t, self.__getattribute__(f"{i}_tolerance_ratio")
+                        )
+                    )
 
     def char_begins_new_word(
         self,
@@ -380,6 +401,7 @@ class WordExtractor:
         compare, while horizontal_ltr/vertical_ttb determine the direction
         of the comparison.
         """
+        self.set_tolerances_from_ratio(curr_char)
 
         # Note: Due to the grouping step earlier in the process,
         # curr_char["upright"] will always equal prev_char["upright"].
@@ -462,6 +484,7 @@ class WordExtractor:
             upright = upright_cluster[0]["upright"]
             cluster_key = "doctop" if upright else "x0"
 
+            self.set_tolerances_from_ratio(upright_cluster[0])
             # Cluster by line
             subclusters = cluster_objects(
                 upright_cluster, itemgetter(cluster_key), self.y_tolerance
@@ -583,3 +606,6 @@ def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
 
     deduped = yield_unique_chars(chars)
     return sorted(deduped, key=chars.index)
+
+def set_tolerance(t, tolerance_ratio):
+    return tolerance_ratio*(t['bottom'] - t['top'])
