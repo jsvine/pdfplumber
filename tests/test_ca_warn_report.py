@@ -40,6 +40,7 @@ class Test(unittest.TestCase):
         assert len(p.images)
 
     def test_parse(self):
+
         rect_x0_clusters = utils.cluster_list(
             [r["x0"] for r in self.pdf.pages[1].rects], tolerance=3
         )

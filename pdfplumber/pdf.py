@@ -72,6 +72,7 @@ class PDF(Container):
         repair: bool = False,
         gs_path: Optional[Union[str, pathlib.Path]] = None,
     ) -> "PDF":
+
         stream: Union[BufferedReader, BytesIO]
 
         if repair:

@@ -286,6 +286,7 @@ def intersections_to_cells(intersections: T_intersections) -> List[T_bbox]:
                     and edge_connects(bottom_right, right_pt)
                     and edge_connects(bottom_right, below_pt)
                 ):
+
                     return (pt[0], pt[1], bottom_right[0], bottom_right[1])
         return None
 
@@ -396,6 +397,7 @@ class Table(object):
         return rows
 
     def extract(self, **kwargs: Any) -> List[List[Optional[str]]]:
+
         chars = self.page.chars
         table_arr = []
 

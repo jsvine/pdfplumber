@@ -51,12 +51,14 @@ class Test(unittest.TestCase):
             """
 
             for cl in checklines:
+
                 if (
                     checkbox["height"] > (RECT_HEIGHT - RECT_TOLERANCE)
                     and (checkbox["height"] < RECT_HEIGHT + RECT_TOLERANCE)
                     and (checkbox["width"] < RECT_WIDTH + RECT_TOLERANCE)
                     and (checkbox["width"] < RECT_WIDTH + RECT_TOLERANCE)
                 ):
+
                     xmatch = False
                     ymatch = False
 

@@ -10,6 +10,7 @@ def _repair(
     password: Optional[str] = None,
     gs_path: Optional[Union[str, pathlib.Path]] = None,
 ) -> BytesIO:
+
     executable = gs_path or shutil.which("gs") or shutil.which("gswin32c")
     if executable is None:  # pragma: nocover
         raise Exception(

@@ -41,6 +41,7 @@ def get_page_image(
     password: Optional[str],
     antialias: bool = False,
 ) -> PIL.Image.Image:
+
     src: Union[pathlib.Path, BufferedReader, BytesIO]
 
     # If we are working with a file object saved to disk
@@ -356,6 +357,7 @@ class PageImage:
         x_tolerance: T_num = utils.DEFAULT_X_TOLERANCE,
         y_tolerance: T_num = utils.DEFAULT_Y_TOLERANCE,
     ) -> "PageImage":
+
         words = self.page.extract_words(
             x_tolerance=x_tolerance, y_tolerance=y_tolerance
         )
@@ -368,6 +370,7 @@ class PageImage:
         fill: T_color = (255, 0, 0, int(255 / 4)),
         stroke_width: int = DEFAULT_STROKE_WIDTH,
     ) -> "PageImage":
+
         self.draw_rects(
             self.page.chars, stroke=stroke, fill=fill, stroke_width=stroke_width
         )
