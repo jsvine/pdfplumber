@@ -3,7 +3,18 @@ import itertools
 import re
 import string
 from operator import itemgetter
-from typing import Any, Dict, Generator, List, Match, Optional, Pattern, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    List,
+    Literal,
+    Match,
+    Optional,
+    Pattern,
+    Tuple,
+    Union,
+)
 
 from .._typing import T_num, T_obj, T_obj_iter, T_obj_list
 from .clustering import cluster_objects
@@ -72,7 +83,6 @@ class TextMap:
         return_chars: bool = True,
         main_group: int = 0,
     ) -> List[Dict[str, Any]]:
-
         if isinstance(pattern, Pattern):
             if regex is False:
                 raise ValueError(
@@ -562,6 +572,118 @@ def extract_text_simple(
     return "\n".join(collate_line(c, x_tolerance) for c in clustered)
 
 
+def extract_text_dir_sensitive(
+    chars: T_obj_list,
+    x_tolerance: T_num = 1,
+    y_tolerance: T_num = 1,
+    x_tolerance_ratio: Union[int, float, None] = None,
+    y_tolerance_ratio: Union[int, float, None] = None,
+    char_dir: Literal["ltr", "rtl", "ttb", "btt"] = "ltr",
+    line_dir: Literal["ltr", "rtl", "ttb", "btt"] = "ttb",
+) -> str:
+
+    dir_key: Dict[Tuple[str, str], Dict[str, Any]] = {
+        ("ltr", "ttb"): {
+            "line_cluster_key": "doctop",
+            "char_cluster_keys": ("x0", "x1"),
+            "reverse_lines": False,
+            "reverse_words": False,
+            "reverse_chars": False,
+        },
+        ("ttb", "rtl"): {
+            "line_cluster_key": "x0",
+            "char_cluster_keys": ("x0", "x1"),
+            "reverse_lines": True,
+            "reverse_words": False,
+            "reverse_chars": False,
+        },
+        ("rtl", "btt"): {
+            "line_cluster_key": "doctop",
+            "char_cluster_keys": ("doctop", "bottom"),
+            "reverse_lines": False,
+            "reverse_words": True,
+            "reverse_chars": False,
+        },
+        ("btt", "ltr"): {
+            "line_cluster_key": "x0",
+            "char_cluster_keys": ("x0", "x1"),
+            "reverse_lines": True,
+            "reverse_words": True,
+            "reverse_chars": False,
+        },
+        ("rtl", "ttb"): {
+            "line_cluster_key": "doctop",
+            "char_cluster_keys": ("bottom", "bottom"),
+            "reverse_lines": True,
+            "reverse_words": True,
+            "reverse_chars": False,
+        },
+        ("btt", "rtl"): {
+            "line_cluster_key": "x0",
+            "char_cluster_keys": ("x0", "x1"),
+            "reverse_lines": False,
+            "reverse_words": True,
+            "reverse_chars": False,
+        },
+        ("ltr", "btt"): {
+            "line_cluster_key": "doctop",
+            "char_cluster_keys": ("x0", "x1"),
+            "reverse_lines": False,
+            "reverse_words": True,
+            "reverse_chars": False,
+        },
+        ("ttb", "ltr"): {
+            "line_cluster_key": "x0",
+            "char_cluster_keys": ("x0", "x1"),
+            "reverse_lines": False,
+            "reverse_words": False,
+            "reverse_chars": False,
+        },
+    }
+
+    params = dir_key[(char_dir, line_dir)]
+
+    for axis in "xy":
+        if locals()[f"{axis}_tolerance_ratio"] is not None:
+            locals()[f"{axis}_tolerance"] = set_tolerance(
+                chars[0], locals()[f"{axis}_tolerance_ratio"]
+            )
+
+    line_cluster_tolerance, char_cluster_tolerance = (
+        (x_tolerance, y_tolerance)
+        if params["line_cluster_key"] == "doctop"
+        else (y_tolerance, x_tolerance)
+    )
+    line_clusters = cluster_objects(
+        chars, itemgetter(params["line_cluster_key"]), line_cluster_tolerance
+    )
+
+    if params["reverse_lines"]:
+        line_clusters = line_clusters[::-1]
+
+    k0, k1 = params["char_cluster_keys"]
+    lines = []
+    for c in line_clusters:
+        coll = ""
+        last_k1 = None
+        chars = sorted(c, key=itemgetter(k0))
+        if params["reverse_chars"]:
+            chars = chars[::-1]
+        for char in chars:
+            if (last_k1 is not None) and (
+                char[k0] > (last_k1 + char_cluster_tolerance)
+            ):
+                coll += " "
+            last_k1 = char[k1]
+            coll += char["text"]
+        lines.append(coll)
+
+    if params["reverse_words"]:
+        lines = lines[::-1]
+
+    return "\n".join(lines)
+
+
 def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
     """
     Removes duplicate chars — those sharing the same text, fontname, size,
@@ -583,3 +705,7 @@ def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
 
     deduped = yield_unique_chars(chars)
     return sorted(deduped, key=chars.index)
+
+
+def set_tolerance(t: T_obj, tolerance_ratio: float) -> Any:
+    return tolerance_ratio * (t["bottom"] - t["top"])

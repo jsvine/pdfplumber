@@ -88,6 +88,31 @@ class Test(unittest.TestCase):
         assert words_rtl[1]["text"] == "baaabaaA/AAA"
         assert words_rtl[1]["direction"] == -1
 
+    def test_extract_words_dir_sensitve(self):
+        pdf = pdfplumber.open(
+            "/Users/user/Documents/code/pdfplumber/tests/pdfs/issue-848/robocop_0.pdf"
+        )
+        p = pdf.pages[0]
+        expected = utils.text.extract_text_simple(p.chars)
+        rotation_key = {
+            "0": ("ltr", "ttb"),
+            "90": ("ttb", "rtl"),
+            "180": ("rtl", "btt"),
+            "270": ("btt", "ltr"),
+            "-0": ("rtl", "ttb"),
+            "-90": ("btt", "rtl"),
+            "-180": ("ltr", "btt"),
+            "-270": ("ttb", "ltr"),
+        }
+        for n in rotation_key:
+            pdf = pdfplumber.open(os.path.join(HERE, f"pdfs/issue-848/robocop_{n}.pdf"))
+            p = pdf.pages[0]
+            char_dir, line_dir = rotation_key[n]
+            output = utils.text.extract_text_dir_sensitive(
+                chars=p.chars, char_dir=char_dir, line_dir=line_dir
+            )
+            assert output == expected
+
     def test_extract_words_punctuation(self):
         path = os.path.join(HERE, "pdfs/test-punkt.pdf")
         with pdfplumber.open(path) as pdf:
