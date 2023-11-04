@@ -5,7 +5,7 @@ import string
 from operator import itemgetter
 from typing import Any, Dict, Generator, List, Match, Optional, Pattern, Tuple, Union
 
-from .._typing import T_num, T_obj, T_obj_iter, T_obj_list, Iterable
+from .._typing import T_num, T_obj, T_obj_iter, T_obj_list
 from .clustering import cluster_objects
 from .generic import to_list
 from .geometry import objects_to_bbox
@@ -294,8 +294,8 @@ class WordExtractor:
         self,
         x_tolerance: T_num = DEFAULT_X_TOLERANCE,
         y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
-        x_tolerance_ratio: T_num = None,
-        y_tolerance_ratio: T_num = None,
+        x_tolerance_ratio: Union[int, float, None] = None,
+        y_tolerance_ratio: Union[int, float, None] = None,
         keep_blank_chars: bool = False,
         use_text_flow: bool = False,
         horizontal_ltr: bool = True,  # Should words be read left-to-right?
@@ -347,23 +347,30 @@ class WordExtractor:
             word[key] = ordered_chars[0][key]
 
         return word
-    
-    def set_tolerances_from_ratio(self, t: T_obj, axis_range: Iterable='x'):
+
+    def set_tolerances_from_ratio(
+        self, t: T_obj, axis_range: Union[str, List[str]] = "x"
+    ) -> None:
         """
-        If there is a `tolerance_ratio` for any axis, overrides the tolerance with ratio * size of `t`. Allows for dynamic tolerances to react to different text sizes within a single call.
+        If there is a `tolerance_ratio` for any axis...
+        overrides the tolerance with ratio * size of `t`.
+        Allows for dynamic tolerances ...
+        react to different text sizes within a single call.
 
-        ie: If `x_tolerance_ratio=0.15`, sets `self.x_tolerance` to `set_tolerance(t, x_tolerance_ratio)`
+        ie:
+        If `x_tolerance_ratio=0.15`... set `self.x_tolerance` to
+        `set_tolerance(t, x_tolerance_ratio)`
 
-        `axis_range` is there to restrict this to only `x_tolerance` until `y_tolerance` gets implemented (if ever).
+        `axis_range`:
+        restricts this to `x_tolerance`
+        (until `y_tolerance` gets implemented (if ever).)
         """
         for i in axis_range:
             if self.__getattribute__(f"{i}_tolerance_ratio") is not None:
                 self.__setattr__(
-                    f"{i}_tolerance", 
-                    set_tolerance(
-                        t, self.__getattribute__(f"{i}_tolerance_ratio")
-                        )
-                    )
+                    f"{i}_tolerance",
+                    set_tolerance(t, self.__getattribute__(f"{i}_tolerance_ratio")),
+                )
 
     def char_begins_new_word(
         self,
@@ -607,5 +614,6 @@ def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
     deduped = yield_unique_chars(chars)
     return sorted(deduped, key=chars.index)
 
-def set_tolerance(t, tolerance_ratio):
-    return tolerance_ratio*(t['bottom'] - t['top'])
+
+def set_tolerance(t: T_obj, tolerance_ratio: Union[float, int]) -> Any:
+    return tolerance_ratio * (t["bottom"] - t["top"])
