@@ -305,8 +305,8 @@ class WordExtractor:
         expand_ligatures: bool = True,
     ):
         self.x_tolerance = x_tolerance
-        self.x_tolerance_ratio = x_tolerance_ratio
         self.y_tolerance = y_tolerance
+        self.x_tolerance_ratio = x_tolerance_ratio
         self.y_tolerance_ratio = y_tolerance_ratio
         self.keep_blank_chars = keep_blank_chars
         self.use_text_flow = use_text_flow
@@ -348,34 +348,12 @@ class WordExtractor:
 
         return word
 
-    def set_tolerances_from_ratio(
-        self, t: T_obj, axis_range: Union[str, List[str]] = "x"
-    ) -> None:
-        """
-        If there is a `tolerance_ratio` for any axis...
-        overrides the tolerance with ratio * size of `t`.
-        Allows for dynamic tolerances ...
-        react to different text sizes within a single call.
-
-        ie:
-        If `x_tolerance_ratio=0.15`... set `self.x_tolerance` to
-        `set_tolerance(t, x_tolerance_ratio)`
-
-        `axis_range`:
-        restricts this to `x_tolerance`
-        (until `y_tolerance` gets implemented (if ever).)
-        """
-        for i in axis_range:
-            if self.__getattribute__(f"{i}_tolerance_ratio") is not None:
-                self.__setattr__(
-                    f"{i}_tolerance",
-                    set_tolerance(t, self.__getattribute__(f"{i}_tolerance_ratio")),
-                )
-
     def char_begins_new_word(
         self,
         prev_char: T_obj,
         curr_char: T_obj,
+        x_tolerance: T_num,
+        y_tolerance: T_num,
     ) -> bool:
         """This method takes several factors into account to determine if
         `curr_char` represents the beginning of a new word:
@@ -408,13 +386,11 @@ class WordExtractor:
         compare, while horizontal_ltr/vertical_ttb determine the direction
         of the comparison.
         """
-        self.set_tolerances_from_ratio(curr_char)
-
         # Note: Due to the grouping step earlier in the process,
         # curr_char["upright"] will always equal prev_char["upright"].
         if curr_char["upright"]:
-            x = self.x_tolerance
-            y = self.y_tolerance
+            x = x_tolerance
+            y = y_tolerance
             ay = prev_char["top"]
             cy = curr_char["top"]
             if self.horizontal_ltr:
@@ -427,8 +403,8 @@ class WordExtractor:
                 cx = -curr_char["x1"]
 
         else:
-            x = self.y_tolerance
-            y = self.x_tolerance
+            x = y_tolerance
+            y = x_tolerance
             ay = prev_char["x0"]
             cy = curr_char["x0"]
             if self.vertical_ttb:
@@ -463,6 +439,10 @@ class WordExtractor:
 
             current_word = [] if new_char is None else [new_char]
 
+        xt = self.x_tolerance
+        xtr = self.x_tolerance_ratio
+        yt = self.y_tolerance
+
         for char in ordered_chars:
             text = char["text"]
 
@@ -473,7 +453,12 @@ class WordExtractor:
                 yield from start_next_word(char)
                 yield from start_next_word(None)
 
-            elif current_word and self.char_begins_new_word(current_word[-1], char):
+            elif current_word and self.char_begins_new_word(
+                current_word[-1],
+                char,
+                x_tolerance=(xt if xtr is None else xtr * current_word[-1]["size"]),
+                y_tolerance=yt,
+            ):
                 yield from start_next_word(char)
 
             else:
@@ -491,7 +476,6 @@ class WordExtractor:
             upright = upright_cluster[0]["upright"]
             cluster_key = "doctop" if upright else "x0"
 
-            self.set_tolerances_from_ratio(upright_cluster[0])
             # Cluster by line
             subclusters = cluster_objects(
                 upright_cluster, itemgetter(cluster_key), self.y_tolerance
@@ -613,7 +597,3 @@ def dedupe_chars(chars: T_obj_list, tolerance: T_num = 1) -> T_obj_list:
 
     deduped = yield_unique_chars(chars)
     return sorted(deduped, key=chars.index)
-
-
-def set_tolerance(t: T_obj, tolerance_ratio: Union[float, int]) -> Any:
-    return tolerance_ratio * (t["bottom"] - t["top"])
