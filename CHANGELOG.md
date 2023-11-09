@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file. The format 
 
 ### Added
 
+- Add `x_tolerance_ratio` parameter to `extract_text` and similar functions, to account for text size when spacing characters (instead of a fixed number of pixels) (h/t @afriedman412). ([#1041](https://github.com/jsvine/pdfplumber/pulls/1041))
+- Add support for PDF 1.3 logical structure via `Page.structure_tree` (h/t @dhdaines). ([#963](https://github.com/jsvine/pdfplumber/pulls/963))
 - Add "gswin64c" as another possible Ghostscript executable in `repair.py` (h/t @echedey-ls). ([#1032](https://github.com/jsvine/pdfplumber/issues/1030))
 - Re-add `Page.close()` method, have `PDF.close()` close all pages as well, and improve relevant documentation (h/t @luketudge). ([#1042](https://github.com/jsvine/pdfplumber/issues/1042))
 
@@ -20,7 +22,6 @@ All notable changes to this project will be documented in this file. The format 
 
 - Add support for marked-content sequences, represented by `mcid` and `tag` attributes on `char`/`rect`/`line`/`curve`/`image` objects (h/t @dhdaines). ([#961](https://github.com/jsvine/pdfplumber/pulls/961))
 - Add `gs_path` argument to `pdfplumber.open(...)` and `pdfplumber.repair(...)`, to allow passing a custom Ghostscript path to be used for repairing. ([#953](https://github.com/jsvine/pdfplumber/issues/953))
-- Add `x_tolerance_ratio` to `extract_text` and similar functions, to account for text size when spacing characters (instead of a fixed number of pixels)
 
 ### Fixed
 
