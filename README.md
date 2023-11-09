@@ -548,6 +548,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [David Huggins-Daines](https://github.com/dhdaines)
 - [Jeremy B. Merrill](https://github.com/jeremybmerrill)
 - [Echedey Luis](https://github.com/echedey-ls)
+- [Andy Friedman](https://github.com/afriedman412)
 
 ## Contributing
 
