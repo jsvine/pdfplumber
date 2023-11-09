@@ -64,6 +64,17 @@ class Test(unittest.TestCase):
         a = [PSLiteral("test"), "test_2"]
         assert utils.decode_psl_list(a) == ["test", "test_2"]
 
+    def test_x_tolerance_ratio(self):
+        pdf = pdfplumber.open(os.path.join(HERE, "pdfs/issue-987-test.pdf"))
+        page = pdf.pages[0]
+
+        assert page.extract_text() == "Big Te xt\nSmall Text"
+        assert page.extract_text(x_tolerance=4) == "Big Te xt\nSmallText"
+        assert page.extract_text(x_tolerance_ratio=0.15) == "Big Text\nSmall Text"
+
+        words = page.extract_words(x_tolerance_ratio=0.15)
+        assert "|".join(w["text"] for w in words) == "Big|Text|Small|Text"
+
     def test_extract_words(self):
         path = os.path.join(HERE, "pdfs/issue-192-example.pdf")
         with pdfplumber.open(path) as pdf:

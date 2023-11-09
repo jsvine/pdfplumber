@@ -294,6 +294,8 @@ class WordExtractor:
         self,
         x_tolerance: T_num = DEFAULT_X_TOLERANCE,
         y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+        x_tolerance_ratio: Union[int, float, None] = None,
+        y_tolerance_ratio: Union[int, float, None] = None,
         keep_blank_chars: bool = False,
         use_text_flow: bool = False,
         horizontal_ltr: bool = True,  # Should words be read left-to-right?
@@ -304,6 +306,8 @@ class WordExtractor:
     ):
         self.x_tolerance = x_tolerance
         self.y_tolerance = y_tolerance
+        self.x_tolerance_ratio = x_tolerance_ratio
+        self.y_tolerance_ratio = y_tolerance_ratio
         self.keep_blank_chars = keep_blank_chars
         self.use_text_flow = use_text_flow
         self.horizontal_ltr = horizontal_ltr
@@ -348,6 +352,8 @@ class WordExtractor:
         self,
         prev_char: T_obj,
         curr_char: T_obj,
+        x_tolerance: T_num,
+        y_tolerance: T_num,
     ) -> bool:
         """This method takes several factors into account to determine if
         `curr_char` represents the beginning of a new word:
@@ -380,12 +386,11 @@ class WordExtractor:
         compare, while horizontal_ltr/vertical_ttb determine the direction
         of the comparison.
         """
-
         # Note: Due to the grouping step earlier in the process,
         # curr_char["upright"] will always equal prev_char["upright"].
         if curr_char["upright"]:
-            x = self.x_tolerance
-            y = self.y_tolerance
+            x = x_tolerance
+            y = y_tolerance
             ay = prev_char["top"]
             cy = curr_char["top"]
             if self.horizontal_ltr:
@@ -398,8 +403,8 @@ class WordExtractor:
                 cx = -curr_char["x1"]
 
         else:
-            x = self.y_tolerance
-            y = self.x_tolerance
+            x = y_tolerance
+            y = x_tolerance
             ay = prev_char["x0"]
             cy = curr_char["x0"]
             if self.vertical_ttb:
@@ -434,6 +439,10 @@ class WordExtractor:
 
             current_word = [] if new_char is None else [new_char]
 
+        xt = self.x_tolerance
+        xtr = self.x_tolerance_ratio
+        yt = self.y_tolerance
+
         for char in ordered_chars:
             text = char["text"]
 
@@ -444,7 +453,12 @@ class WordExtractor:
                 yield from start_next_word(char)
                 yield from start_next_word(None)
 
-            elif current_word and self.char_begins_new_word(current_word[-1], char):
+            elif current_word and self.char_begins_new_word(
+                current_word[-1],
+                char,
+                x_tolerance=(xt if xtr is None else xtr * current_word[-1]["size"]),
+                y_tolerance=yt,
+            ):
                 yield from start_next_word(char)
 
             else:
