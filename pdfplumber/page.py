@@ -231,6 +231,9 @@ class Page(Container):
         # https://rednafi.com/python/lru_cache_on_methods/
         self.get_textmap = textmap_cacher(self._get_textmap)
 
+    def close(self) -> None:
+        self.flush_cache()
+
     @property
     def width(self) -> T_num:
         return self.bbox[2] - self.bbox[0]

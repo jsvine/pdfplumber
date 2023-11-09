@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 
 - Add "gswin64c" as another possible Ghostscript executable in `repair.py` (h/t @echedey-ls). ([#1032](https://github.com/jsvine/pdfplumber/issues/1030))
+- Re-add `Page.close()` method, have `PDF.close()` close all pages as well, and improve relevant documentation (h/t @luketudge). ([#1042](https://github.com/jsvine/pdfplumber/issues/1042))
 
 ### Fixed
 

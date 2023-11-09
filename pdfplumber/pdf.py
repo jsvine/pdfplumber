@@ -108,6 +108,10 @@ class PDF(Container):
 
     def close(self) -> None:
         self.flush_cache()
+
+        for page in self.pages:
+            page.close()
+
         if not self.stream_is_external:
             self.stream.close()
 
