@@ -29,6 +29,7 @@ from pdfminer.psparser import PSLiteral
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
+from .structure import PDFStructTree, StructTreeMissing
 from .table import T_table_settings, Table, TableFinder, TableSettings
 from .utils import decode_text, resolve_all, resolve_and_decode
 from .utils.text import TextMap
@@ -241,6 +242,14 @@ class Page(Container):
     @property
     def height(self) -> T_num:
         return self.bbox[3] - self.bbox[1]
+
+    @property
+    def structure_tree(self) -> List[Dict[str, Any]]:
+        """Return the structure tree for a page, if any."""
+        try:
+            return [elem.to_dict() for elem in PDFStructTree(self.pdf, self)]
+        except StructTreeMissing:
+            return []
 
     @property
     def layout(self) -> LTPage:

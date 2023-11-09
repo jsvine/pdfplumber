@@ -16,6 +16,7 @@ from ._typing import T_num, T_obj_list
 from .container import Container
 from .page import Page
 from .repair import _repair
+from .structure import PDFStructTree, StructTreeMissing
 from .utils import resolve_and_decode
 
 logger = logging.getLogger(__name__)
@@ -163,6 +164,14 @@ class PDF(Container):
     def hyperlinks(self) -> List[Dict[str, Any]]:
         gen = (p.hyperlinks for p in self.pages)
         return list(itertools.chain(*gen))
+
+    @property
+    def structure_tree(self) -> List[Dict[str, Any]]:
+        """Return the structure tree for the document."""
+        try:
+            return [elem.to_dict() for elem in PDFStructTree(self)]
+        except StructTreeMissing:
+            return []
 
     def to_dict(self, object_types: Optional[List[str]] = None) -> Dict[str, Any]:
         return {

@@ -16,6 +16,114 @@ logging.disable(logging.ERROR)
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
+SCOTUS_TEXT = [
+    {
+        "type": "Div",
+        "children": [
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {
+                    "LineHeight": 25.75,
+                    "TextIndent": 21.625,
+                    "O": "Layout",
+                },
+                "mcids": [1],
+                "text": [
+                    "IN THE SUPREME COURT OF THE UNITED STATES - - - - - - - - - - - - "
+                    "- - - - - x MICHAEL A. KNOWLES, : WARDEN, :"
+                ],
+            },
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {
+                    "LineHeight": 25.75,
+                    "StartIndent": 86.375,
+                    "O": "Layout",
+                },
+                "mcids": [2],
+                "text": [" Petitioner :"],
+            },
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {
+                    "LineHeight": 25.75,
+                    "TextIndent": 50.375,
+                    "O": "Layout",
+                },
+                "mcids": [3, 4],
+                "text": [
+                    " v. ",
+                    ": No. 07-1315 ALEXANDRE MIRZAYANCE. : - - - - - - - - - - - - - -"
+                    " - - - x",
+                ],
+            },
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {
+                    "O": "Layout",
+                    "SpaceAfter": 24.5,
+                    "LineHeight": 25.75,
+                    "StartIndent": 165.625,
+                    "EndIndent": 57.625,
+                },
+                "mcids": [5],
+                "text": [" Washington, D.C. Tuesday, January 13, 2009"],
+            },
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {
+                    "LineHeight": 25.75,
+                    "TextIndent": 100.75,
+                    "O": "Layout",
+                },
+                "mcids": [6],
+                "text": [
+                    " The above-entitled matter came on for oral argument before the "
+                    "Supreme Court of the United States at 1:01 p.m. APPEARANCES: "
+                    "STEVEN E. MERCER, ESQ., Deputy Attorney General, Los"
+                ],
+            },
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {
+                    "O": "Layout",
+                    "SpaceAfter": 179.125,
+                    "LineHeight": 25.75,
+                    "TextIndent": 21.625,
+                    "EndIndent": 50.375,
+                    "TextAlign": "None",
+                },
+                "mcids": [7],
+                "text": [
+                    " Angeles, Cal.; on behalf of the Petitioner. CHARLES M. SEVILLA, "
+                    "ESQ., San Diego, Cal.; on behalf of the Respondent. "
+                ],
+            },
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {"O": "Layout", "TextAlign": "Center", "SpaceAfter": 8.5},
+                "mcids": [8],
+                "text": ["1\n"],
+            },
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {"O": "Layout", "TextAlign": "Center"},
+                "mcids": [9],
+                "text": ["Alderson Reporting Company "],
+            },
+        ],
+    }
+]
+
+
 def run(cmd):
     return Popen(cmd, stdout=PIPE).communicate()[0]
 
@@ -82,6 +190,18 @@ class Test(unittest.TestCase):
     def test_csv_all_types(self):
         c = self.pdf.to_csv(object_types=None)
         assert c.split("\r\n")[1].split(",")[0] == "line"
+
+    def test_cli_structure(self):
+        res = run([sys.executable, "-m", "pdfplumber.cli", self.path, "--structure"])
+        c = json.loads(res)
+        # lol no structure
+        assert c == []
+
+    def test_cli_structure_text(self):
+        path = os.path.join(HERE, "pdfs/scotus-transcript-p1.pdf")
+        res = run([sys.executable, "-m", "pdfplumber.cli", path, "--structure-text"])
+        c = json.loads(res)
+        assert c == SCOTUS_TEXT
 
     def test_cli_json(self):
         res = run(

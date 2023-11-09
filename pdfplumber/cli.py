@@ -2,8 +2,9 @@
 import argparse
 import json
 import sys
+from collections import defaultdict, deque
 from itertools import chain
-from typing import List
+from typing import Any, DefaultDict, Dict, List
 
 from .pdf import PDF
 
@@ -21,6 +22,19 @@ def parse_args(args_raw: List[str]) -> argparse.Namespace:
 
     parser.add_argument(
         "infile", nargs="?", type=argparse.FileType("rb"), default=sys.stdin.buffer
+    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--structure",
+        help="Write the structure tree as JSON.  "
+        "All other arguments except --pages, --laparams, and --indent will be ignored",
+        action="store_true",
+    )
+    group.add_argument(
+        "--structure-text",
+        help="Write the structure tree as JSON including text contents.  "
+        "All other arguments except --pages, --laparams, and --indent will be ignored",
+        action="store_true",
     )
 
     parser.add_argument("--format", choices=["csv", "json"], default="csv")
@@ -55,11 +69,39 @@ def parse_args(args_raw: List[str]) -> argparse.Namespace:
     return args
 
 
+def add_text_to_mcids(pdf: PDF, data: List[Dict[str, Any]]) -> None:
+    page_contents: DefaultDict[int, Any] = defaultdict(lambda: defaultdict(str))
+    for page in pdf.pages:
+        text_contents = page_contents[page.page_number]
+        for c in page.chars:
+            mcid = c.get("mcid")
+            if mcid is None:
+                continue
+            text_contents[mcid] += c["text"]
+    d = deque(data)
+    while d:
+        el = d.popleft()
+        if "children" in el:
+            d.extend(el["children"])
+        pageno = el.get("page_number")
+        if pageno is None:
+            continue
+        text_contents = page_contents[pageno]
+        if "mcids" in el:
+            el["text"] = [text_contents[mcid] for mcid in el["mcids"]]
+
+
 def main(args_raw: List[str] = sys.argv[1:]) -> None:
     args = parse_args(args_raw)
 
     with PDF.open(args.infile, pages=args.pages, laparams=args.laparams) as pdf:
-        if args.format == "csv":
+        if args.structure:
+            print(json.dumps(pdf.structure_tree, indent=args.indent))
+        elif args.structure_text:
+            tree = pdf.structure_tree
+            add_text_to_mcids(pdf, tree)
+            print(json.dumps(tree, indent=args.indent, ensure_ascii=False))
+        elif args.format == "csv":
             pdf.to_csv(
                 sys.stdout,
                 args.types,

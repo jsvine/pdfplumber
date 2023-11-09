@@ -1,0 +1,176 @@
+%PDF-1.4
+1 0 obj
+  << /Type /Catalog
+     /Outlines 2 0 R
+     /Pages 3 0 R
+     /StructTreeRoot 7 0 R
+  >>
+endobj
+
+2 0 obj
+  << /Type /Outlines
+     /Count 0
+  >>
+endobj
+
+3 0 obj
+  << /Type /Pages
+     /MediaBox [0 0 612 792]
+     /Kids [4 0 R 11 0 R]
+     /Count 2
+  >>
+endobj
+
+4 0 obj
+  << /Type /Page
+     /Parent 3 0 R
+     /Contents 6 0 R
+     /StructParents 0
+     /Resources << /ProcSet [/PDF /Text]
+                   /Font << /F1 5 0 R >>
+                >>
+  >>
+endobj
+
+5 0 obj
+  << /Type /Font
+     /Subtype /Type1
+     /Name /F1
+     /BaseFont /Helvetica
+  >>
+endobj
+
+6 0 obj
+  << /Length 87 >>
+stream
+  /H1 <</MCID 1>> BDC
+  BT
+    /F1 24 Tf
+    100 700 Td
+    (Hello World) Tj
+  ET
+  EMC
+endstream
+endobj
+
+7 0 obj
+  << /Type /StructTreeRoot
+     /ParentTree 8 0 R
+     /RoleMap << /Title /P >>
+     /ClassMap << /C1 << /O /Foo /A1 1 >>
+                  /C2 << /O /Foo /A1 3 >>
+               >>
+     /K [9 0 R
+         << /Type OBJR /Pg 11 0 R /Obj 14 0 R >>]
+  >>
+endobj
+
+8 0 obj
+  << /Nums [
+            0 [10 0 R]
+            1 [13 0 R 14 0 R]
+           ]
+  >>
+endobj
+
+9 0 obj
+  << /Type /StructElem
+     /S /Section
+     /Pg 4 0 R
+     /P 7 0 R
+     /K [10 0 R
+         << /Type OBJR /Pg 11 0 R /Obj 13 0 R >>]
+  >>
+endobj
+
+10 0 obj
+   << /Type /StructElem
+      /S /Title
+      /P 9 0 R
+      /Pg 4 0 R
+      /C /C1
+      /K [15 0 R]
+   >>
+endobj
+
+11 0 obj
+  << /Type /Page
+     /Parent 3 0 R
+     /Contents 12 0 R
+     /StructParents 1
+     /Resources << /ProcSet [/PDF /Text]
+                   /Font << /F1 5 0 R >>
+                >>
+  >>
+endobj
+
+12 0 obj
+  << /Length 190 >>
+stream
+  /H1 <</MCID 1>> BDC
+  BT
+    /F1 24 Tf
+    100 700 Td
+    (Goodbye Cruel World...) Tj
+  ET
+  /P <</MCID 2>> BDC
+  BT
+    /F1 12 Tf
+    100 600 Td
+    (I'll be back shortly!) Tj
+  ET
+  EMC
+endstream
+endobj
+
+13 0 obj
+   << /Type /StructElem
+      /S /Title
+      /P 9 0 R
+      /Pg 11 0 R
+      /K [1]
+      /C /C1
+      /A << /A1 2 /A2 2 >>
+   >>
+endobj
+
+14 0 obj
+   << /Type /StructElem
+      /S /P
+      /P 7 0 R
+      /Pg 11 0 R
+      /K [2]
+      /R 1
+      % /C3 does not exist (coverage)
+      /C [/C1 0 /C2 1 /C3 1]
+      /A [<< /A1 2 /A2 2 >> 0
+          << /A2 3 >> 1]
+   >>
+endobj
+
+15 0 obj
+   <</Type MCR /MCID 1 /Pg 4 0 R>>
+endobj
+
+xref
+0 16
+0000000000 65535 f 
+0000000009 00000 n 
+0000000116 00000 n 
+0000000172 00000 n 
+0000000280 00000 n 
+0000000481 00000 n 
+0000000581 00000 n 
+0000000721 00000 n 
+0000000989 00000 n 
+0000001089 00000 n 
+0000001245 00000 n 
+0000001370 00000 n 
+0000001573 00000 n 
+0000001817 00000 n 
+0000001965 00000 n 
+0000002202 00000 n 
+trailer  << /Size 16 /Root 1 0 R >>
+startxref
+2254
+%%EOF
