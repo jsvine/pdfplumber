@@ -414,7 +414,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 |`"min_words_horizontal"`| When using `"horizontal_strategy": "text"`, at least `min_words_horizontal` words must share the same alignment.|
 |`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges must be within `intersection_tolerance` pixels to be considered intersecting.|
 |`"text_*"`| All settings prefixed with `text_` are then used when extracting text from each discovered table. All possible arguments to `Page.extract_text(...)` are also valid here.|
-|`"text_x_tolerance"`, `"text_y_tolerance"`| These `text_`-prefixed settings *also* apply to the table-identification algorithm when the `text` strategy is used. I.e., when that algorithm searches for words, it will expect the individual letters in each word to be no more than `text_[x|y]_tolerance` pixels apart.|
+|`"text_x_tolerance"`, `"text_y_tolerance"`| These `text_`-prefixed settings *also* apply to the table-identification algorithm when the `text` strategy is used. I.e., when that algorithm searches for words, it will expect the individual letters in each word to be no more than `text_x_tolerance`/`text_y_tolerance` pixels apart.|
 
 ### Table-extraction strategies
 
