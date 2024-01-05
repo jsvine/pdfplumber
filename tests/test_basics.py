@@ -148,7 +148,7 @@ class Test(unittest.TestCase):
             assert rotated.pages[0].width == 612
             assert rotated.pages[0].height == 1008
 
-            assert rotated.pages[0].cropbox == self.pdf.pages[0].cropbox
+            assert rotated.pages[0].cropbox != self.pdf.pages[0].cropbox
             assert rotated.pages[0].bbox != self.pdf.pages[0].bbox
 
     def test_password(self):

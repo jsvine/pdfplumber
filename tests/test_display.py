@@ -73,6 +73,14 @@ class Test(unittest.TestCase):
         im = self.pdf.pages[0].crop((10, 20, 30, 50)).to_image()
         assert im.original.size == (20, 30)
 
+    def test_cropbox(self):
+        path = os.path.join(HERE, "pdfs/issue-1054-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            im = pdf.pages[0].to_image()
+            assert im.original.size == (596, 842)
+            im = pdf.pages[0].to_image(force_mediabox=True)
+            assert im.original.size == (2227, 2923)
+
     def test_copy(self):
         assert self.im.copy().original == self.im.original
 

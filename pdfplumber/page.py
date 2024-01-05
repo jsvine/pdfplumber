@@ -185,6 +185,27 @@ def textmap_cacher(func: Callable[..., TextMap]) -> Callable[..., TextMap]:
     return new_func
 
 
+def _normalize_box(box_raw: T_bbox, rotation: T_num = 0) -> T_bbox:
+    # Per PDF Reference 3.8.4: "Note: Although rectangles are
+    # conventionally specified by their lower-left and upperright
+    # corners, it is acceptable to specify any two diagonally opposite
+    # corners."
+    x0, x1 = sorted((box_raw[0], box_raw[2]))
+    y0, y1 = sorted((box_raw[1], box_raw[3]))
+    if rotation in [90, 270]:
+        return (y0, x0, y1, x1)
+    else:
+        return (x0, y0, x1, y1)
+
+
+# PDFs coordinate spaces refer to an origin in the bottom-left of the
+# page; pdfplumber flips this vertically, so that the origin is in the
+# top-left.
+def _invert_box(box_raw: T_bbox, mb_height: T_num) -> T_bbox:
+    x0, y0, x1, y1 = box_raw
+    return (x0, mb_height - y1, x1, mb_height - y0)
+
+
 class Page(Container):
     cached_properties: List[str] = Container.cached_properties + ["_layout"]
     is_original: bool = True
@@ -201,35 +222,34 @@ class Page(Container):
         self.root_page = self
         self.page_obj = page_obj
         self.page_number = page_number
-        _rotation = resolve_all(self.page_obj.attrs.get("Rotate", 0)) or 0
-        self.rotation = _rotation % 360
-        self.page_obj.rotate = self.rotation
         self.initial_doctop = initial_doctop
 
-        cropbox = page_obj.attrs.get("CropBox")
-        mediabox = page_obj.attrs.get("MediaBox")
+        def get_attr(key: str, default: Any = None) -> Any:
+            ref = page_obj.attrs.get(key)
+            return default if ref is None else resolve_all(ref)
 
-        self.cropbox = resolve_all(cropbox) if cropbox is not None else None
-        self.mediabox = resolve_all(mediabox) or self.cropbox
-        m = self.mediabox
+        # Per PDF Reference Table 3.27: "The number of degrees by which the
+        # page should be rotated clockwise when displayed or printed. The value
+        # must be a multiple of 90. Default value: 0"
+        _rotation = get_attr("Rotate", 0)
+        self.rotation = _rotation % 360
 
-        self.bbox: T_bbox = (
-            (
-                min(m[1], m[3]),
-                min(m[0], m[2]),
-                max(m[1], m[3]),
-                max(m[0], m[2]),
+        mb_raw = _normalize_box(get_attr("MediaBox"), self.rotation)
+        mb_height = mb_raw[3] - mb_raw[1]
+
+        self.mediabox = _invert_box(mb_raw, mb_height)
+
+        if "CropBox" in page_obj.attrs:
+            self.cropbox = _invert_box(
+                _normalize_box(get_attr("CropBox"), self.rotation), mb_height
             )
-            if self.rotation in [90, 270]
-            else (
-                min(m[0], m[2]),
-                min(m[1], m[3]),
-                max(m[0], m[2]),
-                max(m[1], m[3]),
-            )
-        )
+        else:
+            self.cropbox = self.mediabox
 
-        # https://rednafi.com/python/lru_cache_on_methods/
+        # Page.bbox defaults to self.mediabox, but can be altered by Page.crop(...)
+        self.bbox = self.mediabox
+
+        # See https://rednafi.com/python/lru_cache_on_methods/
         self.get_textmap = textmap_cacher(self._get_textmap)
 
     def close(self) -> None:
@@ -542,6 +562,7 @@ class Page(Container):
         width: Optional[Union[int, float]] = None,
         height: Optional[Union[int, float]] = None,
         antialias: bool = False,
+        force_mediabox: bool = False,
     ) -> "PageImage":
         """
         You can pass a maximum of 1 of the following:
@@ -562,7 +583,10 @@ class Page(Container):
             resolution = 72 * height / self.height
 
         return PageImage(
-            self, resolution=resolution or DEFAULT_RESOLUTION, antialias=antialias
+            self,
+            resolution=resolution or DEFAULT_RESOLUTION,
+            antialias=antialias,
+            force_mediabox=force_mediabox,
         )
 
     def to_dict(self, object_types: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -597,6 +621,8 @@ class DerivedPage(Page):
         self.pdf = parent_page.pdf
         self.page_obj = parent_page.page_obj
         self.page_number = parent_page.page_number
+        self.mediabox = parent_page.mediabox
+        self.cropbox = parent_page.cropbox
         self.flush_cache(Container.cached_properties)
         self.get_textmap = textmap_cacher(self._get_textmap)
 

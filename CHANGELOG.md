@@ -10,9 +10,11 @@ All notable changes to this project will be documented in this file. The format 
 - Add support for PDF 1.3 logical structure via `Page.structure_tree` (h/t @dhdaines). ([#963](https://github.com/jsvine/pdfplumber/pulls/963))
 - Add "gswin64c" as another possible Ghostscript executable in `repair.py` (h/t @echedey-ls). ([#1032](https://github.com/jsvine/pdfplumber/issues/1030))
 - Re-add `Page.close()` method, have `PDF.close()` close all pages as well, and improve relevant documentation (h/t @luketudge). ([#1042](https://github.com/jsvine/pdfplumber/issues/1042))
+- Add `force_mediabox` parameter to `Page.to_image(...)`. ([#1054](https://github.com/jsvine/pdfplumber/issues/1054))
 
 ### Fixed
 
+- Standardize handling of cropbox, fixing various issues with PageImage. ([#1054](https://github.com/jsvine/pdfplumber/issues/1054))
 - Fix `Page.get_textmap` caching to allow for `extra_attrs=[...]`, by preconverting list kwargs to tuples. ([#1030](https://github.com/jsvine/pdfplumber/issues/1030))
 
 

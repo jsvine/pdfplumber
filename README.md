@@ -273,6 +273,7 @@ To turn any page (including cropped pages) into an `PageImage` object, call `my_
 - `width`: The desired image width in pixels. Default: unset, determined by `resolution`. Type: `int`.
 - `height`: The desired image width in pixels. Default: unset, determined by `resolution`. Type: `int`.
 - `antialias`: Whether to use antialiasing when creating the image. Setting to `True` creates images with less-jagged text and graphics, but with larger file sizes. Default: `False`. Type: `bool`.
+- `force_mediabox`: Use the page's `.mediabox` dimensions, rather than the `.cropbox` dimensions. Default: `False`. Type: `bool`.
 
 For instance:
 

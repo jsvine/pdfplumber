@@ -78,8 +78,12 @@ class PageImage:
         original: Optional[PIL.Image.Image] = None,
         resolution: Union[int, float] = DEFAULT_RESOLUTION,
         antialias: bool = False,
+        force_mediabox: bool = False,
     ):
         self.page = page
+        self.root = page if page.is_original else page.root_page
+        self.resolution = resolution
+
         if original is None:
             self.original = get_page_image(
                 stream=page.pdf.stream,
@@ -92,43 +96,49 @@ class PageImage:
         else:
             self.original = original
 
-        if page.is_original:
-            self.root = page
-            cropped = False
-        else:
-            self.root = page.root_page
-            cropped = page.root_page.bbox != page.bbox
+        self.scale = self.original.size[0] / (page.cropbox[2] - page.cropbox[0])
 
-        self.resolution = resolution
-        self.scale = self.original.size[0] / self.root.width
+        # This value represents the coordinates of the page,
+        # in page-unit values, that will be displayed.
+        self.bbox = (
+            page.bbox
+            if page.bbox != page.mediabox
+            else (page.mediabox if force_mediabox else page.cropbox)
+        )
 
-        if cropped:
-            cropbox = (
-                int((page.bbox[0] - page.root_page.bbox[0]) * self.scale),
-                int((page.bbox[1] - page.root_page.bbox[1]) * self.scale),
-                int((page.bbox[2] - page.root_page.bbox[0]) * self.scale),
-                int((page.bbox[3] - page.root_page.bbox[1]) * self.scale),
+        # If this value is different than the *Page*'s .cropbox
+        # (e.g., because the mediabox differs from the cropbox or
+        # or because we've used Page.crop(...)), then we'll need to
+        # crop the initially-converted image.
+        if page.bbox != page.cropbox:
+            crop_dims = self._reproject_bbox(page.cropbox)
+            bbox_dims = self._reproject_bbox(self.bbox)
+            self.original = self.original.crop(
+                (
+                    bbox_dims[0] - crop_dims[0],
+                    bbox_dims[1] - crop_dims[1],
+                    bbox_dims[2] - crop_dims[0],
+                    bbox_dims[3] - crop_dims[1],
+                )
             )
-            self.original = self.original.crop(cropbox)
+
         self.reset()
 
-    def _reproject_bbox(self, bbox: T_bbox) -> T_bbox:
+    def _reproject_bbox(self, bbox: T_bbox) -> Tuple[int, int, int, int]:
         x0, top, x1, bottom = bbox
         _x0, _top = self._reproject((x0, top))
         _x1, _bottom = self._reproject((x1, bottom))
         return (_x0, _top, _x1, _bottom)
 
-    def _reproject(self, coord: T_point) -> T_point:
+    def _reproject(self, coord: T_point) -> Tuple[int, int]:
         """
         Given an (x0, top) tuple from the *root* coordinate system,
         return an (x0, top) tuple in the *image* coordinate system.
         """
         x0, top = coord
-        px0, ptop = self.page.bbox[:2]
-        rx0, rtop = self.root.bbox[:2]
-        _x0 = (x0 + rx0 - px0) * self.scale
-        _top = (top + rtop - ptop) * self.scale
-        return (_x0, _top)
+        _x0 = (x0 - self.bbox[0]) * self.scale
+        _top = (top - self.bbox[1]) * self.scale
+        return (int(_x0), int(_top))
 
     def reset(self) -> "PageImage":
         self.annotated = PIL.Image.new("RGB", self.original.size)
@@ -202,7 +212,7 @@ class PageImage:
         stroke: T_color = DEFAULT_STROKE,
         stroke_width: int = DEFAULT_STROKE_WIDTH,
     ) -> "PageImage":
-        points = (location, self.page.bbox[1], location, self.page.bbox[3])
+        points = (location, self.bbox[1], location, self.bbox[3])
         self.draw.line(self._reproject_bbox(points), fill=stroke, width=stroke_width)
         return self
 
@@ -222,7 +232,7 @@ class PageImage:
         stroke: T_color = DEFAULT_STROKE,
         stroke_width: int = DEFAULT_STROKE_WIDTH,
     ) -> "PageImage":
-        points = (self.page.bbox[0], location, self.page.bbox[2], location)
+        points = (self.bbox[0], location, self.bbox[2], location)
         self.draw.line(self._reproject_bbox(points), fill=stroke, width=stroke_width)
         return self
 
