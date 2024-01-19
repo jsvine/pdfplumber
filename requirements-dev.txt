@@ -8,5 +8,5 @@ pandas==2.0.3
 mypy==0.981
 pandas-stubs==1.2.0.58
 types-Pillow==9.0.14
-jupyterlab==3.4.2
+jupyterlab==3.6.7
 nbexec==0.2.0
