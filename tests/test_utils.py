@@ -55,7 +55,7 @@ class Test(unittest.TestCase):
 
     def test_resolve_all(self):
         info = self.pdf.doc.xrefs[0].trailer["Info"]
-        assert type(info) == PDFObjRef
+        assert type(info) is PDFObjRef
         a = [{"info": info}]
         a_res = utils.resolve_all(a)
         assert a_res[0]["info"]["Producer"] == self.pdf.doc.info[0]["Producer"]
