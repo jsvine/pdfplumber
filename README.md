@@ -311,22 +311,6 @@ You can pass explicit coordinates or any `pdfplumber` PDF object (e.g., char, li
 
 Note: The methods above are built on Pillow's [`ImageDraw` methods](http://pillow.readthedocs.io/en/latest/reference/ImageDraw.html), but the parameters have been tweaked for consistency with SVG's `fill`/`stroke`/`stroke_width` nomenclature.
 
-### Troubleshooting ImageMagick on Debian-based systems
-
-If you're using `pdfplumber` on a Debian-based system and encounter a `PolicyError`, you may be able to fix it by changing the following line in `/etc/ImageMagick-6/policy.xml` from this:
-
-```xml
-<policy domain="coder" rights="none" pattern="PDF" />
-```
-
-... to this:
-
-```xml
-<policy domain="coder" rights="read|write" pattern="PDF" />
-```
-
-(More details about `policy.xml` [available here](https://imagemagick.org/script/security-policy.php).)
-
 ## Extracting text
 
 `pdfplumber` can extract text from any given page (including cropped and derived pages). It can also attempt to preserve the layout of that text, as well as to identify the coordinates of words and search queries. `Page` objects can call the following text-extraction methods:
