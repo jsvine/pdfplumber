@@ -147,9 +147,10 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
         # create one object, but that is far from being guaranteed.
         # Even if pdfminer.six's API would just return the objects it
         # creates, we wouldn't have to do this.
-        cur_obj = self.cur_item._objs[-1]
-        cur_obj.mcid = self.cur_mcid  # type: ignore
-        cur_obj.tag = self.cur_tag  # type: ignore
+        if self.cur_item._objs:
+            cur_obj = self.cur_item._objs[-1]
+            cur_obj.mcid = self.cur_mcid  # type: ignore
+            cur_obj.tag = self.cur_tag  # type: ignore
 
     def render_char(self, *args, **kwargs) -> float:  # type: ignore
         """Hook for rendering characters, adding the `mcid` attribute."""
