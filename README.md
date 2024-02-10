@@ -311,6 +311,10 @@ You can pass explicit coordinates or any `pdfplumber` PDF object (e.g., char, li
 
 Note: The methods above are built on Pillow's [`ImageDraw` methods](http://pillow.readthedocs.io/en/latest/reference/ImageDraw.html), but the parameters have been tweaked for consistency with SVG's `fill`/`stroke`/`stroke_width` nomenclature.
 
+### Visually debugging the table-finder
+
+`im.debug_tablefinder(table_settings={})` will return a version of the PageImage with the detected lines (in red), intersections (circles), and tables (light blue) overlaid.
+
 ## Extracting text
 
 `pdfplumber` can extract text from any given page (including cropped and derived pages). It can also attempt to preserve the layout of that text, as well as to identify the coordinates of words and search queries. `Page` objects can call the following text-extraction methods:
