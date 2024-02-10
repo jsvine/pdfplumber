@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.10.4] - [Unreleased]
+## [0.10.4] - 2024-02-10
 
 ### Added
 
@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file. The format 
 - Standardize handling of cropbox, fixing various issues with PageImage. ([#1054](https://github.com/jsvine/pdfplumber/issues/1054))
 - Fix `Page.get_textmap` caching to allow for `extra_attrs=[...]`, by preconverting list kwargs to tuples. ([#1030](https://github.com/jsvine/pdfplumber/issues/1030))
 - Explicitly close `pypdfium2.PdfDocument` in `get_page_image` (h/t @dhdaines). ([#1090](https://github.com/jsvine/pdfplumber/pull/1090))
+- In `PDFPageAggregatorWithMarkedContent.tag_cur_item`, check `self.cur_item._objs` length before trying to access `[-1]`. ([4f39d03](https://github.com/jsvine/pdfplumber/commit/4f39d03))
 
 
 ## [0.10.3] - 2023-10-26
