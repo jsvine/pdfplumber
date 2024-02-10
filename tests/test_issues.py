@@ -2,6 +2,11 @@
 import logging
 import os
 import re
+
+try:
+    import resource
+except ModuleNotFoundError:
+    resource = None
 import unittest
 
 import pdfplumber
@@ -275,3 +280,22 @@ class Test(unittest.TestCase):
             text = re.sub(r"\s+", " ", page.extract_text(use_text_flow=True))
             words = " ".join(w["text"] for w in page.extract_words(use_text_flow=True))
             assert text[0:100] == words[0:100]
+
+    def test_issue_1089(self):
+        """
+        Page.to_image() leaks file descriptors
+
+        This is because PyPdfium2 leaks file descriptors.  Explicitly
+        close the `PdfDocument` to prevent this.
+        """
+        # Skip test on platforms without getrlimit
+        if resource is None:
+            return
+        # Any PDF will do
+        path = os.path.join(HERE, "pdfs/test-punkt.pdf")
+        soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+        with pdfplumber.open(path) as pdf:
+            for idx in range(soft):
+                _ = pdf.pages[0].to_image()
+        # We're still alive
+        assert True

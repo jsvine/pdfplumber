@@ -53,10 +53,8 @@ def get_page_image(
         stream.seek(0)
         src = stream
 
-    pdfium_page = pypdfium2.PdfDocument(
-        src,
-        password=password,
-    ).get_page(page_ix)
+    pdfium_doc = pypdfium2.PdfDocument(src, password=password)
+    pdfium_page = pdfium_doc.get_page(page_ix)
 
     img: PIL.Image.Image = pdfium_page.render(
         # Modifiable arguments
@@ -67,6 +65,9 @@ def get_page_image(
         # Non-modifiable arguments
         prefer_bgrx=True,
     ).to_pil()
+    # In theory `autoclose` when creating it should make it close...
+    # automatically.  In practice this does not seem to be the case.
+    pdfium_doc.close()
 
     return img.convert("RGB")
 
