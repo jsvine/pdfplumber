@@ -1,3 +1,4 @@
+import itertools
 import logging
 import re
 from collections import deque
@@ -16,12 +17,12 @@ from typing import (
 )
 
 from pdfminer.data_structures import NumberTree
-from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdftypes import PDFObjRef, resolve1
 from pdfminer.psparser import PSLiteral
 
-from .utils import decode_text
+from ._typing import T_bbox, T_obj
+from .utils import decode_text, geometry
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class PDFStructElement:
                 yield el.page_number, mcid
             d.extendleft(reversed(el.children))
 
-    def findall(
+    def find_all(
         self, matcher: str | Pattern[str] | Callable[["PDFStructElement"], bool]
     ) -> Iterator["PDFStructElement"]:
         """Iterate depth-first over matching elements in subtree.
@@ -71,7 +72,7 @@ class PDFStructElement:
         expression, or a function taking a `PDFStructElement` and
         returning `True` if the element matches.
         """
-        return _findall(self.children, matcher)
+        return _find_all(self.children, matcher)
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a compacted dict representation."""
@@ -88,13 +89,14 @@ class PDFStructElement:
         return r
 
 
-def _findall(
+def _find_all(
     elements: Iterable[PDFStructElement],
     matcher: str | Pattern[str] | Callable[[PDFStructElement], bool],
 ) -> Iterator[PDFStructElement]:
     """
-    Common code for `findall()` in trees and elements.
+    Common code for `find_all()` in trees and elements.
     """
+
     def match_tag(x: PDFStructElement) -> bool:
         """Match an element name."""
         return x.type == matcher
@@ -139,7 +141,7 @@ class PDFStructTree:
 
     """
 
-    page: Optional[PDFPage]
+    page: Optional["Page"]
 
     def __init__(self, doc: "PDF", page: Optional["Page"] = None):
         self.doc = doc.doc
@@ -155,7 +157,8 @@ class PDFStructTree:
         # span multiple pages, and the "Pg" attribute is *optional*,
         # so this is the approved way to get a page's structure...
         if page is not None:
-            self.page = page.page_obj
+            self.page = page
+            self.pages = {page.page_number: page}
             self.page_dict = None
             # ...EXCEPT that the ParentTree is sometimes missing, in which
             # case we fall back to the non-approved way.
@@ -169,9 +172,9 @@ class PDFStructTree:
                 # structure tree) then there is no `StructParents`.
                 # Note however that if there are XObjects in a page,
                 # *they* may have `StructParent` (not `StructParents`)
-                if "StructParents" not in self.page.attrs:
+                if "StructParents" not in self.page.page_obj.attrs:
                     return
-                parent_id = self.page.attrs["StructParents"]
+                parent_id = self.page.page_obj.attrs["StructParents"]
                 # NumberTree should have a `get` method like it does in pdf.js...
                 parent_array = resolve1(
                     next(array for num, array in parent_tree.values if num == parent_id)
@@ -180,8 +183,9 @@ class PDFStructTree:
         else:
             self.page = None
             # Overhead of creating pages shouldn't be too bad we hope!
+            self.pages = {page.page_number: page for page in doc.pages}
             self.page_dict = {
-                page.page_obj.pageid: page.page_number for page in doc.pages
+                page.page_obj.pageid: page.page_number for page in self.pages.values()
             }
             self._parse_struct_tree()
 
@@ -313,7 +317,7 @@ class PDFStructTree:
             return page_objid in self.page_dict
         if self.page is not None:
             # We have to do this to satisfy mypy
-            if page_objid != self.page.pageid:
+            if page_objid != self.page.page_obj.pageid:
                 return False
         return True
 
@@ -432,7 +436,7 @@ class PDFStructTree:
     def __iter__(self) -> Iterator[PDFStructElement]:
         return iter(self.children)
 
-    def findall(
+    def find_all(
         self, matcher: str | Pattern[str] | Callable[["PDFStructElement"], bool]
     ) -> Iterator[PDFStructElement]:
         """
@@ -442,4 +446,42 @@ class PDFStructTree:
         expression, or a function taking a `PDFStructElement` and
         returning `True` if the element matches.
         """
-        return _findall(self.children, matcher)
+        return _find_all(self.children, matcher)
+
+    def element_bbox(self, el: PDFStructElement) -> T_bbox:
+        """Get the bounding box for an element for visual debugging."""
+        page = None
+        if self.page is not None:
+            page = self.page
+        elif el.page_number is not None:
+            page = self.pages[el.page_number]
+        bbox = el.attributes.get("BBox", None)
+        if page is not None and bbox is not None:
+            x0, y0, x1, y1 = bbox
+            # FIXME: This does not work for cropped/rotated pages, but
+            # there doesn't seem to be a public method to normalize
+            # and translate PDF coordinates to page ones.  We expect
+            # that in general `page` here will *not* be a CroppedPage
+            # as you'd really have to try hard for that to happen.
+            top = page.height - y1
+            bottom = page.height - y0
+            return (x0, top, x1, bottom)
+        else:
+            mcid_objs = []
+            for page_number, mcid in el.all_mcids():
+                objects: Iterable[T_obj]
+                if page_number is None:
+                    if page is not None:
+                        objects = itertools.chain.from_iterable(page.objects.values())
+                    else:
+                        objects = []  # pragma: nocover
+                else:
+                    objects = itertools.chain.from_iterable(
+                        self.pages[page_number].objects.values()
+                    )
+                for c in objects:
+                    if c["mcid"] == mcid:
+                        mcid_objs.append(c)
+            if not mcid_objs:
+                raise ValueError("No objects found")  # pragma: nocover
+            return geometry.objects_to_bbox(mcid_objs)
