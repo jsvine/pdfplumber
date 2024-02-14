@@ -92,10 +92,15 @@ def _findall(
     elements: Iterable[PDFStructElement],
     matcher: str | Pattern[str] | Callable[[PDFStructElement], bool],
 ) -> Iterator[PDFStructElement]:
+    """
+    Common code for `findall()` in trees and elements.
+    """
     def match_tag(x: PDFStructElement) -> bool:
+        """Match an element name."""
         return x.type == matcher
 
     def match_regex(x: PDFStructElement) -> bool:
+        """Match an element name by regular expression."""
         return matcher.match(x.type)  # type: ignore
 
     if isinstance(matcher, str):

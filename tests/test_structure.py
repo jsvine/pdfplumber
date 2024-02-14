@@ -921,6 +921,9 @@ class TestClass(unittest.TestCase):
         assert None in pages
         assert 1 not in pages
         assert 2 not in pages
+        # Assure that we get the MCIDs for a content element
+        for p in sect.findall("P"):
+            assert set(mcid for page, mcid in p.all_mcids()) == set(p.mcids)
 
 
 class TestUnparsed(unittest.TestCase):
