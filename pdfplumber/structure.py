@@ -1,7 +1,19 @@
 import logging
+import re
 from collections import deque
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Pattern,
+    Tuple,
+)
 
 from pdfminer.data_structures import NumberTree
 from pdfminer.pdfpage import PDFPage
@@ -36,9 +48,35 @@ class PDFStructElement:
     def __iter__(self) -> Iterator["PDFStructElement"]:
         return iter(self.children)
 
+    def all_mcids(self) -> Iterator[tuple[Optional[int], int]]:
+        """Collect all MCIDs (with their page numbers, if there are
+        multiple pages in the tree) inside a structure element.
+        """
+        # Collect them depth-first to preserve ordering
+        for mcid in self.mcids:
+            yield self.page_number, mcid
+        d = deque(self.children)
+        while d:
+            el = d.popleft()
+            for mcid in el.mcids:
+                yield el.page_number, mcid
+            d.extendleft(reversed(el.children))
+
+    def findall(
+        self, matcher: str | Pattern[str] | Callable[["PDFStructElement"], bool]
+    ) -> Iterator["PDFStructElement"]:
+        """Iterate depth-first over matching elements in subtree.
+
+        The `matcher` argument is either an element name, a regular
+        expression, or a function taking a `PDFStructElement` and
+        returning `True` if the element matches.
+        """
+        return _findall(self.children, matcher)
+
     def to_dict(self) -> Dict[str, Any]:
         """Return a compacted dict representation."""
         r = asdict(self)
+        # Prune empty values (does not matter in which order)
         d = deque([r])
         while d:
             el = d.popleft()
@@ -48,6 +86,30 @@ class PDFStructElement:
             if "children" in el:
                 d.extend(el["children"])
         return r
+
+
+def _findall(
+    elements: Iterable[PDFStructElement],
+    matcher: str | Pattern[str] | Callable[[PDFStructElement], bool],
+) -> Iterator[PDFStructElement]:
+    def match_tag(x: PDFStructElement) -> bool:
+        return x.type == matcher
+
+    def match_regex(x: PDFStructElement) -> bool:
+        return matcher.match(x.type)  # type: ignore
+
+    if isinstance(matcher, str):
+        match_func = match_tag
+    elif isinstance(matcher, re.Pattern):
+        match_func = match_regex
+    else:
+        match_func = matcher  # type: ignore
+    d = deque(elements)
+    while d:
+        el = d.popleft()
+        if match_func(el):
+            yield el
+        d.extendleft(reversed(el.children))
 
 
 class StructTreeMissing(ValueError):
@@ -364,3 +426,15 @@ class PDFStructTree:
 
     def __iter__(self) -> Iterator[PDFStructElement]:
         return iter(self.children)
+
+    def findall(
+        self, matcher: str | Pattern[str] | Callable[["PDFStructElement"], bool]
+    ) -> Iterator[PDFStructElement]:
+        """
+        Iterate depth-first over all matching elements in subtree.
+
+        The `matcher` argument is either an element name, a regular
+        expression, or a function taking a `PDFStructElement` and
+        returning `True` if the element matches.
+        """
+        return _findall(self.children, matcher)

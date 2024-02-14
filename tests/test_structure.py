@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import unittest
 from collections import deque
 
@@ -862,6 +863,64 @@ class TestClass(unittest.TestCase):
         stree = PDFStructTree(pdf, pdf.pages[0])
         doc_elem = next(iter(stree))
         assert [k.type for k in doc_elem] == ["P", "P", "Figure"]
+
+    def test_findall_tree(self):
+        """
+        Test findall() on trees
+        """
+        path = os.path.join(HERE, "pdfs/image_structure.pdf")
+        pdf = pdfplumber.open(path)
+        stree = PDFStructTree(pdf, pdf.pages[0])
+        figs = list(stree.findall("Figure"))
+        assert len(figs) == 1
+        figs = list(stree.findall(re.compile(r"Fig.*")))
+        assert len(figs) == 1
+        figs = list(stree.findall(lambda x: x.type == "Figure"))
+        assert len(figs) == 1
+        figs = list(stree.findall("Foogure"))
+        assert len(figs) == 0
+        figs = list(stree.findall(re.compile(r"Fog.*")))
+        assert len(figs) == 0
+        figs = list(stree.findall(lambda x: x.type == "Flogger"))
+        assert len(figs) == 0
+
+    def test_findall_element(self):
+        """
+        Test findall() on elements
+        """
+        path = os.path.join(HERE, "pdfs/pdf_structure.pdf")
+        pdf = pdfplumber.open(path)
+        stree = PDFStructTree(pdf)
+        for list_elem in stree.findall("L"):
+            items = list(list_elem.findall("LI"))
+            assert items
+            for item in items:
+                body = list(item.findall("LBody"))
+                assert body
+
+    def test_all_mcids(self):
+        """
+        Test all_mcids()
+        """
+        path = os.path.join(HERE, "pdfs/2023-06-20-PV.pdf")
+        pdf = pdfplumber.open(path)
+        # Make sure we can get them with page numbers
+        stree = PDFStructTree(pdf)
+        sect = next(stree.findall("Sect"))
+        mcids = list(sect.all_mcids())
+        pages = set(page for page, mcid in mcids)
+        assert 1 in pages
+        assert 2 in pages
+        # If we take only a single page there are no page numbers
+        # (FIXME: may wish to reconsider this API decision...)
+        page = pdf.pages[1]
+        stree = PDFStructTree(pdf, page)
+        sect = next(stree.findall("Sect"))
+        mcids = list(sect.all_mcids())
+        pages = set(page for page, mcid in mcids)
+        assert None in pages
+        assert 1 not in pages
+        assert 2 not in pages
 
 
 class TestUnparsed(unittest.TestCase):
