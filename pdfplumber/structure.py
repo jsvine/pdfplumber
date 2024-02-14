@@ -14,6 +14,7 @@ from typing import (
     Optional,
     Pattern,
     Tuple,
+    Union,
 )
 
 from pdfminer.data_structures import NumberTree
@@ -30,6 +31,9 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:  # pragma: nocover
     from .page import Page
     from .pdf import PDF
+
+
+MatchFunc = Callable[["PDFStructElement"], bool]
 
 
 @dataclass
@@ -64,7 +68,7 @@ class PDFStructElement:
             d.extendleft(reversed(el.children))
 
     def find_all(
-        self, matcher: str | Pattern[str] | Callable[["PDFStructElement"], bool]
+        self, matcher: Union[str, Pattern[str], MatchFunc]
     ) -> Iterator["PDFStructElement"]:
         """Iterate depth-first over matching elements in subtree.
 
@@ -91,7 +95,7 @@ class PDFStructElement:
 
 def _find_all(
     elements: Iterable[PDFStructElement],
-    matcher: str | Pattern[str] | Callable[[PDFStructElement], bool],
+    matcher: Union[str, Pattern[str], MatchFunc],
 ) -> Iterator[PDFStructElement]:
     """
     Common code for `find_all()` in trees and elements.
@@ -437,7 +441,7 @@ class PDFStructTree:
         return iter(self.children)
 
     def find_all(
-        self, matcher: str | Pattern[str] | Callable[["PDFStructElement"], bool]
+        self, matcher: Union[str, Pattern[str], MatchFunc]
     ) -> Iterator[PDFStructElement]:
         """
         Iterate depth-first over all matching elements in subtree.
