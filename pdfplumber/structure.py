@@ -86,24 +86,30 @@ class PDFStructTree:
         # If we have a specific page then we will work backwards from
         # its ParentTree - this is because structure elements could
         # span multiple pages, and the "Pg" attribute is *optional*,
-        # so this is the approved way to get a page's structure
+        # so this is the approved way to get a page's structure...
         if page is not None:
             self.page = page.page_obj
             self.page_dict = None
-            parent_tree = NumberTree(self.root["ParentTree"])
-            # If there is no marked content in the structure tree for
-            # this page (which can happen even when there is a
-            # structure tree) then there is no `StructParents`.
-            # Note however that if there are XObjects in a page,
-            # *they* may have `StructParent` (not `StructParents`)
-            if "StructParents" not in self.page.attrs:
-                return
-            parent_id = self.page.attrs["StructParents"]
-            # NumberTree should have a `get` method like it does in pdf.js...
-            parent_array = resolve1(
-                next(array for num, array in parent_tree.values if num == parent_id)
-            )
-            self._parse_parent_tree(parent_array)
+            # ...EXCEPT that the ParentTree is sometimes missing, in which
+            # case we fall back to the non-approved way.
+            parent_tree_obj = self.root.get("ParentTree")
+            if parent_tree_obj is None:
+                self._parse_struct_tree()
+            else:
+                parent_tree = NumberTree(parent_tree_obj)
+                # If there is no marked content in the structure tree for
+                # this page (which can happen even when there is a
+                # structure tree) then there is no `StructParents`.
+                # Note however that if there are XObjects in a page,
+                # *they* may have `StructParent` (not `StructParents`)
+                if "StructParents" not in self.page.attrs:
+                    return
+                parent_id = self.page.attrs["StructParents"]
+                # NumberTree should have a `get` method like it does in pdf.js...
+                parent_array = resolve1(
+                    next(array for num, array in parent_tree.values if num == parent_id)
+                )
+                self._parse_parent_tree(parent_array)
         else:
             self.page = None
             # Overhead of creating pages shouldn't be too bad we hope!
