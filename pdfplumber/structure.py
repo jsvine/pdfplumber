@@ -53,7 +53,7 @@ class PDFStructElement:
     def __iter__(self) -> Iterator["PDFStructElement"]:
         return iter(self.children)
 
-    def all_mcids(self) -> Iterator[tuple[Optional[int], int]]:
+    def all_mcids(self) -> Iterator[Tuple[Optional[int], int]]:
         """Collect all MCIDs (with their page numbers, if there are
         multiple pages in the tree) inside a structure element.
         """
