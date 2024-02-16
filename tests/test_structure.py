@@ -4,6 +4,8 @@ import os
 import unittest
 from collections import deque
 
+from pdfminer.pdftypes import resolve1
+
 import pdfplumber
 from pdfplumber.structure import PDFStructTree
 
@@ -593,6 +595,7 @@ PVSTRUCT2 = [
     }
 ]
 
+
 IMAGESTRUCT = [
     {
         "type": "Document",
@@ -893,6 +896,14 @@ class TestMany(unittest.TestCase):
         assert pdf.structure_tree == PVSTRUCT
         page = pdf.pages[1]
         assert page.structure_tree == PVSTRUCT1
+
+    def test_missing_parenttree(self):
+        """Verify we can get structure without a ParentTree."""
+        path = os.path.join(HERE, "pdfs/2023-06-20-PV.pdf")
+        pdf = pdfplumber.open(path)
+        root = resolve1(pdf.doc.catalog["StructTreeRoot"])
+        del root["ParentTree"]
+        assert pdf.pages[1].structure_tree == PVSTRUCT1
 
     def test_image_structure(self):
         path = os.path.join(HERE, "pdfs/image_structure.pdf")
