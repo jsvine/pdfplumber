@@ -944,6 +944,18 @@ class TestClass(unittest.TestCase):
         assert tuple(stree.element_bbox(table)) == (56.7, 489.9, 555.3, 542.25)
         tr = next(table.find_all("TR"))
         assert tuple(stree.element_bbox(tr)) == (56.8, 495.9, 328.312, 507.9)
+        # Yeah but what happens if you crop the page?
+        page = pdf.pages[0].crop((10, 400, 500, 500))
+        stree = PDFStructTree(pdf, page)
+        table = next(stree.find_all("Table"))
+        # The element gets cropped too
+        assert tuple(stree.element_bbox(table)) == (56.7, 489.9, 500, 500)
+        # And if you crop it out of the page?
+        page = pdf.pages[0].crop((0, 0, 560, 400))
+        stree = PDFStructTree(pdf, page)
+        table = next(stree.find_all("Table"))
+        with self.assertRaises(IndexError):
+            _ = stree.element_bbox(table)
 
 
 class TestUnparsed(unittest.TestCase):
