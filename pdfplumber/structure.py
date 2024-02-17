@@ -461,15 +461,21 @@ class PDFStructTree:
             page = self.pages[el.page_number]
         bbox = el.attributes.get("BBox", None)
         if page is not None and bbox is not None:
-            x0, y0, x1, y1 = bbox
-            # FIXME: This does not work for cropped/rotated pages, but
-            # there doesn't seem to be a public method to normalize
-            # and translate PDF coordinates to page ones.  We expect
-            # that in general `page` here will *not* be a CroppedPage
-            # as you'd really have to try hard for that to happen.
-            top = page.height - y1
-            bottom = page.height - y0
-            return (x0, top, x1, bottom)
+            from .page import _normalize_box, _invert_box
+            # Use secret knowledge of CroppedPage (cannot use
+            # page.height because it is the *cropped* dimension, but
+            # cropping does not actually translate coordinates)
+            bbox = _invert_box(_normalize_box(bbox),
+                               page.mediabox[3] - page.mediabox[1])
+            # Use more secret knowledge of CroppedPage
+            if "_crop_fn" in vars(page):
+                rect = geometry.bbox_to_rect(bbox)
+                rects = page._crop_fn([rect])
+                if not rects:
+                    raise IndexError("Element no longer on page")
+                return geometry.obj_to_bbox(rects[0])
+            else:
+                return bbox
         else:
             mcid_objs = []
             for page_number, mcid in el.all_mcids():
@@ -487,5 +493,5 @@ class PDFStructTree:
                     if c["mcid"] == mcid:
                         mcid_objs.append(c)
             if not mcid_objs:
-                raise ValueError("No objects found")  # pragma: nocover
+                raise IndexError("No objects found")  # pragma: nocover
             return geometry.objects_to_bbox(mcid_objs)
