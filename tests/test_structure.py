@@ -866,13 +866,15 @@ class TestClass(unittest.TestCase):
 
     def test_find_all_tree(self):
         """
-        Test find_all() on trees
+        Test find_all() and find() on trees
         """
         path = os.path.join(HERE, "pdfs/image_structure.pdf")
         pdf = pdfplumber.open(path)
         stree = PDFStructTree(pdf, pdf.pages[0])
         figs = list(stree.find_all("Figure"))
         assert len(figs) == 1
+        fig = stree.find("Figure")
+        assert fig == figs[0]
         figs = list(stree.find_all(re.compile(r"Fig.*")))
         assert len(figs) == 1
         figs = list(stree.find_all(lambda x: x.type == "Figure"))
@@ -886,7 +888,7 @@ class TestClass(unittest.TestCase):
 
     def test_find_all_element(self):
         """
-        Test find_all() on elements
+        Test find_all() and find() on elements
         """
         path = os.path.join(HERE, "pdfs/pdf_structure.pdf")
         pdf = pdfplumber.open(path)
@@ -897,6 +899,8 @@ class TestClass(unittest.TestCase):
             for item in items:
                 body = list(item.find_all("LBody"))
                 assert body
+                body1 = item.find("LBody")
+                assert body1 == body[0]
 
     def test_all_mcids(self):
         """

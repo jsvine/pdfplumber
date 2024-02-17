@@ -36,8 +36,69 @@ if TYPE_CHECKING:  # pragma: nocover
 MatchFunc = Callable[["PDFStructElement"], bool]
 
 
+def _find_all(
+    elements: Iterable["PDFStructElement"],
+    matcher: Union[str, Pattern[str], MatchFunc],
+) -> Iterator["PDFStructElement"]:
+    """
+    Common code for `find_all()` in trees and elements.
+    """
+
+    def match_tag(x: "PDFStructElement") -> bool:
+        """Match an element name."""
+        return x.type == matcher
+
+    def match_regex(x: "PDFStructElement") -> bool:
+        """Match an element name by regular expression."""
+        return matcher.match(x.type)  # type: ignore
+
+    if isinstance(matcher, str):
+        match_func = match_tag
+    elif isinstance(matcher, re.Pattern):
+        match_func = match_regex
+    else:
+        match_func = matcher  # type: ignore
+    d = deque(elements)
+    while d:
+        el = d.popleft()
+        if match_func(el):
+            yield el
+        d.extendleft(reversed(el.children))
+
+
+class Findable:
+    """find() and find_all() methods that can be inherited to avoid
+    repeating oneself"""
+    children: List["PDFStructElement"]
+
+    def find_all(
+        self, matcher: Union[str, Pattern[str], MatchFunc]
+    ) -> Iterator["PDFStructElement"]:
+        """Iterate depth-first over matching elements in subtree.
+
+        The `matcher` argument is either an element name, a regular
+        expression, or a function taking a `PDFStructElement` and
+        returning `True` if the element matches.
+        """
+        return _find_all(self.children, matcher)
+
+    def find(
+        self, matcher: Union[str, Pattern[str], MatchFunc]
+    ) -> Optional["PDFStructElement"]:
+        """Find the first matching element in subtree.
+
+        The `matcher` argument is either an element name, a regular
+        expression, or a function taking a `PDFStructElement` and
+        returning `True` if the element matches.
+        """
+        try:
+            return next(_find_all(self.children, matcher))
+        except StopIteration:
+            return None
+
+
 @dataclass
-class PDFStructElement:
+class PDFStructElement(Findable):
     type: str
     revision: Optional[int]
     id: Optional[str]
@@ -67,17 +128,6 @@ class PDFStructElement:
                 yield el.page_number, mcid
             d.extendleft(reversed(el.children))
 
-    def find_all(
-        self, matcher: Union[str, Pattern[str], MatchFunc]
-    ) -> Iterator["PDFStructElement"]:
-        """Iterate depth-first over matching elements in subtree.
-
-        The `matcher` argument is either an element name, a regular
-        expression, or a function taking a `PDFStructElement` and
-        returning `True` if the element matches.
-        """
-        return _find_all(self.children, matcher)
-
     def to_dict(self) -> Dict[str, Any]:
         """Return a compacted dict representation."""
         r = asdict(self)
@@ -93,41 +143,11 @@ class PDFStructElement:
         return r
 
 
-def _find_all(
-    elements: Iterable[PDFStructElement],
-    matcher: Union[str, Pattern[str], MatchFunc],
-) -> Iterator[PDFStructElement]:
-    """
-    Common code for `find_all()` in trees and elements.
-    """
-
-    def match_tag(x: PDFStructElement) -> bool:
-        """Match an element name."""
-        return x.type == matcher
-
-    def match_regex(x: PDFStructElement) -> bool:
-        """Match an element name by regular expression."""
-        return matcher.match(x.type)  # type: ignore
-
-    if isinstance(matcher, str):
-        match_func = match_tag
-    elif isinstance(matcher, re.Pattern):
-        match_func = match_regex
-    else:
-        match_func = matcher  # type: ignore
-    d = deque(elements)
-    while d:
-        el = d.popleft()
-        if match_func(el):
-            yield el
-        d.extendleft(reversed(el.children))
-
-
 class StructTreeMissing(ValueError):
     pass
 
 
-class PDFStructTree:
+class PDFStructTree(Findable):
     """Parse the structure tree of a PDF.
 
     The constructor takes a `pdfplumber.PDF` and optionally a
@@ -440,18 +460,6 @@ class PDFStructTree:
     def __iter__(self) -> Iterator[PDFStructElement]:
         return iter(self.children)
 
-    def find_all(
-        self, matcher: Union[str, Pattern[str], MatchFunc]
-    ) -> Iterator[PDFStructElement]:
-        """
-        Iterate depth-first over all matching elements in subtree.
-
-        The `matcher` argument is either an element name, a regular
-        expression, or a function taking a `PDFStructElement` and
-        returning `True` if the element matches.
-        """
-        return _find_all(self.children, matcher)
-
     def element_bbox(self, el: PDFStructElement) -> T_bbox:
         """Get the bounding box for an element for visual debugging."""
         page = None
@@ -461,21 +469,24 @@ class PDFStructTree:
             page = self.pages[el.page_number]
         bbox = el.attributes.get("BBox", None)
         if page is not None and bbox is not None:
-            from .page import _normalize_box, _invert_box
+            from .page import _invert_box, _normalize_box, CroppedPage
+
             # Use secret knowledge of CroppedPage (cannot use
             # page.height because it is the *cropped* dimension, but
             # cropping does not actually translate coordinates)
-            bbox = _invert_box(_normalize_box(bbox),
-                               page.mediabox[3] - page.mediabox[1])
+            bbox = _invert_box(
+                _normalize_box(bbox), page.mediabox[3] - page.mediabox[1]
+            )
             # Use more secret knowledge of CroppedPage
-            if "_crop_fn" in vars(page):
+            if isinstance(page, CroppedPage):
                 rect = geometry.bbox_to_rect(bbox)
                 rects = page._crop_fn([rect])
                 if not rects:
                     raise IndexError("Element no longer on page")
                 return geometry.obj_to_bbox(rects[0])
             else:
-                return bbox
+                # Not sure why mypy complains here
+                return bbox  # type: ignore
         else:
             mcid_objs = []
             for page_number, mcid in el.all_mcids():
