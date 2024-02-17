@@ -69,6 +69,7 @@ def _find_all(
 class Findable:
     """find() and find_all() methods that can be inherited to avoid
     repeating oneself"""
+
     children: List["PDFStructElement"]
 
     def find_all(
@@ -469,7 +470,7 @@ class PDFStructTree(Findable):
             page = self.pages[el.page_number]
         bbox = el.attributes.get("BBox", None)
         if page is not None and bbox is not None:
-            from .page import _invert_box, _normalize_box, CroppedPage
+            from .page import CroppedPage, _invert_box, _normalize_box
 
             # Use secret knowledge of CroppedPage (cannot use
             # page.height because it is the *cropped* dimension, but

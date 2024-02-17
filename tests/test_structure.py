@@ -875,6 +875,7 @@ class TestClass(unittest.TestCase):
         assert len(figs) == 1
         fig = stree.find("Figure")
         assert fig == figs[0]
+        assert stree.find("Fogure") is None
         figs = list(stree.find_all(re.compile(r"Fig.*")))
         assert len(figs) == 1
         figs = list(stree.find_all(lambda x: x.type == "Figure"))
@@ -901,6 +902,7 @@ class TestClass(unittest.TestCase):
                 assert body
                 body1 = item.find("LBody")
                 assert body1 == body[0]
+                assert item.find("Loonie") is None
 
     def test_all_mcids(self):
         """
