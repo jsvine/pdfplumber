@@ -118,6 +118,13 @@ def normalize_color(
     return separate_pattern(tuplefied)
 
 
+def tuplify_list_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        key: (tuple(value) if isinstance(value, list) else value)
+        for key, value in kwargs.items()
+    }
+
+
 class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
     """Extract layout from a specific page, adding marked-content IDs to
     objects where found."""
@@ -167,23 +174,6 @@ class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
         """Hook for rendering lines and curves, adding the `mcid` attribute."""
         super().paint_path(*args, **kwargs)
         self.tag_cur_item()
-
-
-def textmap_cacher(func: Callable[..., TextMap]) -> Callable[..., TextMap]:
-    """
-    Caches the kwargs to Page._get_textmap
-    and converts list kwargs (which would be unhashable) into tuples.
-    """
-
-    def new_func(**kwargs: Any) -> TextMap:
-        return lru_cache()(func)(
-            **{
-                key: (tuple(value) if isinstance(value, list) else value)
-                for key, value in kwargs.items()
-            }
-        )
-
-    return new_func
 
 
 def _normalize_box(box_raw: T_bbox, rotation: T_num = 0) -> T_bbox:
@@ -251,7 +241,7 @@ class Page(Container):
         self.bbox = self.mediabox
 
         # See https://rednafi.com/python/lru_cache_on_methods/
-        self.get_textmap = textmap_cacher(self._get_textmap)
+        self.get_textmap = lru_cache()(self._get_textmap)
 
     def close(self) -> None:
         self.flush_cache()
@@ -493,7 +483,7 @@ class Page(Container):
         return_groups: bool = True,
         **kwargs: Any,
     ) -> List[Dict[str, Any]]:
-        textmap = self.get_textmap(**kwargs)
+        textmap = self.get_textmap(**tuplify_list_kwargs(kwargs))
         return textmap.search(
             pattern,
             regex=regex,
@@ -504,7 +494,7 @@ class Page(Container):
         )
 
     def extract_text(self, **kwargs: Any) -> str:
-        return self.get_textmap(**kwargs).as_string
+        return self.get_textmap(**tuplify_list_kwargs(kwargs)).as_string
 
     def extract_text_simple(self, **kwargs: Any) -> str:
         return utils.extract_text_simple(self.chars, **kwargs)
@@ -515,7 +505,7 @@ class Page(Container):
     def extract_text_lines(
         self, strip: bool = True, return_chars: bool = True, **kwargs: Any
     ) -> T_obj_list:
-        return self.get_textmap(**kwargs).extract_text_lines(
+        return self.get_textmap(**tuplify_list_kwargs(kwargs)).extract_text_lines(
             strip=strip, return_chars=return_chars
         )
 
@@ -625,7 +615,7 @@ class DerivedPage(Page):
         self.mediabox = parent_page.mediabox
         self.cropbox = parent_page.cropbox
         self.flush_cache(Container.cached_properties)
-        self.get_textmap = textmap_cacher(self._get_textmap)
+        self.get_textmap = lru_cache()(self._get_textmap)
 
 
 def test_proposed_bbox(bbox: T_bbox, parent_bbox: T_bbox) -> None:
