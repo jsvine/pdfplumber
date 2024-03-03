@@ -18,6 +18,7 @@ from pdfminer.layout import (
     LTChar,
     LTComponent,
     LTContainer,
+    LTCurve,
     LTItem,
     LTPage,
     LTTextContainer,
@@ -59,10 +60,9 @@ ALL_ATTRS = set(
         "evenodd",
         "fill",
         "non_stroking_color",
-        "path",
-        "stream",
         "stroke",
         "stroking_color",
+        "stream",
         "mcid",
         "tag",
     ]
@@ -383,8 +383,14 @@ class Page(Container):
             if isinstance(attr["fontname"], bytes):
                 attr["fontname"] = fix_fontname_bytes(attr["fontname"])
 
-        if "pts" in attr:
+        elif isinstance(obj, (LTCurve,)):
             attr["pts"] = list(map(self.point2coord, attr["pts"]))
+
+            # Ignoring typing because type signature for obj.original_path
+            # appears to be incorrect
+            attr["path"] = [(cmd, *map(self.point2coord, pts)) for cmd, *pts in obj.original_path]  # type: ignore  # noqa: E501
+
+            attr["dash"] = obj.dashing_style
 
         if "y0" in attr:
             attr["top"] = self.height - attr["y1"]

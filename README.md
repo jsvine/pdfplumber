@@ -229,7 +229,8 @@ my_char_rotation = my_char_ctm.skew_x
 | Property | Description |
 |----------|-------------|
 |`page_number`| Page number on which this curve was found.|
-|`pts`| Points — as a list of `(x, top)` tuples — describing the curve.|
+|`pts`| A list of `(x, top)` tuples indicating the *points on the curve*.|
+|`path`| A list of `(cmd, *(x, top))` tuples *describing the full path description*, including (for example) control points used in Bezier curves.|
 |`height`| Height of curve's bounding box.|
 |`width`| Width of curve's bounding box.|
 |`x0`| Distance of curve's left-most point from left side of page.|
@@ -243,6 +244,7 @@ my_char_rotation = my_char_ctm.skew_x
 |`fill`| Whether the shape defined by the curve's path is filled.|
 |`stroking_color`|The color of the curve's outline. See [docs/colors.md](docs/colors.md) for details.|
 |`non_stroking_color`|The curve’s fill color. See [docs/colors.md](docs/colors.md) for details.|
+|`dash`|A `([dash_array], dash_phase)` tuple describing the curve's dash style. See [Table 4.6 of the PDF specification](https://ghostscript.com/~robin/pdf_reference17.pdf#page=218) for details.|
 |`mcid`| The [marked content](https://ghostscript.com/~robin/pdf_reference17.pdf#page=850) section ID for this curve if any (otherwise `None`). *Experimental attribute.*|
 |`tag`| The [marked content](https://ghostscript.com/~robin/pdf_reference17.pdf#page=850) section tag for this curve if any (otherwise `None`). *Experimental attribute.*|
 |`object_type`| "curve"|
