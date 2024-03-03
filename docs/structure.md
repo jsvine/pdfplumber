@@ -59,3 +59,18 @@ In this case, because marked content IDs are specific to a given page,
 each element will also have a `page_number` attribute, which is the
 number of the page containing (partially or completely) this element,
 indexed from 1 (for consistency with `pdfplumber.Page`).
+
+You can also access the underlying `PDFStructTree` object for more
+flexibility, including visual debugging.  For instance to plot the
+bounding boxes of the contents of all of the `TD` elements on the
+first page of a document:
+
+    page = pdf.pages[0]
+    stree = PDFStructTree(pdf, page)
+    img = page.to_image()
+    img.draw_rects(stree.element_bbox(td) for td in table.find_all("TD"))
+
+The `find_all` method works rather like the same method in
+[BeautifulSoup](https://beautiful-soup-4.readthedocs.io/en/latest/#searching-the-tree) -
+it takes an element name, a regular expression, or a matching
+function.
