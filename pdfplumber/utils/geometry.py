@@ -84,7 +84,8 @@ def clip_obj(obj: T_obj, bbox: T_bbox) -> Optional[T_obj]:
         copy[attr] = dims[attr]
 
     diff = dims["top"] - obj["top"]
-    copy["doctop"] = obj["doctop"] + diff
+    if "doctop" in copy:
+        copy["doctop"] = obj["doctop"] + diff
     copy["width"] = copy["x1"] - copy["x0"]
     copy["height"] = copy["bottom"] - copy["top"]
 
