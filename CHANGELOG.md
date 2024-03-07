@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.11.0] - 2024-03-07
+
+## Added
+
+- Add `{line,char}_dir{,rotated,render}` params, to provide better support for non–top-to-bottom, left-to-right text (h/t @afriedman412). ([850fd45](https://github.com/jsvine/pdfplumber/commit/850fd45))
+- Add `curve["path"]` and `curve["dash"]`, thanks to `pdfminer.six` upgrade (see below). ([1820247](https://github.com/jsvine/pdfplumber/commit/1820247))
+
+## Changed
+- Upgrade `pdfminer.six` from `20221105` to `20231228`. ([cd2f768](https://github.com/jsvine/pdfplumber/commit/cd2f768))
+- Change value of in `word["direction"]` from `{1,-1}` to `{"ltr","rtl","ttb","btt"}`. ([850fd45](https://github.com/jsvine/pdfplumber/commit/850fd45))
+- Deprecate `vertical_ttb`, `horizontal_ltr` in favor of `char_dir` and `char_dir_rotated`.([850fd45](https://github.com/jsvine/pdfplumber/commit/850fd45))
+
+
+## Fixed
+- Fix layout-caching issue  caused by `0bfffc2`. ([#1097](https://github.com/jsvine/pdfplumber/pull/1097) + [efca277](https://github.com/jsvine/pdfplumber/commit/efca277))
+- Fix missing ParentTree edge-case. ([#1094](https://github.com/jsvine/pdfplumber/pull/1094)))
+
 ## [0.10.4] - 2024-02-10
 
 ### Added
