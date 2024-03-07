@@ -422,11 +422,10 @@ class Table(object):
                     ]
 
                     if len(cell_chars):
-                        kwargs["x_shift"] = cell[0]
-                        kwargs["y_shift"] = cell[1]
                         if "layout" in kwargs:
                             kwargs["layout_width"] = cell[2] - cell[0]
                             kwargs["layout_height"] = cell[3] - cell[1]
+                            kwargs["layout_bbox"] = cell
                         cell_text = utils.extract_text(cell_chars, **kwargs)
                     else:
                         cell_text = ""

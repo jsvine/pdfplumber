@@ -85,7 +85,7 @@ class Test(unittest.TestCase):
             words_rtl = p.extract_words(horizontal_ltr=False)
 
         assert words[0]["text"] == "Agaaaaa:"
-        assert words[0]["direction"] == 1
+        assert words[0]["direction"] == "ltr"
 
         assert "size" not in words[0]
         assert round(words_attr[0]["size"], 2) == 9.96
@@ -94,10 +94,118 @@ class Test(unittest.TestCase):
 
         vertical = [w for w in words if w["upright"] == 0]
         assert vertical[0]["text"] == "Aaaaaabag8"
-        assert vertical[0]["direction"] == -1
+        assert vertical[0]["direction"] == "btt"
 
         assert words_rtl[1]["text"] == "baaabaaA/AAA"
-        assert words_rtl[1]["direction"] == -1
+        assert words_rtl[1]["direction"] == "rtl"
+
+    def test_text_rotation(self):
+        rotations = {
+            "0": ("ltr", "ttb"),
+            "-0": ("rtl", "ttb"),
+            "180": ("rtl", "btt"),
+            "-180": ("ltr", "btt"),
+            "90": ("ttb", "rtl"),
+            "-90": ("btt", "rtl"),
+            "270": ("btt", "ltr"),
+            "-270": ("ttb", "ltr"),
+        }
+
+        path = os.path.join(HERE, "pdfs/issue-848.pdf")
+        with pdfplumber.open(path) as pdf:
+            expected = utils.text.extract_text(pdf.pages[0].chars)
+            for i, (rotation, (char_dir, line_dir)) in enumerate(rotations.items()):
+                if i == 0:
+                    continue
+                print(f"--- {rotation} ---")
+                p = pdf.pages[i].filter(lambda obj: obj.get("text") != " ")
+                output = utils.text.extract_text(
+                    x_tolerance=2,
+                    y_tolerance=2,
+                    chars=p.chars,
+                    char_dir=char_dir,
+                    line_dir=line_dir,
+                    char_dir_rotated=char_dir,
+                    line_dir_rotated=line_dir,
+                    char_dir_render="ltr",
+                    line_dir_render="ttb",
+                )
+                assert output == expected
+
+    def test_text_rotation_layout(self):
+        rotations = {
+            "0": ("ltr", "ttb"),
+            "-0": ("rtl", "ttb"),
+            "180": ("rtl", "btt"),
+            "-180": ("ltr", "btt"),
+            "90": ("ttb", "rtl"),
+            "-90": ("btt", "rtl"),
+            "270": ("btt", "ltr"),
+            "-270": ("ttb", "ltr"),
+        }
+
+        def meets_expectations(text):
+            # Both texts should be found, and the first should appear before the second
+            a = re.search("opens with a news report", text)
+            b = re.search("having been transferred", text)
+            return a and b and (a.start() < b.start())
+
+        path = os.path.join(HERE, "pdfs/issue-848.pdf")
+        with pdfplumber.open(path) as pdf:
+            for i, (rotation, (char_dir, line_dir)) in enumerate(rotations.items()):
+                print(f"--- {rotation} ---")
+                p = pdf.pages[i].filter(lambda obj: obj.get("text") != " ")
+                output = p.extract_text(
+                    layout=True,
+                    x_tolerance=2,
+                    y_tolerance=2,
+                    char_dir=char_dir,
+                    line_dir=line_dir,
+                    char_dir_rotated=char_dir,
+                    line_dir_rotated=line_dir,
+                    char_dir_render="ltr",
+                    line_dir_render="ttb",
+                    y_density=14,
+                )
+                assert meets_expectations(output)
+
+    def test_text_render_directions(self):
+        path = os.path.join(HERE, "pdfs/line-char-render-example.pdf")
+        targets = {
+            ("ttb", "ltr"): "first line\nsecond line\nthird line",
+            ("ttb", "rtl"): "enil tsrif\nenil dnoces\nenil driht",
+            ("btt", "ltr"): "third line\nsecond line\nfirst line",
+            ("btt", "rtl"): "enil driht\nenil dnoces\nenil tsrif",
+            ("ltr", "ttb"): "fst\nieh\nrci\nsor\ntnd\n d \nl l\nili\nnin\nene\n e ",
+            ("ltr", "btt"): " s \nfet\nich\nroi\nsnr\ntdd\n   \nlll\niii\nnnn\neee",
+            ("rtl", "ttb"): "tsf\nhei\nicr\nros\ndnt\n d \nl l\nili\nnin\nene\n e ",
+            ("rtl", "btt"): " s \ntef\nhci\nior\nrns\nddt\n   \nlll\niii\nnnn\neee",
+        }
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            for (line_dir, char_dir), target in targets.items():
+                text = page.extract_text(
+                    line_dir_render=line_dir, char_dir_render=char_dir
+                )
+                assert text == target
+
+    def test_invalid_directions(self):
+        path = os.path.join(HERE, "pdfs/line-char-render-example.pdf")
+        pdf = pdfplumber.open(path)
+        page = pdf.pages[0]
+        with pytest.raises(ValueError):
+            page.extract_text(line_dir="xxx", char_dir="ltr")
+        with pytest.raises(ValueError):
+            page.extract_text(line_dir="ttb", char_dir="a")
+        with pytest.raises(ValueError):
+            page.extract_text(line_dir="rtl", char_dir="ltr")
+        with pytest.raises(ValueError):
+            page.extract_text(line_dir="ttb", char_dir="btt")
+        with pytest.raises(ValueError):
+            page.extract_text(line_dir_rotated="ttb", char_dir="btt")
+        with pytest.raises(ValueError):
+            page.extract_text(line_dir_render="ttb", char_dir_render="btt")
+        pdf.close()
 
     def test_extra_attrs(self):
         path = os.path.join(HERE, "pdfs/extra-attrs-example.pdf")
@@ -255,7 +363,11 @@ class Test(unittest.TestCase):
         page = self.pdf_scotus.pages[0]
         text = page.extract_text(layout=True)
         utils_text = utils.extract_text(
-            page.chars, layout=True, layout_width=page.width, layout_height=page.height
+            page.chars,
+            layout=True,
+            layout_width=page.width,
+            layout_height=page.height,
+            layout_bbox=page.bbox,
         )
         assert text == utils_text
         assert text == target

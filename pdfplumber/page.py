@@ -471,7 +471,9 @@ class Page(Container):
             return table.extract(**(tset.text_settings or {}))
 
     def _get_textmap(self, **kwargs: Any) -> TextMap:
-        defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])
+        defaults: Dict[str, Any] = dict(
+            layout_bbox=self.bbox,
+        )
         if "layout_width_chars" not in kwargs:
             defaults.update({"layout_width": self.width})
         if "layout_height_chars" not in kwargs:
