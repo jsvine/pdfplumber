@@ -1,22 +1,8 @@
 from typing import Any, List, Optional, Union
 
-from pdfminer.pdftypes import PDFObjRef
-from pdfminer.psparser import PSLiteral
-from pdfminer.utils import PDFDocEncoding
-
-
-def decode_text(s: Union[bytes, str]) -> str:
-    """
-    Decodes a PDFDocEncoding string to Unicode.
-    Adds py3 compatibility to pdfminer's version.
-    """
-    if isinstance(s, bytes) and s.startswith(b"\xfe\xff"):
-        return str(s[2:], "utf-16be", "ignore")
-    try:
-        ords = (ord(c) if isinstance(c, str) else c for c in s)
-        return "".join(PDFDocEncoding[o] for o in ords)
-    except IndexError:
-        return str(s)
+from playa.pdftypes import PDFObjRef
+from playa.psparser import PSLiteral
+from playa.utils import PDFDocEncoding, decode_text
 
 
 def resolve_and_decode(obj: Any) -> Any:

@@ -8,8 +8,8 @@ from operator import itemgetter
 
 import pandas as pd
 import pytest
-from pdfminer.pdfparser import PDFObjRef
-from pdfminer.psparser import PSLiteral
+from playa.pdfparser import PDFObjRef
+from playa.psparser import PSLiteral
 
 import pdfplumber
 from pdfplumber import utils

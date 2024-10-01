@@ -15,8 +15,8 @@ from typing import (
 from unicodedata import normalize as normalize_unicode
 from warnings import warn
 
-from pdfminer.converter import PDFPageAggregator
-from pdfminer.layout import (
+from playa.converter import PDFPageAggregator
+from playa.layout import (
     LTChar,
     LTComponent,
     LTContainer,
@@ -25,9 +25,9 @@ from pdfminer.layout import (
     LTPage,
     LTTextContainer,
 )
-from pdfminer.pdfinterp import PDFPageInterpreter, PDFStackT
-from pdfminer.pdfpage import PDFPage
-from pdfminer.psparser import PSLiteral
+from playa.pdfinterp import PDFPageInterpreter, PDFStackT
+from playa.pdfpage import PDFPage
+from playa.psparser import PSLiteral
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list

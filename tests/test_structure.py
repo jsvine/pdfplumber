@@ -5,7 +5,7 @@ import re
 import unittest
 from collections import deque
 
-from pdfminer.pdftypes import resolve1
+from playa.pdftypes import resolve1
 
 import pdfplumber
 from pdfplumber.structure import PDFStructTree

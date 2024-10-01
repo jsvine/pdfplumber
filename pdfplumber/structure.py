@@ -17,10 +17,10 @@ from typing import (
     Union,
 )
 
-from pdfminer.data_structures import NumberTree
-from pdfminer.pdfparser import PDFParser
-from pdfminer.pdftypes import PDFObjRef, resolve1
-from pdfminer.psparser import PSLiteral
+from playa.data_structures import NumberTree
+from playa.pdfparser import KEYWORD_NULL
+from playa.pdftypes import PDFObjRef, resolve1
+from playa.psparser import PSLiteral
 
 from ._typing import T_bbox, T_obj
 from .utils import decode_text, geometry
@@ -316,7 +316,7 @@ class PDFStructTree(Findable):
             ref = d.popleft()
             # In the case where an MCID is not associated with any
             # structure, there will be a "null" in the parent tree.
-            if ref == PDFParser.KEYWORD_NULL:
+            if ref == KEYWORD_NULL:
                 continue
             if repr(ref) in s:
                 continue
