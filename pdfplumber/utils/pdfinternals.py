@@ -2,7 +2,7 @@ from typing import Any, List, Optional, Union
 
 from playa.pdftypes import PDFObjRef
 from playa.psparser import PSLiteral
-from playa.utils import PDFDocEncoding, decode_text
+from playa.utils import decode_text
 
 
 def resolve_and_decode(obj: Any) -> Any:

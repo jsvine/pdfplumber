@@ -5,10 +5,10 @@ from io import BufferedReader, BytesIO
 from types import TracebackType
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
+from playa.exceptions import PDFNoStructTree, PSException
 from playa.layout import LAParams
 from playa.pdfdocument import PDFDocument
 from playa.pdfinterp import PDFResourceManager
-from playa.exceptions import PSException, PDFNoStructTree
 from playa.pdfstructtree import PDFStructTree
 
 from ._typing import T_num, T_obj_list
@@ -181,7 +181,9 @@ class PDF(Container):
             if self.pages_to_parse is None:
                 numbered_pages = None
             else:
-                numbered_pages = zip(self.pages_to_parse, (p.page_obj for p in self.pages))
+                numbered_pages = zip(
+                    self.pages_to_parse, (p.page_obj for p in self.pages)
+                )
             return [elem.to_dict() for elem in PDFStructTree(self.doc, numbered_pages)]
         except PDFNoStructTree:
             return []

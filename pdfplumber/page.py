@@ -16,6 +16,7 @@ from unicodedata import normalize as normalize_unicode
 from warnings import warn
 
 from playa.converter import PDFPageAggregator
+from playa.exceptions import PDFNoStructTree
 from playa.layout import (
     LTChar,
     LTComponent,
@@ -27,9 +28,8 @@ from playa.layout import (
 )
 from playa.pdfinterp import PDFPageInterpreter
 from playa.pdfpage import PDFPage
-from playa.psparser import PSLiteral
 from playa.pdfstructtree import PDFStructTree
-from playa.exceptions import PDFNoStructTree
+from playa.psparser import PSLiteral
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
@@ -214,9 +214,7 @@ class Page(Container):
         try:
             return [
                 elem.to_dict()
-                for elem in PDFStructTree(
-                    self.pdf.doc, [(None, self.page_obj)]
-                )
+                for elem in PDFStructTree(self.pdf.doc, [(None, self.page_obj)])
             ]
         except PDFNoStructTree:
             return []
