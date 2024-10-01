@@ -327,13 +327,9 @@ class Page(Container):
         attr["page_number"] = self.page_number
 
         for cs in ["ncs", "scs"]:
-            # Note: As of pdfminer.six v20221105, that library only
-            # exposes ncs for LTChars, and neither attribute for
-            # other objects. Keeping this code here, though,
-            # for ease of addition if color spaces become
-            # more available via pdfminer.six
             if hasattr(obj, cs):
-                attr[cs] = resolve_and_decode(getattr(obj, cs).name)
+                csobj = getattr(obj, cs)
+                attr[cs] = resolve_and_decode(csobj.name)
 
         for color_attr, pattern_attr in [
             ("stroking_color", "stroking_pattern"),
