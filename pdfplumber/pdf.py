@@ -8,14 +8,13 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 from playa.layout import LAParams
 from playa.pdfdocument import PDFDocument
 from playa.pdfinterp import PDFResourceManager
-from playa.pdfpage import PDFPage
-from playa.psparser import PSException
+from playa.exceptions import PSException, PDFNoStructTree
+from playa.pdfstructtree import PDFStructTree
 
 from ._typing import T_num, T_obj_list
 from .container import Container
 from .page import Page
 from .repair import T_repair_setting, _repair
-from .structure import PDFStructTree, StructTreeMissing
 from .utils import resolve_and_decode
 
 logger = logging.getLogger(__name__)
@@ -179,8 +178,12 @@ class PDF(Container):
     def structure_tree(self) -> List[Dict[str, Any]]:
         """Return the structure tree for the document."""
         try:
-            return [elem.to_dict() for elem in PDFStructTree(self)]
-        except StructTreeMissing:
+            if self.pages_to_parse is None:
+                numbered_pages = None
+            else:
+                numbered_pages = zip(self.pages_to_parse, (p.page_obj for p in self.pages))
+            return [elem.to_dict() for elem in PDFStructTree(self.doc, numbered_pages)]
+        except PDFNoStructTree:
             return []
 
     def to_dict(self, object_types: Optional[List[str]] = None) -> Dict[str, Any]:

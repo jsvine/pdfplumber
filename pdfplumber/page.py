@@ -25,14 +25,15 @@ from playa.layout import (
     LTPage,
     LTTextContainer,
 )
-from playa.pdfinterp import PDFPageInterpreter, PDFStackT
+from playa.pdfinterp import PDFPageInterpreter
 from playa.pdfpage import PDFPage
 from playa.psparser import PSLiteral
+from playa.pdfstructtree import PDFStructTree
+from playa.exceptions import PDFNoStructTree
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
-from .structure import PDFStructTree, StructTreeMissing
 from .table import T_table_settings, Table, TableFinder, TableSettings
 from .utils import decode_text, resolve_all, resolve_and_decode
 from .utils.text import TextMap
@@ -211,8 +212,13 @@ class Page(Container):
     def structure_tree(self) -> List[Dict[str, Any]]:
         """Return the structure tree for a page, if any."""
         try:
-            return [elem.to_dict() for elem in PDFStructTree(self.pdf, self)]
-        except StructTreeMissing:
+            return [
+                elem.to_dict()
+                for elem in PDFStructTree(
+                    self.pdf.doc, [(None, self.page_obj)]
+                )
+            ]
+        except PDFNoStructTree:
             return []
 
     @property
