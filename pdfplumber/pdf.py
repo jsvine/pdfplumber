@@ -144,7 +144,7 @@ class PDF(Container):
         doctop: T_num = 0
         pp = self.pages_to_parse
         self._pages: List[Page] = []
-        for i, page in enumerate(self.doc.get_pages()):
+        for i, page in enumerate(self.doc.pages):
             page_number = i + 1
             if pp is not None and page_number not in pp:
                 continue
