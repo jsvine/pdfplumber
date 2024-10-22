@@ -351,17 +351,6 @@ class Page(Container):
             )
 
         if isinstance(obj, LTChar):
-            # pdfminer.six (at least as of v20221105) does not
-            # directly expose .stroking_color and .non_stroking_color
-            # for LTChar objects (unlike, e.g., LTRect objects).
-            gs = obj.graphicstate
-            attr["stroking_color"], attr["stroking_pattern"] = normalize_color(
-                gs.scolor
-            )
-            attr["non_stroking_color"], attr["non_stroking_pattern"] = normalize_color(
-                gs.ncolor
-            )
-
             # Handle (rare) byte-encoded fontnames
             if isinstance(attr["fontname"], bytes):
                 attr["fontname"] = fix_fontname_bytes(attr["fontname"])
