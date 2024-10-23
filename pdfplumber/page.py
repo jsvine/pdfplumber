@@ -15,17 +15,8 @@ from typing import (
 from unicodedata import normalize as normalize_unicode
 from warnings import warn
 
-from playa.converter import PDFPageAggregator
 from playa.exceptions import PDFNoStructTree
-from playa.layout import (
-    LTChar,
-    LTComponent,
-    LTContainer,
-    LTCurve,
-    LTItem,
-    LTPage,
-)
-from playa.pdfinterp import PDFPageInterpreter
+from playa.layout import LTChar, LTComponent, LTContainer, LTCurve, LTItem, LTPage
 from playa.pdfpage import PDFPage
 from playa.pdfstructtree import PDFStructTree
 from playa.psparser import PSLiteral
@@ -220,16 +211,8 @@ class Page(Container):
 
     @property
     def layout(self) -> LTPage:
-        if hasattr(self, "_layout"):
-            return self._layout
-        device = PDFPageAggregator(
-            self.pdf.rsrcmgr,
-            pageno=self.page_number,
-        )
-        interpreter = PDFPageInterpreter(self.pdf.rsrcmgr, device)
-        interpreter.process_page(self.page_obj)
-        self._layout: LTPage = device.get_result()
-        return self._layout
+        # PLAYA will cache it for us
+        return self.page_obj.layout
 
     @property
     def annots(self) -> T_obj_list:

@@ -46,7 +46,9 @@ class Test(unittest.TestCase):
         # Ensure that caching is working:
         assert id(self.pdf._rect_edges) == id(self.pdf.rect_edges)
         assert id(self.pdf_2._curve_edges) == id(self.pdf_2.curve_edges)
-        assert id(self.pdf.pages[0]._layout) == id(self.pdf.pages[0].layout)
+        assert id(self.pdf.pages[0].page_obj._layout) == id(
+            self.pdf.pages[0].page_obj.layout
+        )
 
     def test_annots(self):
         pdf = self.pdf_2
