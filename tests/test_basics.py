@@ -213,13 +213,6 @@ class Test(unittest.TestCase):
         char = self.pdf.pages[0].chars[3358]
         assert char["non_stroking_color"] == (1, 0, 0)
 
-    def test_load_with_custom_laparams(self):
-        # See https://github.com/jsvine/pdfplumber/issues/168
-        path = os.path.join(HERE, "pdfs/cupertino_usd_4-6-16.pdf")
-        laparams = dict(line_margin=0.2)
-        with pdfplumber.open(path, laparams=laparams) as pdf:
-            assert round(pdf.pages[0].chars[0]["top"], 3) == 66.384
-
     def test_loading_pathobj(self):
         from pathlib import Path
 

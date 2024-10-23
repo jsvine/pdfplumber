@@ -24,7 +24,6 @@ from playa.layout import (
     LTCurve,
     LTItem,
     LTPage,
-    LTTextContainer,
 )
 from playa.pdfinterp import PDFPageInterpreter
 from playa.pdfpage import PDFPage
@@ -226,7 +225,6 @@ class Page(Container):
         device = PDFPageAggregator(
             self.pdf.rsrcmgr,
             pageno=self.page_number,
-            laparams=self.pdf.laparams,
         )
         interpreter = PDFPageInterpreter(self.pdf.rsrcmgr, device)
         interpreter.process_page(self.page_obj)
@@ -342,15 +340,13 @@ class Page(Container):
             if color_attr in attr:
                 attr[color_attr], attr[pattern_attr] = normalize_color(attr[color_attr])
 
-        if isinstance(obj, (LTChar, LTTextContainer)):
+        if isinstance(obj, LTChar):
             text = obj.get_text()
             attr["text"] = (
                 normalize_unicode(self.pdf.unicode_norm, text)
                 if self.pdf.unicode_norm is not None
                 else text
             )
-
-        if isinstance(obj, LTChar):
             # Handle (rare) byte-encoded fontnames
             if isinstance(attr["fontname"], bytes):
                 attr["fontname"] = fix_fontname_bytes(attr["fontname"])
@@ -386,9 +382,6 @@ class Page(Container):
         for obj in layout_objects:
             # If object is, like LTFigure, a higher-level object ...
             if isinstance(obj, LTContainer):
-                # and LAParams is passed, process the object itself.
-                if self.pdf.laparams is not None:
-                    yield self.process_object(obj)
                 # Regardless, iterate through its children
                 yield from self.iter_layout_objects(obj._objs)
             else:

@@ -6,7 +6,6 @@ from types import TracebackType
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
 from playa.exceptions import PDFNoStructTree, PSException
-from playa.layout import LAParams
 from playa.pdfdocument import PDFDocument
 from playa.pdfinterp import PDFResourceManager
 from playa.pdfstructtree import PDFStructTree
@@ -39,7 +38,6 @@ class PDF(Container):
         self.stream_is_external = stream_is_external
         self.path = path
         self.pages_to_parse = pages
-        self.laparams = None if laparams is None else LAParams(**laparams)
         self.password = password
         self.unicode_norm = unicode_norm
         self.raise_unicode_errors = raise_unicode_errors
