@@ -202,7 +202,7 @@ class PDFStructTree(Findable):
                 parent_id = self.page.page_obj.attrs["StructParents"]
                 # NumberTree should have a `get` method like it does in pdf.js...
                 parent_array = resolve1(
-                    next(array for num, array in parent_tree.values if num == parent_id)
+                    next(array for num, array in parent_tree if num == parent_id)
                 )
                 self._parse_parent_tree(parent_array)
         else:
