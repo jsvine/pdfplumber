@@ -16,10 +16,10 @@ from unicodedata import normalize as normalize_unicode
 from warnings import warn
 
 from playa.exceptions import PDFNoStructTree
-from playa.layout import LTChar, LTComponent, LTContainer, LTCurve, LTItem, LTPage
-from playa.pdfpage import PDFPage
-from playa.pdfstructtree import PDFStructTree
-from playa.psparser import PSLiteral
+from playa.layout import LTChar, LTComponent, LTCurve, LTFigure
+from playa.page import Page as PDFPage
+from playa.parser import PSLiteral
+from playa.structtree import PDFStructTree
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
@@ -201,18 +201,20 @@ class Page(Container):
     @property
     def structure_tree(self) -> List[Dict[str, Any]]:
         """Return the structure tree for a page, if any."""
+
         try:
             return [
-                elem.to_dict()
-                for elem in PDFStructTree(self.pdf.doc, [(None, self.page_obj)])
+                elem.to_dict() for elem in PDFStructTree(self.pdf.doc, [self.page_obj])
             ]
         except PDFNoStructTree:
             return []
 
     @property
-    def layout(self) -> LTPage:
-        # PLAYA will cache it for us
-        return self.page_obj.layout
+    def layout(self) -> List[LTComponent]:
+        if hasattr(self, "_layout"):
+            return self._layout
+        self._layout = list(self.page_obj.layout)
+        return self._layout
 
     @property
     def annots(self) -> T_obj_list:
@@ -295,7 +297,7 @@ class Page(Container):
         # See note below re. #1181 and mediabox-adjustment reversions
         return (self.mediabox[0] + pt[0], self.mediabox[1] + self.height - pt[1])
 
-    def process_object(self, obj: LTItem) -> T_obj:
+    def process_object(self, obj: LTComponent) -> T_obj:
         kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
 
         def process_attr(item: Tuple[str, Any]) -> Optional[Tuple[str, Any]]:
@@ -330,6 +332,7 @@ class Page(Container):
                 if self.pdf.unicode_norm is not None
                 else text
             )
+
             # Handle (rare) byte-encoded fontnames
             if isinstance(attr["fontname"], bytes):
                 attr["fontname"] = fix_fontname_bytes(attr["fontname"])
@@ -364,7 +367,7 @@ class Page(Container):
     ) -> Generator[T_obj, None, None]:
         for obj in layout_objects:
             # If object is, like LTFigure, a higher-level object ...
-            if isinstance(obj, LTContainer):
+            if isinstance(obj, LTFigure):
                 # Regardless, iterate through its children
                 yield from self.iter_layout_objects(obj._objs)
             else:
@@ -372,7 +375,7 @@ class Page(Container):
 
     def parse_objects(self) -> Dict[str, T_obj_list]:
         objects: Dict[str, T_obj_list] = {}
-        for obj in self.iter_layout_objects(self.layout._objs):
+        for obj in self.iter_layout_objects(self.layout):
             kind = obj["object_type"]
             if kind in ["anno"]:
                 continue

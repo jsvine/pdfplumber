@@ -1,7 +1,7 @@
 from typing import Any, List, Optional, Union
 
-from playa.pdftypes import PDFObjRef
-from playa.psparser import PSLiteral
+from playa.parser import PSLiteral
+from playa.pdftypes import ObjRef as PDFObjRef
 from playa.utils import decode_text
 
 
