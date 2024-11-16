@@ -46,8 +46,8 @@ class Test(unittest.TestCase):
         # Ensure that caching is working:
         assert id(self.pdf._rect_edges) == id(self.pdf.rect_edges)
         assert id(self.pdf_2._curve_edges) == id(self.pdf_2.curve_edges)
-        assert id(self.pdf.pages[0].page_obj._layout) == id(
-            self.pdf.pages[0].page_obj.layout
+        assert id(self.pdf.pages[0]._layout) == id(
+            self.pdf.pages[0].layout
         )
 
     def test_annots(self):
@@ -232,11 +232,11 @@ class Test(unittest.TestCase):
 
     def test_bad_fileobj(self):
         path = os.path.join(HERE, "pdfs/empty.pdf")
-        with pytest.raises(pdfplumber.pdf.PSException):
+        with pytest.raises(ValueError):
             pdfplumber.open(path)
 
-        f = open(path)
-        with pytest.raises(pdfplumber.pdf.PSException):
+        f = open(path)  # not a binary file
+        with pytest.raises(TypeError):
             pdfplumber.open(f)
         # File objects passed to pdfplumber should not be auto-closed
         assert not f.closed

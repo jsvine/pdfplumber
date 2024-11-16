@@ -1,11 +1,9 @@
-import re
 from functools import lru_cache
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     Dict,
-    Generator,
     List,
     Optional,
     Pattern,
@@ -15,8 +13,7 @@ from typing import (
 from unicodedata import normalize as normalize_unicode
 from warnings import warn
 
-from playa.exceptions import PDFNoStructTree
-from playa.layout import LTChar, LTComponent, LTCurve, LTFigure
+from playa.page import LayoutObject
 from playa.page import Page as PDFPage
 from playa.parser import PSLiteral
 from playa.structtree import PDFStructTree
@@ -27,8 +24,6 @@ from .container import Container
 from .table import T_table_settings, Table, TableFinder, TableSettings
 from .utils import decode_text, resolve_all, resolve_and_decode
 from .utils.text import TextMap
-
-lt_pat = re.compile(r"^LT")
 
 ALL_ATTRS = set(
     [
@@ -206,15 +201,8 @@ class Page(Container):
             return [
                 elem.to_dict() for elem in PDFStructTree(self.pdf.doc, [self.page_obj])
             ]
-        except PDFNoStructTree:
+        except KeyError:
             return []
-
-    @property
-    def layout(self) -> List[LTComponent]:
-        if hasattr(self, "_layout"):
-            return self._layout
-        self._layout = list(self.page_obj.layout)
-        return self._layout
 
     @property
     def annots(self) -> T_obj_list:
@@ -297,88 +285,73 @@ class Page(Container):
         # See note below re. #1181 and mediabox-adjustment reversions
         return (self.mediabox[0] + pt[0], self.mediabox[1] + self.height - pt[1])
 
-    def process_object(self, obj: LTComponent) -> T_obj:
-        kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
-
-        def process_attr(item: Tuple[str, Any]) -> Optional[Tuple[str, Any]]:
-            k, v = item
+    def process_object(self, layout_object: LayoutObject) -> T_obj:
+        kind = layout_object["object_type"]
+        obj: Dict[str, Any] = {"object_type": kind, "page_number": self.page_number}
+        for k, v in layout_object.items():
             if k in ALL_ATTRS:
                 res = resolve_all(v)
-                return (k, res)
-            else:
-                return None
+                if res is not None:
+                    obj[k] = v
 
-        attr = dict(filter(None, map(process_attr, obj.__dict__.items())))
-
-        attr["object_type"] = kind
-        attr["page_number"] = self.page_number
-
-        for cs in ["ncs", "scs"]:
-            if hasattr(obj, cs):
-                csobj = getattr(obj, cs)
-                attr[cs] = resolve_and_decode(csobj.name)
+        csobj = layout_object.get("ncs")
+        if csobj is not None:
+            obj["ncs"] = resolve_and_decode(csobj.name)
+        csobj = layout_object.get("scs")
+        if csobj is not None:
+            obj["scs"] = resolve_and_decode(csobj.name)
 
         for color_attr, pattern_attr in [
             ("stroking_color", "stroking_pattern"),
             ("non_stroking_color", "non_stroking_pattern"),
         ]:
-            if color_attr in attr:
-                attr[color_attr], attr[pattern_attr] = normalize_color(attr[color_attr])
+            if color_attr in obj:
+                obj[color_attr], obj[pattern_attr] = normalize_color(obj[color_attr])
 
-        if isinstance(obj, LTChar):
-            text = obj.get_text()
-            attr["text"] = (
+        if kind == "char":
+            text = layout_object["text"]
+            obj["text"] = (
                 normalize_unicode(self.pdf.unicode_norm, text)
                 if self.pdf.unicode_norm is not None
                 else text
             )
-
             # Handle (rare) byte-encoded fontnames
-            if isinstance(attr["fontname"], bytes):
-                attr["fontname"] = fix_fontname_bytes(attr["fontname"])
-
-        elif isinstance(obj, (LTCurve,)):
-            attr["pts"] = list(map(self.point2coord, attr["pts"]))
-
-            # Ignoring typing because type signature for obj.original_path
-            # appears to be incorrect
-            attr["path"] = [(cmd, *map(self.point2coord, pts)) for cmd, *pts in obj.original_path]  # type: ignore  # noqa: E501
-
-            attr["dash"] = obj.dashing_style
+            if isinstance(obj["fontname"], bytes):
+                obj["fontname"] = fix_fontname_bytes(obj["fontname"])
+        elif obj["object_type"] == "curve":
+            obj["pts"] = list(map(self.point2coord, layout_object["pts"]))
+            obj["path"] = [
+                (cmd, *map(self.point2coord, pts))
+                for cmd, *pts in layout_object["path"]
+            ]  # noqa: E501
 
         # As noted in #1181, `pdfminer.six` adjusts objects'
         # coordinates relative to the MediaBox:
         # https://github.com/pdfminer/pdfminer.six/blob/1a8bd2f730295b31d6165e4d95fcb5a03793c978/pdfminer/converter.py#L79-L84
         mb_x0, mb_top = self.mediabox[:2]
 
-        if "y0" in attr:
-            attr["top"] = (self.height - attr["y1"]) + mb_top
-            attr["bottom"] = (self.height - attr["y0"]) + mb_top
-            attr["doctop"] = self.initial_doctop + attr["top"]
+        if "y0" in obj:
+            obj["top"] = (self.height - obj["y1"]) + mb_top
+            obj["bottom"] = (self.height - obj["y0"]) + mb_top
+            obj["doctop"] = self.initial_doctop + obj["top"]
 
-        if "x0" in attr and mb_x0 != 0:
-            attr["x0"] = attr["x0"] + mb_x0
-            attr["x1"] = attr["x1"] + mb_x0
+        if "x0" in obj and mb_x0 != 0:
+            obj["x0"] = obj["x0"] + mb_x0
+            obj["x1"] = obj["x1"] + mb_x0
+        return obj
 
-        return attr
-
-    def iter_layout_objects(
-        self, layout_objects: List[LTComponent]
-    ) -> Generator[T_obj, None, None]:
-        for obj in layout_objects:
-            # If object is, like LTFigure, a higher-level object ...
-            if isinstance(obj, LTFigure):
-                # Regardless, iterate through its children
-                yield from self.iter_layout_objects(obj._objs)
-            else:
-                yield self.process_object(obj)
+    @property
+    def layout(self) -> List[LayoutObject]:
+        if hasattr(self, "_layout"):
+            return self._layout
+        self._layout = list(self.page_obj.layout)
+        return self._layout
 
     def parse_objects(self) -> Dict[str, T_obj_list]:
         objects: Dict[str, T_obj_list] = {}
-        for obj in self.iter_layout_objects(self.layout):
+        for layout_obj in self.layout:
+            obj = self.process_object(layout_obj)
             kind = obj["object_type"]
-            if kind in ["anno"]:
-                continue
             if objects.get(kind) is None:
                 objects[kind] = []
             objects[kind].append(obj)

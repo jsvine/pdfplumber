@@ -6,7 +6,6 @@ from types import TracebackType
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
 from playa.document import PDFDocument
-from playa.exceptions import PDFNoStructTree, PSException
 from playa.structtree import PDFStructTree
 
 from ._typing import T_num, T_obj_list
@@ -107,7 +106,7 @@ class PDF(Container):
                 raise_unicode_errors=raise_unicode_errors,
             )
 
-        except PSException:
+        except Exception:
             if not stream_is_external:
                 stream.close()
             raise
@@ -179,7 +178,7 @@ class PDF(Container):
             else:
                 numbered_pages = (p.page_obj for p in self.pages)
             return [elem.to_dict() for elem in PDFStructTree(self.doc, numbered_pages)]
-        except PDFNoStructTree:
+        except KeyError:
             return []
 
     def to_dict(self, object_types: Optional[List[str]] = None) -> Dict[str, Any]:

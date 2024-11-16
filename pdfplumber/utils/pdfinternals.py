@@ -59,8 +59,11 @@ def resolve_all(x: Any) -> Any:
             return x
 
         return resolve_all(resolved)
-    elif isinstance(x, (list, tuple)):
-        return type(x)(resolve_all(v) for v in x)
+    # FIXME: This is suboptimal for NamedTuples...
+    elif isinstance(x, tuple):
+        return tuple(resolve_all(v) for v in x)
+    elif isinstance(x, list):
+        return list(resolve_all(v) for v in x)
     elif isinstance(x, dict):
         exceptions = ["Parent"] if get_dict_type(x) == "Annot" else []
         return {k: v if k in exceptions else resolve_all(v) for k, v in x.items()}
