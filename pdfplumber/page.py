@@ -16,7 +16,7 @@ from warnings import warn
 from playa.page import LayoutObject
 from playa.page import Page as PDFPage
 from playa.parser import PSLiteral
-from playa.structtree import PDFStructTree
+from playa.structtree import StructTree as PDFStructTree
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list

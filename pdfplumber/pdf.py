@@ -6,7 +6,7 @@ from types import TracebackType
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
 from playa.document import PDFDocument
-from playa.structtree import PDFStructTree
+from playa.structtree import StructTree as PDFStructTree
 
 from ._typing import T_num, T_obj_list
 from .container import Container
