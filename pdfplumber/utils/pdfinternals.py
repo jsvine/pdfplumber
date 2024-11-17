@@ -59,9 +59,6 @@ def resolve_all(x: Any) -> Any:
             return x
 
         return resolve_all(resolved)
-    # FIXME: This is suboptimal for NamedTuples...
-    elif isinstance(x, tuple):
-        return tuple(resolve_all(v) for v in x)
     elif isinstance(x, list):
         return list(resolve_all(v) for v in x)
     elif isinstance(x, dict):

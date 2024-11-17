@@ -40,9 +40,11 @@ ALL_ATTRS = set(
         "y1",
         "bits",
         "matrix",
+        "name",
         "upright",
         "fontname",
         "text",
+        "dash",
         "imagemask",
         "colorspace",
         "evenodd",
@@ -290,16 +292,12 @@ class Page(Container):
         obj: Dict[str, Any] = {"object_type": kind, "page_number": self.page_number}
         for k, v in layout_object.items():
             if k in ALL_ATTRS:
-                res = resolve_all(v)
-                if res is not None:
-                    obj[k] = v
+                obj[k] = resolve_all(v)
 
         csobj = layout_object.get("ncs")
-        if csobj is not None:
-            obj["ncs"] = resolve_and_decode(csobj.name)
+        obj["ncs"] = None if csobj is None else resolve_and_decode(csobj.name)
         csobj = layout_object.get("scs")
-        if csobj is not None:
-            obj["scs"] = resolve_and_decode(csobj.name)
+        obj["scs"] = None if csobj is None else resolve_and_decode(csobj.name)
 
         for color_attr, pattern_attr in [
             ("stroking_color", "stroking_pattern"),
