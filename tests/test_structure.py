@@ -331,7 +331,6 @@ class Test(unittest.TestCase):
         self.pdf.close()
 
     def test_structure_tree(self):
-        assert self.pdf.pages[0].structure_tree == TREE
         # Add page numbers
         d = deque(TREE)
         while d:
@@ -339,6 +338,7 @@ class Test(unittest.TestCase):
             el["page_number"] = 1
             if "children" in el:
                 d.extend(el["children"])
+        assert self.pdf.pages[0].structure_tree == TREE
         assert self.pdf.structure_tree == TREE
 
 
@@ -514,13 +514,13 @@ PVSTRUCT1 = [
     {
         "type": "Sect",
         "children": [
-            {"lang": "FR-CA", "type": "P", "mcids": [0]},
-            {"lang": "FR-CA", "type": "P", "mcids": [1]},
-            {"lang": "FR-CA", "type": "P", "mcids": [2]},
-            {"lang": "FR-CA", "type": "P", "mcids": [3]},
-            {"lang": "FR-CA", "type": "P", "mcids": [4]},
-            {"lang": "FR-CA", "type": "P", "mcids": [5]},
-            {"lang": "FR-CA", "type": "P", "mcids": [6]},
+            {"type": "P", "lang": "FR-CA", "mcids": [0], "page_number": 2},
+            {"type": "P", "lang": "FR-CA", "mcids": [1], "page_number": 2},
+            {"type": "P", "lang": "FR-CA", "mcids": [2], "page_number": 2},
+            {"type": "P", "lang": "FR-CA", "mcids": [3], "page_number": 2},
+            {"type": "P", "lang": "FR-CA", "mcids": [4], "page_number": 2},
+            {"type": "P", "lang": "FR-CA", "mcids": [5], "page_number": 2},
+            {"type": "P", "lang": "FR-CA", "mcids": [6], "page_number": 2},
             {
                 "type": "L",
                 "children": [
@@ -528,23 +528,29 @@ PVSTRUCT1 = [
                         "type": "LI",
                         "children": [
                             {
-                                "lang": "FR-CA",
                                 "type": "LBody",
+                                "lang": "FR-CA",
                                 "mcids": [9, 11],
                                 "children": [
-                                    {"lang": "FR-FR", "type": "Span", "mcids": [10]}
+                                    {
+                                        "type": "Span",
+                                        "lang": "FR-FR",
+                                        "mcids": [10],
+                                        "page_number": 2,
+                                    }
                                 ],
+                                "page_number": 2,
                             }
                         ],
                     }
                 ],
             },
-            {"lang": "FR-CA", "type": "P", "mcids": [14]},
-            {"lang": "FR-CA", "type": "P", "mcids": [15]},
-            {"lang": "FR-CA", "type": "P", "mcids": [16]},
-            {"lang": "FR-FR", "type": "P", "mcids": [17]},
-            {"lang": "FR-FR", "type": "P", "mcids": [18]},
-            {"lang": "FR-FR", "type": "P", "mcids": [19]},
+            {"type": "P", "lang": "FR-CA", "mcids": [14], "page_number": 2},
+            {"type": "P", "lang": "FR-CA", "mcids": [15], "page_number": 2},
+            {"type": "P", "lang": "FR-CA", "mcids": [16], "page_number": 2},
+            {"type": "P", "lang": "FR-FR", "mcids": [17], "page_number": 2},
+            {"type": "P", "lang": "FR-FR", "mcids": [18], "page_number": 2},
+            {"type": "P", "lang": "FR-FR", "mcids": [19], "page_number": 2},
         ],
     }
 ]
@@ -619,28 +625,56 @@ WORD365 = [
             {
                 "type": "H1",
                 "children": [
-                    {"type": "Span", "mcids": [0]},
-                    {"type": "Span", "actual_text": " ", "mcids": [1]},
+                    {"type": "Span", "mcids": [0], "page_number": 1},
+                    {
+                        "type": "Span",
+                        "actual_text": " ",
+                        "mcids": [1],
+                        "page_number": 1,
+                    },
                 ],
+                "page_number": 1,
             },
-            {"type": "P", "mcids": [2]},
+            {"type": "P", "mcids": [2], "page_number": 1},
             {
                 "type": "L",
                 "attributes": {"O": "List", "ListNumbering": "Disc"},
                 "children": [
-                    {"type": "LI", "children": [{"type": "LBody", "mcids": [3]}]},
-                    {"type": "LI", "children": [{"type": "LBody", "mcids": [4]}]},
-                    {"type": "LI", "children": [{"type": "LBody", "mcids": [5]}]},
+                    {
+                        "type": "LI",
+                        "children": [{"type": "LBody", "mcids": [3], "page_number": 1}],
+                        "page_number": 1,
+                    },
+                    {
+                        "type": "LI",
+                        "children": [{"type": "LBody", "mcids": [4], "page_number": 1}],
+                        "page_number": 1,
+                    },
+                    {
+                        "type": "LI",
+                        "children": [{"type": "LBody", "mcids": [5], "page_number": 1}],
+                        "page_number": 1,
+                    },
                 ],
+                "page_number": 1,
             },
-            {"type": "P", "mcids": [6]},
+            {"type": "P", "mcids": [6], "page_number": 1},
             {
                 "type": "L",
                 "attributes": {"O": "List", "ListNumbering": "Decimal"},
                 "children": [
-                    {"type": "LI", "children": [{"type": "LBody", "mcids": [7]}]},
-                    {"type": "LI", "children": [{"type": "LBody", "mcids": [8]}]},
+                    {
+                        "type": "LI",
+                        "children": [{"type": "LBody", "mcids": [7], "page_number": 1}],
+                        "page_number": 1,
+                    },
+                    {
+                        "type": "LI",
+                        "children": [{"type": "LBody", "mcids": [8], "page_number": 1}],
+                        "page_number": 1,
+                    },
                 ],
+                "page_number": 1,
             },
             {
                 "type": "Table",
@@ -653,17 +687,39 @@ WORD365 = [
                                 "children": [
                                     {
                                         "type": "TH",
-                                        "children": [{"type": "P", "mcids": [9, 10]}],
+                                        "children": [
+                                            {
+                                                "type": "P",
+                                                "mcids": [9, 10],
+                                                "page_number": 1,
+                                            }
+                                        ],
+                                        "page_number": 1,
                                     },
                                     {
                                         "type": "TH",
-                                        "children": [{"type": "P", "mcids": [11, 12]}],
+                                        "children": [
+                                            {
+                                                "type": "P",
+                                                "mcids": [11, 12],
+                                                "page_number": 1,
+                                            }
+                                        ],
+                                        "page_number": 1,
                                     },
                                     {
                                         "type": "TH",
-                                        "children": [{"type": "P", "mcids": [13, 14]}],
+                                        "children": [
+                                            {
+                                                "type": "P",
+                                                "mcids": [13, 14],
+                                                "page_number": 1,
+                                            }
+                                        ],
+                                        "page_number": 1,
                                     },
                                 ],
+                                "page_number": 1,
                             }
                         ],
                     },
@@ -675,40 +731,85 @@ WORD365 = [
                                 "children": [
                                     {
                                         "type": "TD",
-                                        "children": [{"type": "P", "mcids": [15, 16]}],
+                                        "children": [
+                                            {
+                                                "type": "P",
+                                                "mcids": [15, 16],
+                                                "page_number": 1,
+                                            }
+                                        ],
+                                        "page_number": 1,
                                     },
                                     {
                                         "type": "TD",
-                                        "children": [{"type": "P", "mcids": [17, 18]}],
+                                        "children": [
+                                            {
+                                                "type": "P",
+                                                "mcids": [17, 18],
+                                                "page_number": 1,
+                                            }
+                                        ],
+                                        "page_number": 1,
                                     },
                                     {
                                         "type": "TD",
-                                        "children": [{"type": "P", "mcids": [19, 20]}],
+                                        "children": [
+                                            {
+                                                "type": "P",
+                                                "mcids": [19, 20],
+                                                "page_number": 1,
+                                            }
+                                        ],
+                                        "page_number": 1,
                                     },
                                 ],
+                                "page_number": 1,
                             },
                             {
                                 "type": "TR",
                                 "children": [
                                     {
                                         "type": "TD",
-                                        "children": [{"type": "P", "mcids": [21, 22]}],
+                                        "children": [
+                                            {
+                                                "type": "P",
+                                                "mcids": [21, 22],
+                                                "page_number": 1,
+                                            }
+                                        ],
+                                        "page_number": 1,
                                     },
                                     {
                                         "type": "TD",
-                                        "children": [{"type": "P", "mcids": [23, 24]}],
+                                        "children": [
+                                            {
+                                                "type": "P",
+                                                "mcids": [23, 24],
+                                                "page_number": 1,
+                                            }
+                                        ],
+                                        "page_number": 1,
                                     },
                                     {
                                         "type": "TD",
-                                        "children": [{"type": "P", "mcids": [25, 26]}],
+                                        "children": [
+                                            {
+                                                "type": "P",
+                                                "mcids": [25, 26],
+                                                "page_number": 1,
+                                            }
+                                        ],
+                                        "page_number": 1,
                                     },
                                 ],
+                                "page_number": 1,
                             },
                         ],
+                        "page_number": 1,
                     },
                 ],
             },
-            {"type": "P", "mcids": [27]},
+            {"type": "P", "mcids": [27], "page_number": 1},
         ],
     }
 ]
@@ -830,26 +931,6 @@ HELLO = [
         "mcids": [2],
     },
 ]
-HELLO1 = [
-    {
-        "type": "Section",
-        "page_number": 1,
-        "children": [
-            {
-                "type": "P",
-                "page_number": 1,
-                "attributes": {"O": "Foo", "A1": 1},
-                "mcids": [1],
-            },
-        ],
-    }
-]
-HELLO1P = [
-    {
-        "type": "Section",
-        "children": [{"type": "P", "attributes": {"O": "Foo", "A1": 1}, "mcids": [1]}],
-    }
-]
 
 
 class TestUnparsed(unittest.TestCase):
@@ -895,7 +976,9 @@ class TestMany(unittest.TestCase):
 
     def test_image_structure(self):
         path = os.path.join(HERE, "pdfs/image_structure.pdf")
-
+        # Add page numbers
+        for el in IMAGESTRUCT[0]["children"]:
+            el["page_number"] = 1
         pdf = pdfplumber.open(path)
         page = pdf.pages[0]
         assert page.structure_tree == IMAGESTRUCT
@@ -958,6 +1041,6 @@ class TestMany(unittest.TestCase):
         path = os.path.join(HERE, "pdfs/hello_structure.pdf")
         with pdfplumber.open(path) as pdf:
             assert pdf.structure_tree == HELLO
-            assert pdf.pages[0].structure_tree == HELLO1P
+            assert pdf.pages[0].structure_tree == HELLO1
         with pdfplumber.open(path, pages=[1]) as pdf:
             assert pdf.structure_tree == HELLO1
