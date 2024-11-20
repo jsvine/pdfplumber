@@ -5,13 +5,14 @@ from io import BufferedReader, BytesIO
 from types import TracebackType
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
-from playa.document import PDFDocument
-from playa.structtree import StructTree as PDFStructTree
+from playa.document import Document
+from playa.structtree import StructTree
 
 from ._typing import T_num, T_obj_list
 from .container import Container
 from .page import Page
 from .repair import T_repair_setting, _repair
+from .structure import structure_dict
 from .utils import resolve_and_decode
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ class PDF(Container):
         self.unicode_norm = unicode_norm
         self.raise_unicode_errors = raise_unicode_errors
 
-        self.doc = PDFDocument(stream, password=password or "")
+        self.doc = Document(stream, password=password or "")
         self.metadata = {}
 
         for info in self.doc.info:
@@ -177,7 +178,7 @@ class PDF(Container):
                 numbered_pages = None
             else:
                 numbered_pages = (p.page_obj for p in self.pages)
-            return [elem.to_dict() for elem in PDFStructTree(self.doc, numbered_pages)]
+            return [structure_dict(elem) for elem in StructTree(self.doc, numbered_pages)]
         except KeyError:
             return []
 

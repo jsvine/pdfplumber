@@ -16,11 +16,12 @@ from warnings import warn
 from playa.page import LayoutObject
 from playa.page import Page as PDFPage
 from playa.parser import PSLiteral
-from playa.structtree import StructTree as PDFStructTree
+from playa.structtree import StructTree
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
+from .structure import structure_dict
 from .table import T_table_settings, Table, TableFinder, TableSettings
 from .utils import decode_text, resolve_all, resolve_and_decode
 from .utils.text import TextMap
@@ -201,7 +202,7 @@ class Page(Container):
 
         try:
             return [
-                elem.to_dict() for elem in PDFStructTree(self.pdf.doc, [self.page_obj])
+                structure_dict(elem) for elem in StructTree(self.pdf.doc, [self.page_obj])
             ]
         except KeyError:
             return []

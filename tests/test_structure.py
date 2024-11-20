@@ -933,6 +933,22 @@ HELLO = [
 ]
 
 
+HELLO1 = [
+    {
+        "type": "Section",
+        "page_number": 1,
+        "children": [
+            {
+                "type": "P",
+                "page_number": 1,
+                "attributes": {"O": "Foo", "A1": 1},
+                "mcids": [1],
+            },
+        ],
+    },
+]
+
+
 class TestUnparsed(unittest.TestCase):
     """Test handling of PDFs with unparsed pages."""
 

@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from playa.parser import PSLiteral
 from playa.color import ColorGray, ColorRGB, ColorCMYK
-from playa.page import DashingStyle
+from playa.page import DashPattern
 
 from .utils import decode_text
 
@@ -93,7 +93,7 @@ class Serializer:
         else:
             return str(obj)
 
-    def do_DashingStyle(self, x: DashingStyle) -> str:
+    def do_DashPattern(self, x: DashPattern) -> str:
         if x.dash:
             return f"({x.dash}, {x.phase})"
         else:
