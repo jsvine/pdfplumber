@@ -1,9 +1,9 @@
 import base64
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from playa.parser import PSLiteral
-from playa.color import ColorGray, ColorRGB, ColorCMYK
+from playa.color import ColorCMYK, ColorGray, ColorRGB
 from playa.page import DashPattern
+from playa.parser import PSLiteral
 
 from .utils import decode_text
 

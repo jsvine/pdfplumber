@@ -142,6 +142,7 @@ class Page(Container):
     cached_properties: List[str] = Container.cached_properties + ["_layout"]
     is_original: bool = True
     pages = None
+    _layout: List[LayoutObject]
 
     def __init__(
         self,
@@ -202,7 +203,8 @@ class Page(Container):
 
         try:
             return [
-                structure_dict(elem) for elem in StructTree(self.pdf.doc, [self.page_obj])
+                structure_dict(elem)
+                for elem in StructTree(self.pdf.doc, [self.page_obj])
             ]
         except KeyError:
             return []

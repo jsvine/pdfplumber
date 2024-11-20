@@ -178,7 +178,9 @@ class PDF(Container):
                 numbered_pages = None
             else:
                 numbered_pages = (p.page_obj for p in self.pages)
-            return [structure_dict(elem) for elem in StructTree(self.doc, numbered_pages)]
+            return [
+                structure_dict(elem) for elem in StructTree(self.doc, numbered_pages)
+            ]
         except KeyError:
             return []
 

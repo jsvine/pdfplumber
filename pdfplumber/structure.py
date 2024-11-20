@@ -1,7 +1,8 @@
-from playa.structtree import StructElement
-from typing import Dict, Any
 from collections import deque
 from dataclasses import asdict
+from typing import Any, Dict
+
+from playa.structtree import StructElement
 
 
 def structure_dict(top: StructElement) -> Dict[str, Any]:
