@@ -1,3 +1,3 @@
-playa @ git+https://github.com/dhdaines/playa.git
+playa-pdf
 Pillow>=9.1
 pypdfium2>=4.18.0
