@@ -1,7 +1,6 @@
 import base64
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from playa.color import ColorCMYK, ColorGray, ColorRGB
 from playa.page import DashPattern
 from playa.parser import PSLiteral
 
@@ -92,21 +91,6 @@ class Serializer:
         # Otherwise, just use the string-representation
         else:
             return str(obj)
-
-    def do_DashPattern(self, x: DashPattern) -> str:
-        if x.dash:
-            return f"({x.dash}, {x.phase})"
-        else:
-            return ""
-
-    def do_ColorGray(self, x: ColorGray) -> str:
-        return str(x.k)
-
-    def do_ColorRGB(self, x: ColorRGB) -> str:
-        return f"({x.r}, {x.g}, {x.b})"
-
-    def do_ColorCMYK(self, x: ColorCMYK) -> str:
-        return f"({x.c}, {x.m}, {x.y}, {x.k})"
 
     def do_float(self, x: float) -> float:
         return x if self.precision is None else round(x, self.precision)
