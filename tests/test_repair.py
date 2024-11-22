@@ -13,22 +13,12 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 class Test(unittest.TestCase):
     def test_from_issue_932(self):
+        # No longer malformed!
         path = os.path.join(HERE, "pdfs/malformed-from-issue-932.pdf")
         with pdfplumber.open(path) as pdf:
             page = pdf.pages[0]
             char = page.chars[0]
-            assert char["bottom"] > page.height
-
-        with pdfplumber.open(path, repair=True) as pdf:
-            page = pdf.pages[0]
-            char = page.chars[0]
-            assert char["bottom"] < page.height
-
-        with pdfplumber.repair(path) as repaired:
-            with pdfplumber.open(repaired) as pdf:
-                page = pdf.pages[0]
-                char = page.chars[0]
-                assert char["bottom"] < page.height
+            assert char["bottom"] <= page.height
 
     def test_other_repair_inputs(self):
         path = os.path.join(HERE, "pdfs/malformed-from-issue-932.pdf")
