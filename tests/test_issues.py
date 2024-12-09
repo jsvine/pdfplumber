@@ -9,6 +9,8 @@ except ModuleNotFoundError:
     resource = None
 import unittest
 
+import pytest
+
 import pdfplumber
 
 logging.disable(logging.ERROR)
@@ -332,3 +334,26 @@ class Test(unittest.TestCase):
                 ["Bar10", "Bar11", "Bar12"],
                 ["", "", ""],
             ]
+
+    def test_pr_1195(self):
+        """
+        In certain scenarios, annotations may include invalid or extraneous
+        data that can obstruct the annotation processing workflow.  To mitigate
+        this, the raise_unicode_errors parameter in the PDF initializer and the
+        .open() method provides a configurable option to bypass these errors
+        and generate warnings instead, ensuring smoother handling of such
+        anomalies.
+
+        The following tests verifies the functionality of the
+        raise_unicode_errors parameter.
+        """
+        path = os.path.join(HERE, "pdfs/annotations-unicode-issues.pdf")
+        with pdfplumber.open(path) as pdf, pytest.raises(UnicodeDecodeError):
+            for _ in pdf.annots:
+                pass
+
+        with pdfplumber.open(path, raise_unicode_errors=False) as pdf, pytest.warns(
+            UserWarning
+        ):
+            for _ in pdf.annots:
+                pass

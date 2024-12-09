@@ -35,6 +35,7 @@ class PDF(Container):
         password: Optional[str] = None,
         strict_metadata: bool = False,
         unicode_norm: Optional[Literal["NFC", "NFKC", "NFD", "NFKD"]] = None,
+        raise_unicode_errors: bool = True,
     ):
         self.stream = stream
         self.stream_is_external = stream_is_external
@@ -43,6 +44,7 @@ class PDF(Container):
         self.laparams = None if laparams is None else LAParams(**laparams)
         self.password = password
         self.unicode_norm = unicode_norm
+        self.raise_unicode_errors = raise_unicode_errors
 
         self.doc = PDFDocument(PDFParser(stream), password=password or "")
         self.rsrcmgr = PDFResourceManager()
@@ -76,6 +78,7 @@ class PDF(Container):
         repair: bool = False,
         gs_path: Optional[Union[str, pathlib.Path]] = None,
         repair_setting: T_repair_setting = "default",
+        raise_unicode_errors: bool = True,
     ) -> "PDF":
 
         stream: Union[BufferedReader, BytesIO]
@@ -107,6 +110,7 @@ class PDF(Container):
                 strict_metadata=strict_metadata,
                 unicode_norm=unicode_norm,
                 stream_is_external=stream_is_external,
+                raise_unicode_errors=raise_unicode_errors,
             )
 
         except PSException:
