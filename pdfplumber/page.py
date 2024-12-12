@@ -4,6 +4,8 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterator,
+    Iterable,
     List,
     Optional,
     Pattern,
@@ -13,8 +15,15 @@ from typing import (
 from unicodedata import normalize as normalize_unicode
 from warnings import warn
 
-from playa.page import LayoutObject
-from playa.page import Page as PDFPage
+from playa.page import (
+    Page as PDFPage,
+    ContentObject,
+    GlyphObject,
+    TextObject,
+    PathObject,
+    PathSegment,
+)
+from playa.utils import mult_matrix, translate_matrix
 from playa.parser import PSLiteral
 from playa.structtree import StructTree
 
@@ -87,29 +96,6 @@ def fix_fontname_bytes(fontname: bytes) -> str:
     return str(prefix)[2:-1] + suffix_new
 
 
-def separate_pattern(
-    color: Tuple[Any, ...]
-) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
-    if isinstance(color[-1], PSLiteral):
-        return (color[:-1] or None), decode_text(color[-1].name)
-    else:
-        return color, None
-
-
-def normalize_color(
-    color: Any,
-) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
-    if color is None:
-        return (None, None)
-    elif isinstance(color, tuple):
-        tuplefied = color
-    elif isinstance(color, list):
-        tuplefied = tuple(color)
-    else:
-        tuplefied = (color,)
-    return separate_pattern(tuplefied)
-
-
 def tuplify_list_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
     return {
         key: (tuple(value) if isinstance(value, list) else value)
@@ -122,6 +108,8 @@ def _normalize_box(box_raw: T_bbox, rotation: T_num = 0) -> T_bbox:
     # conventionally specified by their lower-left and upperright
     # corners, it is acceptable to specify any two diagonally opposite
     # corners."
+    # TODO: PLAYA mostly does this for us but need to check if that is
+    # still the case when rotation is applied
     x0, x1 = sorted((box_raw[0], box_raw[2]))
     y0, y1 = sorted((box_raw[1], box_raw[3]))
     if rotation in [90, 270]:
@@ -138,11 +126,61 @@ def _invert_box(box_raw: T_bbox, mb_height: T_num) -> T_bbox:
     return (x0, mb_height - y1, x1, mb_height - y0)
 
 
+def flatten_contents(objs: Iterable[ContentObject]) -> Iterator[ContentObject]:
+    """Traverse a PDF page, recursing into text, path, and xobjects."""
+    # This was maybe not such a great design decision - all
+    # ContentObjects are iterable, but only some of them actually
+    # contain other objects.  No way to know this in advance; PLAYA
+    # should put a __len__ method but also an empty() method on them
+    count = 0
+    for obj in objs:
+        yield from flatten_contents(obj)
+        count += 1
+    if count == 0:
+        yield objs
+
+
+def is_closed(segs: List[PathSegment]) -> bool:
+    """Detect a closed shape."""
+    if segs[-1].operator == "h":  # Easy, it tells us it's closed!
+        return True
+    if segs[-1].points[-1] == segs[0].points[-1]:
+        return True
+    return False
+
+
+def is_rectangular(segs: List[PathSegment]) -> bool:
+    """Detect a rectangular shape.
+
+    TODO: Rectangular here is defined in device space, what about
+    rotated rectangles?  Are they not rectangles too?  If you prick
+    yourself on them, do you not bleed?
+    """
+    # A rectangle has four sides (exception for a redundant 'h')
+    if len(segs) > 5 or (len(segs) == 5 and segs[4].operator != "h"):
+        return False
+    xs = []
+    ys = []
+    # TODO: This could be done with fancy list comprehensions which
+    # might be slightly faster but much less easy to understand.
+    for seg in segs[:4]:
+        if seg.operator == "h":
+            x, y = segs[0].points[-1]
+        else:
+            x, y = seg.points[-1]
+        xs.append(x)
+        ys.append(y)
+    if xs[0] == xs[1] and ys[1] == ys[2] and xs[2] == xs[3] and ys[3] == ys[0]:
+        return True
+    if ys[0] == ys[1] and xs[1] == xs[2] and ys[2] == ys[3] and xs[3] == xs[0]:
+        return True
+    return False
+
+
 class Page(Container):
-    cached_properties: List[str] = Container.cached_properties + ["_layout"]
+    cached_properties: List[str] = Container.cached_properties
     is_original: bool = True
     pages = None
-    _layout: List[LayoutObject]
 
     def __init__(
         self,
@@ -290,68 +328,97 @@ class Page(Container):
         # See note below re. #1181 and mediabox-adjustment reversions
         return (self.mediabox[0] + pt[0], self.mediabox[1] + self.height - pt[1])
 
-    def process_object(self, layout_object: LayoutObject) -> T_obj:
-        kind = layout_object["object_type"]
-        obj: Dict[str, Any] = {"object_type": kind, "page_number": self.page_number}
-        for k, v in layout_object.items():
-            if k in ALL_ATTRS:
-                obj[k] = resolve_all(v)
+    def process_object(self, content_object: ContentObject) -> T_obj:
+        kind = content_object.object_type
+        obj: T_obj = {"object_type": kind, "page_number": self.page_number}
 
-        csobj = layout_object.get("ncs")
-        obj["ncs"] = None if csobj is None else resolve_and_decode(csobj.name)
-        csobj = layout_object.get("scs")
-        obj["scs"] = None if csobj is None else resolve_and_decode(csobj.name)
+        gstate = content_object.gstate
+        # These cannot be None, but they might be the defaults
+        obj["ncs"] = resolve_and_decode(gstate.ncs.name)
+        obj["scs"] = resolve_and_decode(gstate.scs.name)
+        obj["stroking_color"] = gstate.scolor.values
+        obj["stroking_pattern"] = gstate.scolor.pattern
+        obj["non_stroking_color"] = gstate.ncolor.values
+        obj["non_stroking_pattern"] = gstate.ncolor.pattern
 
-        for color_attr, pattern_attr in [
-            ("stroking_color", "stroking_pattern"),
-            ("non_stroking_color", "non_stroking_pattern"),
-        ]:
-            if color_attr in obj:
-                obj[color_attr], obj[pattern_attr] = normalize_color(obj[color_attr])
-
-        if kind == "char":
-            text = layout_object["text"]
-            obj["text"] = (
-                normalize_unicode(self.pdf.unicode_norm, text)
-                if self.pdf.unicode_norm is not None
-                else text
-            )
-            # Handle (rare) byte-encoded fontnames
-            if isinstance(obj["fontname"], bytes):
-                obj["fontname"] = fix_fontname_bytes(obj["fontname"])
-        elif obj["object_type"] == "curve":
-            obj["pts"] = list(map(self.point2coord, layout_object["pts"]))
-            obj["path"] = [
-                (cmd, *map(self.point2coord, pts))
-                for cmd, *pts in layout_object["path"]
-            ]  # noqa: E501
-
-        # As noted in #1181, `pdfminer.six` adjusts objects'
+        # As noted in #1181, `pdfminer.six` (and `playa` by default) adjust objects'
         # coordinates relative to the MediaBox:
         # https://github.com/pdfminer/pdfminer.six/blob/1a8bd2f730295b31d6165e4d95fcb5a03793c978/pdfminer/converter.py#L79-L84
         mb_x0, mb_top = self.mediabox[:2]
 
-        if "y0" in obj:
-            obj["top"] = (self.height - obj["y1"]) + mb_top
-            obj["bottom"] = (self.height - obj["y0"]) + mb_top
+        try:
+            x0, y0, x1, y1 = content_object.bbox
+            obj["x0"] = x0 + mb_x0
+            obj["x1"] = x1 + mb_x0
+            obj["y0"] = y0  # FIXME: but... what about the MediaBox?
+            obj["y1"] = y1
+            obj["top"] = (self.height - y1) + mb_top
+            obj["bottom"] = (self.height - y0) + mb_top
             obj["doctop"] = self.initial_doctop + obj["top"]
+            obj["height"] = abs(y1 - y0)
+            obj["width"] = abs(x1 - x0)
+        except ValueError:
+            # It's an object with no bbox (e.g. a marked content point)
+            pass
 
-        if "x0" in obj and mb_x0 != 0:
-            obj["x0"] = obj["x0"] + mb_x0
-            obj["x1"] = obj["x1"] + mb_x0
+        if isinstance(content_object, GlyphObject):
+            text = content_object.text
+            obj["object_type"] = "char"
+            obj["cid"] = content_object.cid
+            obj["adv"] = content_object.adv
+            textstate = content_object.textstate
+            obj["fontname"] = textstate.font.fontname
+            obj["text"] = (
+                normalize_unicode(self.pdf.unicode_norm, text)
+                if text and self.pdf.unicode_norm is not None
+                else text
+            )
+            # Lazy API does not do this stuff for you
+            # NOTE: This is not right at all for rotated text, but we'll live with it
+            if textstate.font.vertical:
+                obj["size"] = obj["width"]
+            else:
+                obj["size"] = obj["height"]
+            matrix = mult_matrix(textstate.line_matrix, content_object.ctm)
+            matrix = translate_matrix(matrix, textstate.glyph_offset)
+            obj["matrix"] = matrix
+            (a, b, c, d, e, f) = matrix
+            scaling = textstate.scaling * 0.01  # FIXME: unnecessary
+            obj["upright"] = a * d * scaling > 0 and b * c <= 0
+            # Handle (rare) byte-encoded fontnames
+            if isinstance(obj["fontname"], bytes):
+                obj["fontname"] = fix_fontname_bytes(obj["fontname"])
+        elif isinstance(content_object, PathObject):
+            segments = list(content_object.segments)
+            # Have to do "rect" and "line" detection ourselves, PLAYA
+            # Does Not Do Heuristics
+            shape = "".join(seg.operator for seg in segments)
+            if shape in ("mlh", "ml"):
+                obj["object_type"] = "line"
+            elif (
+                shape in ("mlllh", "mllll")
+                and is_closed(segments)
+                and is_rectangular(segments)
+            ):
+                obj["object_type"] = "rect"
+            else:
+                obj["object_type"] = "curve"
+
+            obj["pts"] = [
+                self.point2coord(seg.points[-1]) for seg in segments if seg.points
+            ]
+            obj["path"] = [
+                (seg.operator, [self.point2coord(pt) for pt in seg.points])
+                for seg in segments
+            ]
+
         return obj
-
-    @property
-    def layout(self) -> List[LayoutObject]:
-        if hasattr(self, "_layout"):
-            return self._layout
-        self._layout = list(self.page_obj.layout)
-        return self._layout
 
     def parse_objects(self) -> Dict[str, T_obj_list]:
         objects: Dict[str, T_obj_list] = {}
-        for layout_obj in self.layout:
-            obj = self.process_object(layout_obj)
+        # TODO: flatten_contents should go in PLAYA
+        for content_object in flatten_contents(self.page_obj):
+            obj = self.process_object(content_object)
             kind = obj["object_type"]
             if objects.get(kind) is None:
                 objects[kind] = []

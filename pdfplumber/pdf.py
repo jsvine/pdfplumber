@@ -41,7 +41,7 @@ class PDF(Container):
         self.unicode_norm = unicode_norm
         self.raise_unicode_errors = raise_unicode_errors
 
-        self.doc = Document(stream, password=password or "")
+        self.doc = Document(stream, password=password or "", space="page")
         self.metadata = {}
 
         for info in self.doc.info:
