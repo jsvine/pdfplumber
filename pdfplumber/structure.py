@@ -1,12 +1,12 @@
 from collections import deque
-from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterator, Optional, TYPE_CHECKING
+from dataclasses import asdict
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from playa.structtree import StructElement, StructTree
 
 if TYPE_CHECKING:  # pragma: nocover
-    from .pdf import PDF
     from .page import Page
+    from .pdf import PDF
 
 
 class StructTreeMissing(ValueError):
