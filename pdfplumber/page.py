@@ -5,7 +5,6 @@ from typing import (
     Callable,
     Dict,
     Iterator,
-    Iterable,
     List,
     Optional,
     Pattern,
@@ -15,24 +14,18 @@ from typing import (
 from unicodedata import normalize as normalize_unicode
 from warnings import warn
 
-from playa.page import (
-    Page as PDFPage,
-    ContentObject,
-    GlyphObject,
-    TextObject,
-    PathObject,
-    PathSegment,
-)
-from playa.utils import mult_matrix, translate_matrix
-from playa.parser import PSLiteral
+from playa.page import ContentObject, GlyphObject, ImageObject
+from playa.page import Page as PDFPage
+from playa.page import PathObject, PathSegment
 from playa.structtree import StructTree
+from playa.utils import mult_matrix, translate_matrix
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
 from .structure import structure_dict
 from .table import T_table_settings, Table, TableFinder, TableSettings
-from .utils import decode_text, resolve_all, resolve_and_decode
+from .utils import resolve_all, resolve_and_decode
 from .utils.text import TextMap
 
 ALL_ATTRS = set(
@@ -126,18 +119,23 @@ def _invert_box(box_raw: T_bbox, mb_height: T_num) -> T_bbox:
     return (x0, mb_height - y1, x1, mb_height - y0)
 
 
-def flatten_contents(objs: Iterable[ContentObject]) -> Iterator[ContentObject]:
+def flatten_contents(objs: Union[PDFPage, ContentObject]) -> Iterator[ContentObject]:
     """Traverse a PDF page, recursing into text, path, and xobjects."""
-    # This was maybe not such a great design decision - all
-    # ContentObjects are iterable, but only some of them actually
-    # contain other objects.  No way to know this in advance; PLAYA
-    # should put a __len__ method but also an empty() method on them
-    count = 0
-    for obj in objs:
-        yield from flatten_contents(obj)
-        count += 1
-    if count == 0:
-        yield objs
+    if isinstance(objs, PathObject):
+        # PathObjects are a bit special since they always contain at
+        # least one subpath, and these are a flat list (do not recurse)
+        yield from objs
+    else:
+        # Other ContentObjects are iterable and possibly multiply
+        # nested (in the case of XObjects), but only some of them
+        # actually contain other objects.  We *could* check the length
+        # of an object first but this is wasteful, so we don't.
+        count = 0
+        for obj in objs:
+            yield from flatten_contents(obj)
+            count += 1
+        if count == 0 and not isinstance(objs, PDFPage):
+            yield objs
 
 
 def is_closed(segs: List[PathSegment]) -> bool:
@@ -332,6 +330,13 @@ class Page(Container):
         kind = content_object.object_type
         obj: T_obj = {"object_type": kind, "page_number": self.page_number}
 
+        if content_object.mcs is not None:
+            obj["mcid"] = content_object.mcs.mcid
+            obj["tag"] = content_object.mcs.tag
+        else:
+            obj["mcid"] = None
+            obj["tag"] = None
+
         gstate = content_object.gstate
         # These cannot be None, but they might be the defaults
         obj["ncs"] = resolve_and_decode(gstate.ncs.name)
@@ -340,6 +345,8 @@ class Page(Container):
         obj["stroking_pattern"] = gstate.scolor.pattern
         obj["non_stroking_color"] = gstate.ncolor.values
         obj["non_stroking_pattern"] = gstate.ncolor.pattern
+        obj["dash"] = tuple(gstate.dash) if gstate.dash.dash else None
+        obj["linewidth"] = gstate.linewidth
 
         # As noted in #1181, `pdfminer.six` (and `playa` by default) adjust objects'
         # coordinates relative to the MediaBox:
@@ -364,10 +371,8 @@ class Page(Container):
         if isinstance(content_object, GlyphObject):
             text = content_object.text
             obj["object_type"] = "char"
-            obj["cid"] = content_object.cid
             obj["adv"] = content_object.adv
             textstate = content_object.textstate
-            obj["fontname"] = textstate.font.fontname
             obj["text"] = (
                 normalize_unicode(self.pdf.unicode_norm, text)
                 if text and self.pdf.unicode_norm is not None
@@ -375,15 +380,17 @@ class Page(Container):
             )
             # Lazy API does not do this stuff for you
             # NOTE: This is not right at all for rotated text, but we'll live with it
-            if textstate.font.vertical:
-                obj["size"] = obj["width"]
-            else:
-                obj["size"] = obj["height"]
+            if textstate.font is not None:
+                obj["fontname"] = textstate.font.fontname
+                if textstate.font.vertical:
+                    obj["size"] = obj["width"]
+                else:
+                    obj["size"] = obj["height"]
             matrix = mult_matrix(textstate.line_matrix, content_object.ctm)
             matrix = translate_matrix(matrix, textstate.glyph_offset)
             obj["matrix"] = matrix
             (a, b, c, d, e, f) = matrix
-            scaling = textstate.scaling * 0.01  # FIXME: unnecessary
+            scaling = textstate.scaling * 0.01  # FIXME: unnecessary?
             obj["upright"] = a * d * scaling > 0 and b * c <= 0
             # Handle (rare) byte-encoded fontnames
             if isinstance(obj["fontname"], bytes):
@@ -411,6 +418,16 @@ class Page(Container):
                 (seg.operator, [self.point2coord(pt) for pt in seg.points])
                 for seg in segments
             ]
+            obj["evenodd"] = content_object.evenodd
+            obj["stroke"] = content_object.stroke
+            obj["fill"] = content_object.fill
+        elif isinstance(content_object, ImageObject):
+            obj["colorspace"] = content_object.colorspace
+            obj["imagemask"] = content_object.imagemask
+            obj["stream"] = content_object.stream
+            obj["srcsize"] = content_object.srcsize
+            obj["bits"] = content_object.bits
+            obj["name"] = content_object.xobjid
 
         return obj
 
