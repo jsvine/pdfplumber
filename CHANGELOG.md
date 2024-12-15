@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Unreleased
+
+### Changed
+
+- Switch to using [`PLAYA-PDF`](https://github.com/dhdaines/playa) for PDF parsing for increased speed and robustness.
+- Remove pdfminer-specific interfaces (chiefly `LAParams`)
+
 ## [0.11.5] - 2024-10-02
 
 ### Added

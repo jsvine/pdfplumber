@@ -4,7 +4,7 @@
 
 Plumb a PDF for detailed information about each text character, rectangle, and line. Plus: Table extraction and visual debugging.
 
-Works best on machine-generated, rather than scanned, PDFs. Built on [`pdfminer.six`](https://github.com/goulu/pdfminer). 
+Works best on machine-generated, rather than scanned, PDFs. Built on [`PLAYA-PDF`](https://github.com/dhdaines/playa).
 
 Currently [tested](tests/) on [Python 3.8, 3.9, 3.10, 3.11](.github/workflows/tests.yml).
 
@@ -50,7 +50,6 @@ The output will be a CSV containing info about every character, line, and rectan
 |`--format [format]`| `csv` or `json`. The `json` format returns more information; it includes PDF-level and page-level metadata, plus dictionary-nested attributes.|
 |`--pages [list of pages]`| A space-delimited, `1`-indexed list of pages or hyphenated page ranges. E.g., `1, 11-15`, which would return data for pages 1, 11, 12, 13, 14, and 15.|
 |`--types [list of object types to extract]`| Choices are `char`, `rect`, `line`, `curve`, `image`, `annot`, et cetera. Defaults to all available.|
-|`--laparams`| A JSON-formatted string (e.g., `'{"detect_vertical": true}'`) to pass to `pdfplumber.open(..., laparams=...)`.|
 |`--precision [integer]`| The number of decimal places to round floating-point numbers. Defaults to no rounding.|
 
 ## Python library
@@ -76,8 +75,6 @@ To start working with a PDF, call `pdfplumber.open(x)`, where `x` can be a:
 The `open` method returns an instance of the `pdfplumber.PDF` class.
 
 To load a password-protected PDF, pass the `password` keyword argument, e.g., `pdfplumber.open("file.pdf", password = "test")`.
-
-To set layout analysis parameters to `pdfminer.six`'s layout engine, pass the `laparams` keyword argument, e.g., `pdfplumber.open("file.pdf", laparams = { "line_overlap": 0.7 })`.
 
 To [pre-normalize Unicode text](https://unicode.org/reports/tr15/), pass `unicode_norm=...`, where `...` is one of the [four Unicode normalization forms](https://unicode.org/reports/tr15/#Normalization_Forms_Table): `"NFC"`, `"NFD"`, `"NFKC"`, or `"NFKD"`.
 
@@ -132,12 +129,12 @@ Additional methods are described in the sections below:
 
 ### Objects
 
-Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to several types of PDF objects, all derived from [`pdfminer.six`](https://github.com/pdfminer/pdfminer.six/) PDF parsing. The following properties each return a Python list of the matching objects:
+Each instance of `pdfplumber.PDF` and `pdfplumber.Page` provides access to several types of PDF objects, all derived from [`PLAYA-PDF`](https://github.com/dhdaines/playa/) PDF parsing. The following properties each return a Python list of the matching objects:
 
 - `.chars`, each representing a single text character.
 - `.lines`, each representing a single 1-dimensional line.
 - `.rects`, each representing a single 2-dimensional rectangle.
-- `.curves`, each representing any series of connected points that `pdfminer.six` does not recognize as a line or rectangle.
+- `.curves`, each representing any series of connected points that `pdfplumber` does not recognize as a line or rectangle.
 - `.images`, each representing an image.
 - `.annots`, each representing a single PDF annotation (cf. Section 8.4 of the [official PDF specification](https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf) for details)
 - `.hyperlinks`, each representing a single PDF annotation of the subtype `Link` and having an `URI` action attribute
@@ -272,17 +269,12 @@ Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to seve
 |`srcsize`| The image original dimensions, as a `(width, height)` tuple.|
 |`colorspace`| Color domain of the image (e.g., RGB).|
 |`bits`| The number of bits per color component; e.g., 8 corresponds to 255 possible values for each color component (R, G, and B in an RGB color space).|
-|`stream`| Pixel values of the image, as a `pdfminer.pdftypes.PDFStream` object.|
+|`stream`| Pixel values of the image, as a `playa.pdftypes.ContentStream` object.|
 |`imagemask`| A nullable boolean; if `True`, "specifies that the image data is to be used as a stencil mask for painting in the current color."|
 |`name`| "The name by which this image XObject is referenced in the XObject subdictionary of the current resource dictionary." [🔗](https://ghostscript.com/~robin/pdf_reference17.pdf#page=340) |
 |`mcid`| The [marked content](https://ghostscript.com/~robin/pdf_reference17.pdf#page=850) section ID for this image if any (otherwise `None`). *Experimental attribute.*|
 |`tag`| The [marked content](https://ghostscript.com/~robin/pdf_reference17.pdf#page=850) section tag for this image if any (otherwise `None`). *Experimental attribute.*|
 |`object_type`| "image"|
-
-### Obtaining higher-level layout objects via `pdfminer.six`
-
-If you pass the `pdfminer.six`-handling `laparams` parameter to `pdfplumber.open(...)`, then each page's `.objects` dictionary will also contain `pdfminer.six`'s higher-level layout objects, such as `"textboxhorizontal"`.
-
 
 ## Visual debugging
 
@@ -451,7 +443,7 @@ Both `vertical_strategy` and `horizontal_strategy` accept the following options:
 
 Sometimes PDF files can contain forms that include inputs that people can fill out and save. While values in form fields appear like other text in a PDF file, form data is handled differently. If you want the gory details, see page 671 of this [specification](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.7old.pdf).
 
-`pdfplumber` doesn't have an interface for working with form data, but you can access it using `pdfplumber`'s wrappers around `pdfminer`.
+`pdfplumber` doesn't have an interface for working with form data, but you can access it using `pdfplumber`'s wrappers around `PLAYA-PDF`.
 
 For example, this snippet will retrieve form field names and values and store them in a dictionary.
 
@@ -523,7 +515,9 @@ It's also helpful to know what features `pdfplumber` does __not__ provide:
 
 ### Specific comparisons
 
-- [`pdfminer.six`](https://github.com/pdfminer/pdfminer.six) provides the foundation for `pdfplumber`. It primarily focuses on parsing PDFs, analyzing PDF layouts and object positioning, and extracting text. It does not provide tools for table extraction or visual debugging.
+- [`PLAYA-PDF`](https://github.com/dhdaines/playa) provides the foundation for `pdfplumber`. It focuses on parsing PDFs and does not do layout analysis or text extraction.
+
+- [`pdfminer.six`](https://github.com/pdfminer/pdfminer.six) focuses on parsing PDFs, with some functionality for analyzing PDF layouts and object positioning, and extracting text. It does not provide tools for table extraction or visual debugging.
 
 - [`PyPDF2`](https://github.com/mstamy2/PyPDF2) is a pure-Python library "capable of splitting, merging, cropping, and transforming the pages of PDF files. It can also add custom data, viewing options, and passwords to PDF files." It can extract page text, but does not provide easy access to shape objects (rectangles, lines, etc.), table-extraction, or visually debugging tools.
 
