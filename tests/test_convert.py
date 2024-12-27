@@ -179,7 +179,7 @@ class Test(unittest.TestCase):
             "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
             "18.0,12.996,,,,,,,TimesNewRomanPSMT,,0,"
             '"(1.0, 0.0, 0.0, 1.0, 45.83, 660.69)"'
-            ',,,DeviceGray,"(0,)",,,,DeviceGray,18.0,,,,"(0,)",,,Y,,1,'
+            ',,,DeviceGray,"(0,)",,,,0,DeviceGray,18.0,,,,"(0,)",,,Y,,1,'
         )
 
         io = StringIO()
@@ -248,14 +248,15 @@ class Test(unittest.TestCase):
             == "object_type,page_number,x0,x1,y0,y1,doctop,top,bottom,width,height,"
             "adv,bits,colorspace,contents,dash,evenodd,fill,fontname,imagemask,"
             "linewidth,matrix,mcid,name,ncs,non_stroking_color,non_stroking_pattern,"
-            "path,pts,scs,size,srcsize,stream,stroke,stroking_color,stroking_pattern,"
+            "path,pts,render_mode,scs,size,srcsize,stream,stroke,stroking_color,"
+            "stroking_pattern,"
             "tag,text,title,upright,uri"
         )
         assert lines[9] == (
             "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
             "18.0,12.996,,,,,,,TimesNewRomanPSMT,,0,"
             '"(1.0, 0.0, 0.0, 1.0, 45.83, 660.69)"'
-            ',,,DeviceGray,"(0,)",,,,DeviceGray,18.0,,,,"(0,)",,,Y,,1,'
+            ',,,DeviceGray,"(0,)",,,,0,DeviceGray,18.0,,,,"(0,)",,,Y,,1,'
         )
 
     def test_cli_csv_exclude(self):
@@ -283,13 +284,13 @@ class Test(unittest.TestCase):
             lines[0] == "object_type,page_number,x0,x1,y0,y1,doctop,top,bottom,"
             "width,height,adv,bits,colorspace,contents,dash,evenodd,fill,"
             "fontname,imagemask,linewidth,name,non_stroking_color,path,"
-            "pts,scs,size,srcsize,stream,stroke,stroking_color,tag,"
+            "pts,render_mode,scs,size,srcsize,stream,stroke,stroking_color,tag,"
             "text,title,upright,uri"
         )
         assert lines[9] == (
             "char,1,45.83,58.826,656.82,674.82,117.18,117.18,135.18,12.996,"
             "18.0,12.996,,,,,,,TimesNewRomanPSMT,,"
-            '0,,"(0,)",,,DeviceGray,18.0,,,,"(0,)",,Y,,1,'
+            '0,,"(0,)",,,0,DeviceGray,18.0,,,,"(0,)",,Y,,1,'
         )
 
     def test_cli_csv_include(self):

@@ -47,6 +47,7 @@ ALL_ATTRS = set(
         "upright",
         "fontname",
         "text",
+        "render_mode",
         "dash",
         "imagemask",
         "colorspace",
@@ -378,6 +379,7 @@ class Page(Container):
                 if text and self.pdf.unicode_norm is not None
                 else text
             )
+            obj["render_mode"] = textstate.render_mode
             # Lazy API does not do this stuff for you
             # NOTE: This is not right at all for rotated text, but we'll live with it
             if textstate.font is not None:
