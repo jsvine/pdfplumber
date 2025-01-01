@@ -1,7 +1,7 @@
 import base64
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from pdfminer.psparser import PSLiteral
+from playa.parser import PSLiteral
 
 from .utils import decode_text
 

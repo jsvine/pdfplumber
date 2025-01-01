@@ -5,18 +5,14 @@ from io import BufferedReader, BytesIO
 from types import TracebackType
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
-from pdfminer.layout import LAParams
-from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfinterp import PDFResourceManager
-from pdfminer.pdfpage import PDFPage
-from pdfminer.pdfparser import PDFParser
-from pdfminer.psparser import PSException
+from playa.document import Document
+from playa.structtree import StructTree
 
 from ._typing import T_num, T_obj_list
 from .container import Container
 from .page import Page
 from .repair import T_repair_setting, _repair
-from .structure import PDFStructTree, StructTreeMissing
+from .structure import structure_dict
 from .utils import resolve_and_decode
 
 logger = logging.getLogger(__name__)
@@ -41,13 +37,11 @@ class PDF(Container):
         self.stream_is_external = stream_is_external
         self.path = path
         self.pages_to_parse = pages
-        self.laparams = None if laparams is None else LAParams(**laparams)
         self.password = password
         self.unicode_norm = unicode_norm
         self.raise_unicode_errors = raise_unicode_errors
 
-        self.doc = PDFDocument(PDFParser(stream), password=password or "")
-        self.rsrcmgr = PDFResourceManager()
+        self.doc = Document(stream, password=password or "", space="page")
         self.metadata = {}
 
         for info in self.doc.info:
@@ -113,7 +107,7 @@ class PDF(Container):
                 raise_unicode_errors=raise_unicode_errors,
             )
 
-        except PSException:
+        except Exception:
             if not stream_is_external:
                 stream.close()
             raise
@@ -146,7 +140,7 @@ class PDF(Container):
         doctop: T_num = 0
         pp = self.pages_to_parse
         self._pages: List[Page] = []
-        for i, page in enumerate(PDFPage.create_pages(self.doc)):
+        for i, page in enumerate(self.doc.pages):
             page_number = i + 1
             if pp is not None and page_number not in pp:
                 continue
@@ -180,8 +174,14 @@ class PDF(Container):
     def structure_tree(self) -> List[Dict[str, Any]]:
         """Return the structure tree for the document."""
         try:
-            return [elem.to_dict() for elem in PDFStructTree(self)]
-        except StructTreeMissing:
+            if self.pages_to_parse is None:
+                numbered_pages = None
+            else:
+                numbered_pages = (p.page_obj for p in self.pages)
+            return [
+                structure_dict(elem) for elem in StructTree(self.doc, numbered_pages)
+            ]
+        except KeyError:
             return []
 
     def to_dict(self, object_types: Optional[List[str]] = None) -> Dict[str, Any]:

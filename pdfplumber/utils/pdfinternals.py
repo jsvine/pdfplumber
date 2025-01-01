@@ -1,22 +1,8 @@
 from typing import Any, List, Optional, Union
 
-from pdfminer.pdftypes import PDFObjRef
-from pdfminer.psparser import PSLiteral
-from pdfminer.utils import PDFDocEncoding
-
-
-def decode_text(s: Union[bytes, str]) -> str:
-    """
-    Decodes a PDFDocEncoding string to Unicode.
-    Adds py3 compatibility to pdfminer's version.
-    """
-    if isinstance(s, bytes) and s.startswith(b"\xfe\xff"):
-        return str(s[2:], "utf-16be", "ignore")
-    try:
-        ords = (ord(c) if isinstance(c, str) else c for c in s)
-        return "".join(PDFDocEncoding[o] for o in ords)
-    except IndexError:
-        return str(s)
+from playa.parser import PSLiteral
+from playa.pdftypes import ObjRef as PDFObjRef
+from playa.utils import decode_text
 
 
 def resolve_and_decode(obj: Any) -> Any:
@@ -73,8 +59,8 @@ def resolve_all(x: Any) -> Any:
             return x
 
         return resolve_all(resolved)
-    elif isinstance(x, (list, tuple)):
-        return type(x)(resolve_all(v) for v in x)
+    elif isinstance(x, list):
+        return list(resolve_all(v) for v in x)
     elif isinstance(x, dict):
         exceptions = ["Parent"] if get_dict_type(x) == "Annot" else []
         return {k: v if k in exceptions else resolve_all(v) for k, v in x.items()}

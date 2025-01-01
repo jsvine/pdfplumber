@@ -46,7 +46,7 @@ class Test(unittest.TestCase):
         # Ensure that caching is working:
         assert id(self.pdf._rect_edges) == id(self.pdf.rect_edges)
         assert id(self.pdf_2._curve_edges) == id(self.pdf_2.curve_edges)
-        assert id(self.pdf.pages[0]._layout) == id(self.pdf.pages[0].layout)
+        assert id(self.pdf.pages[0]._objects) == id(self.pdf.pages[0].objects)
 
     def test_annots(self):
         pdf = self.pdf_2
@@ -213,13 +213,6 @@ class Test(unittest.TestCase):
         char = self.pdf.pages[0].chars[3358]
         assert char["non_stroking_color"] == (1, 0, 0)
 
-    def test_load_with_custom_laparams(self):
-        # See https://github.com/jsvine/pdfplumber/issues/168
-        path = os.path.join(HERE, "pdfs/cupertino_usd_4-6-16.pdf")
-        laparams = dict(line_margin=0.2)
-        with pdfplumber.open(path, laparams=laparams) as pdf:
-            assert round(pdf.pages[0].chars[0]["top"], 3) == 66.384
-
     def test_loading_pathobj(self):
         from pathlib import Path
 
@@ -237,11 +230,11 @@ class Test(unittest.TestCase):
 
     def test_bad_fileobj(self):
         path = os.path.join(HERE, "pdfs/empty.pdf")
-        with pytest.raises(pdfplumber.pdf.PSException):
+        with pytest.raises(ValueError):
             pdfplumber.open(path)
 
-        f = open(path)
-        with pytest.raises(pdfplumber.pdf.PSException):
+        f = open(path)  # not a binary file
+        with pytest.raises(TypeError):
             pdfplumber.open(f)
         # File objects passed to pdfplumber should not be auto-closed
         assert not f.closed
