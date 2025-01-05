@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. The format 
 - Add `--format text` options to CLI (in addition to previously-available `csv` and `json`) (h/t @brandonrobertz). ([#1235](https://github.com/jsvine/pdfplumber/pull/1235))
 - Add `raise_unicode_errors: bool` parameter to `pdfplumber.open()` to allow bypassing `UnicodeDecodeError`s in annotation-parsing and generate warnings instead (h/t @stolarczyk). ([#1195](https://github.com/jsvine/pdfplumber/issues/1195))
 - Add `name` property to `image` objects (h/t @djr2015). ([#1201](https://github.com/jsvine/pdfplumber/discussions/1201))
+- Added necessary build scripts, pipelines, and harnesses to integrate with [OSS-Fuzz](https://github.com/google/oss-fuzz). ([#1245](https://github.com/jsvine/pdfplumber/pull/1245)
 
 ### Fixed
 
