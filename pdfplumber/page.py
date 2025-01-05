@@ -381,13 +381,12 @@ class Page(Container):
             )
             obj["render_mode"] = textstate.render_mode
             # Lazy API does not do this stuff for you
-            # NOTE: This is not right at all for rotated text, but we'll live with it
             if textstate.font is not None:
                 obj["fontname"] = textstate.font.fontname
                 if textstate.font.vertical:
-                    obj["size"] = obj["width"]
+                    obj["size"] = textstate.fontsize * content_object.matrix[0]
                 else:
-                    obj["size"] = obj["height"]
+                    obj["size"] = textstate.fontsize * content_object.matrix[3]
             matrix = mult_matrix(textstate.line_matrix, content_object.ctm)
             matrix = translate_matrix(matrix, textstate.glyph_offset)
             obj["matrix"] = matrix
