@@ -19,7 +19,8 @@ jobs:
           git remote add upstream https://github.com/jsvine/pdfplumber
           git fetch upstream
           git checkout stable
-          git merge upstream/stable
+          git merge upstream/stable --allow-unrelated-histories
+          git status
 
       - name: Push Changes to Fork
         run: |
