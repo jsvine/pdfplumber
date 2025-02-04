@@ -570,6 +570,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [@wodny](https://github.com/wodny)
 - [Michal Stolarczyk](https://github.com/stolarczyk)
 - [Brandon Roberts](https://github.com/brandonrobertz)
+- [@ennamarie19](https://github.com/ennamarie19/)
 
 ## Contributing
 
