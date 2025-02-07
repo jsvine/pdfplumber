@@ -6,6 +6,7 @@ from typing import (
     Callable,
     Dict,
     Generator,
+    Iterator,
     List,
     Optional,
     Pattern,
@@ -15,8 +16,7 @@ from typing import (
 from unicodedata import normalize as normalize_unicode
 from warnings import warn
 
-from pdfminer.converter import PDFPageAggregator
-from pdfminer.layout import (
+from paves.miner import (
     LTChar,
     LTComponent,
     LTContainer,
@@ -24,17 +24,20 @@ from pdfminer.layout import (
     LTItem,
     LTPage,
     LTTextContainer,
+    MarkedContent,
+    PDFPage,
+    extract_page,
 )
-from pdfminer.pdfinterp import PDFPageInterpreter, PDFStackT
-from pdfminer.pdfpage import PDFPage
-from pdfminer.psparser import PSLiteral
+from playa.color import Color
+from playa.page import ContentObject, GlyphObject, ImageObject, PathObject, PathSegment
+from playa.utils import mult_matrix, translate_matrix
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
 from .structure import PDFStructTree, StructTreeMissing
 from .table import T_table_settings, Table, TableFinder, TableSettings
-from .utils import decode_text, resolve_all, resolve_and_decode
+from .utils import resolve_all, resolve_and_decode
 from .utils.text import TextMap
 
 lt_pat = re.compile(r"^LT")
@@ -57,6 +60,7 @@ ALL_ATTRS = set(
         "upright",
         "fontname",
         "text",
+        "render_mode",
         "imagemask",
         "colorspace",
         "evenodd",
@@ -99,26 +103,17 @@ def fix_fontname_bytes(fontname: bytes) -> str:
 
 
 def separate_pattern(
-    color: Tuple[Any, ...]
+    color: Color,
 ) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
-    if isinstance(color[-1], PSLiteral):
-        return (color[:-1] or None), decode_text(color[-1].name)
-    else:
-        return color, None
+    return color.values, color.pattern
 
 
 def normalize_color(
-    color: Any,
+    color: Union[Color, None],
 ) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
     if color is None:
         return (None, None)
-    elif isinstance(color, tuple):
-        tuplefied = color
-    elif isinstance(color, list):
-        tuplefied = tuple(color)
-    else:
-        tuplefied = (color,)
-    return separate_pattern(tuplefied)
+    return separate_pattern(color)
 
 
 def tuplify_list_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
@@ -126,57 +121,6 @@ def tuplify_list_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
         key: (tuple(value) if isinstance(value, list) else value)
         for key, value in kwargs.items()
     }
-
-
-class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
-    """Extract layout from a specific page, adding marked-content IDs to
-    objects where found."""
-
-    cur_mcid: Optional[int] = None
-    cur_tag: Optional[str] = None
-
-    def begin_tag(self, tag: PSLiteral, props: Optional[PDFStackT] = None) -> None:
-        """Handle beginning of tag, setting current MCID if any."""
-        self.cur_tag = decode_text(tag.name)
-        if isinstance(props, dict) and "MCID" in props:
-            self.cur_mcid = props["MCID"]
-        else:
-            self.cur_mcid = None
-
-    def end_tag(self) -> None:
-        """Handle beginning of tag, clearing current MCID."""
-        self.cur_tag = None
-        self.cur_mcid = None
-
-    def tag_cur_item(self) -> None:
-        """Add current MCID to what we hope to be the most recent object created
-        by pdfminer.six."""
-        # This is somewhat hacky and would not be necessary if
-        # pdfminer.six supported MCIDs.  In reading the code it's
-        # clear that the `render_*` methods methods will only ever
-        # create one object, but that is far from being guaranteed.
-        # Even if pdfminer.six's API would just return the objects it
-        # creates, we wouldn't have to do this.
-        if self.cur_item._objs:
-            cur_obj = self.cur_item._objs[-1]
-            cur_obj.mcid = self.cur_mcid  # type: ignore
-            cur_obj.tag = self.cur_tag  # type: ignore
-
-    def render_char(self, *args, **kwargs) -> float:  # type: ignore
-        """Hook for rendering characters, adding the `mcid` attribute."""
-        adv = super().render_char(*args, **kwargs)
-        self.tag_cur_item()
-        return adv
-
-    def render_image(self, *args, **kwargs) -> None:  # type: ignore
-        """Hook for rendering images, adding the `mcid` attribute."""
-        super().render_image(*args, **kwargs)
-        self.tag_cur_item()
-
-    def paint_path(self, *args, **kwargs) -> None:  # type: ignore
-        """Hook for rendering lines and curves, adding the `mcid` attribute."""
-        super().paint_path(*args, **kwargs)
-        self.tag_cur_item()
 
 
 def _normalize_box(box_raw: T_bbox, rotation: T_num = 0) -> T_bbox:
@@ -198,6 +142,62 @@ def _normalize_box(box_raw: T_bbox, rotation: T_num = 0) -> T_bbox:
 def _invert_box(box_raw: T_bbox, mb_height: T_num) -> T_bbox:
     x0, y0, x1, y1 = box_raw
     return (x0, mb_height - y1, x1, mb_height - y0)
+
+
+def flatten_contents(objs: Union[PDFPage, ContentObject]) -> Iterator[ContentObject]:
+    """Traverse a PDF page, recursing into text, path, and xobjects."""
+    if isinstance(objs, PathObject):
+        # PathObjects are a bit special since they always contain at
+        # least one subpath, and these are a flat list (do not recurse)
+        yield from objs
+    else:
+        # Other ContentObjects are iterable and possibly multiply
+        # nested (in the case of XObjects), but only some of them
+        # actually contain other objects.  We *could* check the length
+        # of an object first but this is wasteful, so we don't.
+        count = 0
+        for obj in objs:
+            yield from flatten_contents(obj)
+            count += 1
+        if count == 0 and not isinstance(objs, PDFPage):
+            yield objs
+
+
+def is_closed(segs: List[PathSegment]) -> bool:
+    """Detect a closed shape."""
+    if segs[-1].operator == "h":  # Easy, it tells us it's closed!
+        return True
+    if segs[-1].points[-1] == segs[0].points[-1]:
+        return True
+    return False
+
+
+def is_rectangular(segs: List[PathSegment]) -> bool:
+    """Detect a rectangular shape.
+
+    TODO: Rectangular here is defined in device space, what about
+    rotated rectangles?  Are they not rectangles too?  If you prick
+    yourself on them, do you not bleed?
+    """
+    # A rectangle has four sides (exception for a redundant 'h')
+    if len(segs) > 5 or (len(segs) == 5 and segs[4].operator != "h"):
+        return False
+    xs = []
+    ys = []
+    # TODO: This could be done with fancy list comprehensions which
+    # might be slightly faster but much less easy to understand.
+    for seg in segs[:4]:
+        if seg.operator == "h":
+            x, y = segs[0].points[-1]
+        else:
+            x, y = seg.points[-1]
+        xs.append(x)
+        ys.append(y)
+    if xs[0] == xs[1] and ys[1] == ys[2] and xs[2] == xs[3] and ys[3] == ys[0]:
+        return True
+    if ys[0] == ys[1] and xs[1] == xs[2] and ys[2] == ys[3] and xs[3] == xs[0]:
+        return True
+    return False
 
 
 class Page(Container):
@@ -270,14 +270,7 @@ class Page(Container):
     def layout(self) -> LTPage:
         if hasattr(self, "_layout"):
             return self._layout
-        device = PDFPageAggregatorWithMarkedContent(
-            self.pdf.rsrcmgr,
-            pageno=self.page_number,
-            laparams=self.pdf.laparams,
-        )
-        interpreter = PDFPageInterpreter(self.pdf.rsrcmgr, device)
-        interpreter.process_page(self.page_obj)
-        self._layout: LTPage = device.get_result()
+        self._layout: LTPage = extract_page(self.page_obj, self.pdf.laparams)
         return self._layout
 
     @property
@@ -377,12 +370,18 @@ class Page(Container):
         attr["object_type"] = kind
         attr["page_number"] = self.page_number
 
+        # Find the first enclosing marked content section
+        mcs: Union[MarkedContent, None] = None
+        if hasattr(obj, "mcstack"):  # LTAnno does not
+            for mcs in reversed(obj.mcstack):
+                if mcs is not None and mcs.mcid is not None:
+                    break
+        if mcs is not None:
+            attr["mcid"] = mcs.mcid
+            attr["tag"] = mcs.tag
+
         for cs in ["ncs", "scs"]:
-            # Note: As of pdfminer.six v20221105, that library only
-            # exposes ncs for LTChars, and neither attribute for
-            # other objects. Keeping this code here, though,
-            # for ease of addition if color spaces become
-            # more available via pdfminer.six
+            # PAVÈS does expose these attributes unlike pdfminer.six
             if hasattr(obj, cs):
                 attr[cs] = resolve_and_decode(getattr(obj, cs).name)
 
@@ -419,16 +418,18 @@ class Page(Container):
 
         elif isinstance(obj, (LTCurve,)):
             attr["pts"] = list(map(self.point2coord, attr["pts"]))
-
             # Ignoring typing because type signature for obj.original_path
-            # appears to be incorrect
-            attr["path"] = [(cmd, *map(self.point2coord, pts)) for cmd, *pts in obj.original_path]  # type: ignore  # noqa: E501
-
+            # appears to be incorrect (PAVÉS is bug compatible here, oops)
+            attr["path"] = [
+                (cmd, *map(self.point2coord, pts))  # type: ignore
+                for cmd, *pts in obj.original_path
+            ]
             attr["dash"] = obj.dashing_style
 
         # As noted in #1181, `pdfminer.six` adjusts objects'
         # coordinates relative to the MediaBox:
         # https://github.com/pdfminer/pdfminer.six/blob/1a8bd2f730295b31d6165e4d95fcb5a03793c978/pdfminer/converter.py#L79-L84
+        # (PAVÉS does this too, because it is not wrong)
         mb_x0, mb_top = self.mediabox[:2]
 
         if "y0" in attr:
@@ -458,10 +459,124 @@ class Page(Container):
 
     def parse_objects(self) -> Dict[str, T_obj_list]:
         objects: Dict[str, T_obj_list] = {}
+        if self.pdf.laparams is None:
+            return self.parse_playa_objects()
         for obj in self.iter_layout_objects(self.layout._objs):
             kind = obj["object_type"]
             if kind in ["anno"]:
                 continue
+            if objects.get(kind) is None:
+                objects[kind] = []
+            objects[kind].append(obj)
+        return objects
+
+    def process_playa_object(self, content_object: ContentObject) -> T_obj:
+        kind = content_object.object_type
+        obj: T_obj = {"object_type": kind, "page_number": self.page_number}
+
+        if content_object.mcs is not None:
+            obj["mcid"] = content_object.mcs.mcid
+            obj["tag"] = content_object.mcs.tag
+
+        gstate = content_object.gstate
+        # These cannot be None, but they might be the defaults
+        obj["ncs"] = resolve_and_decode(gstate.ncs.name)
+        obj["scs"] = resolve_and_decode(gstate.scs.name)
+        obj["stroking_color"] = gstate.scolor.values
+        obj["stroking_pattern"] = gstate.scolor.pattern
+        obj["non_stroking_color"] = gstate.ncolor.values
+        obj["non_stroking_pattern"] = gstate.ncolor.pattern
+
+        # As noted in #1181, `pdfminer.six` (and `playa` by default) adjust objects'
+        # coordinates relative to the MediaBox:
+        # https://github.com/pdfminer/pdfminer.six/blob/1a8bd2f730295b31d6165e4d95fcb5a03793c978/pdfminer/converter.py#L79-L84
+        mb_x0, mb_top = self.mediabox[:2]
+
+        try:
+            x0, y0, x1, y1 = content_object.bbox
+            obj["x0"] = x0 + mb_x0
+            obj["x1"] = x1 + mb_x0
+            obj["y0"] = y0  # FIXME: but... what about the MediaBox?
+            obj["y1"] = y1
+            obj["top"] = (self.height - y1) + mb_top
+            obj["bottom"] = (self.height - y0) + mb_top
+            obj["doctop"] = self.initial_doctop + obj["top"]
+            obj["height"] = abs(y1 - y0)
+            obj["width"] = abs(x1 - x0)
+        except ValueError:
+            # It's an object with no bbox (e.g. a marked content point)
+            pass
+
+        if isinstance(content_object, GlyphObject):
+            text = content_object.text
+            obj["object_type"] = "char"
+            obj["adv"] = content_object.adv
+            textstate = content_object.textstate
+            obj["text"] = (
+                normalize_unicode(self.pdf.unicode_norm, text)
+                if text and self.pdf.unicode_norm is not None
+                else text
+            )
+            obj["render_mode"] = textstate.render_mode
+            # Lazy API does not do this stuff for you
+            if textstate.font is not None:
+                obj["fontname"] = textstate.font.fontname
+                if textstate.font.vertical:
+                    obj["size"] = textstate.fontsize * content_object.matrix[0]
+                else:
+                    obj["size"] = textstate.fontsize * content_object.matrix[3]
+            matrix = mult_matrix(textstate.line_matrix, content_object.ctm)
+            matrix = translate_matrix(matrix, textstate.glyph_offset)
+            obj["matrix"] = matrix
+            (a, b, c, d, e, f) = matrix
+            scaling = textstate.scaling * 0.01  # FIXME: unnecessary?
+            obj["upright"] = a * d * scaling > 0 and b * c <= 0
+            # Handle (rare) byte-encoded fontnames
+            if isinstance(obj["fontname"], bytes):
+                obj["fontname"] = fix_fontname_bytes(obj["fontname"])
+        elif isinstance(content_object, PathObject):
+            segments = list(content_object.segments)
+            # Have to do "rect" and "line" detection ourselves, PLAYA
+            # Does Not Do Heuristics
+            shape = "".join(seg.operator for seg in segments)
+            if shape in ("mlh", "ml"):
+                obj["object_type"] = "line"
+            elif (
+                shape in ("mlllh", "mllll")
+                and is_closed(segments)
+                and is_rectangular(segments)
+            ):
+                obj["object_type"] = "rect"
+            else:
+                obj["object_type"] = "curve"
+
+            obj["pts"] = [
+                self.point2coord(seg.points[-1]) for seg in segments if seg.points
+            ]
+            obj["path"] = [
+                (seg.operator, [self.point2coord(pt) for pt in seg.points])
+                for seg in segments
+            ]
+            obj["evenodd"] = content_object.evenodd
+            obj["stroke"] = content_object.stroke
+            obj["fill"] = content_object.fill
+            obj["linewidth"] = gstate.linewidth
+        elif isinstance(content_object, ImageObject):
+            obj["colorspace"] = content_object.colorspace
+            obj["imagemask"] = content_object.imagemask
+            obj["stream"] = content_object.stream
+            obj["srcsize"] = content_object.srcsize
+            obj["bits"] = content_object.bits
+            obj["name"] = content_object.xobjid
+
+        return obj
+
+    def parse_playa_objects(self) -> Dict[str, T_obj_list]:
+        objects: Dict[str, T_obj_list] = {}
+        # TODO: flatten_contents should go in PLAYA
+        for content_object in flatten_contents(self.page_obj):
+            obj = self.process_playa_object(content_object)
+            kind = obj["object_type"]
             if objects.get(kind) is None:
                 objects[kind] = []
             objects[kind].append(obj)

@@ -5,10 +5,9 @@ import re
 import unittest
 from collections import deque
 
-from pdfminer.pdftypes import resolve1
-
 import pdfplumber
 from pdfplumber.structure import PDFStructTree
+from pdfplumber.utils import resolve
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 TREE = [
@@ -1001,7 +1000,7 @@ class TestMany(unittest.TestCase):
         """Verify we can get structure without a ParentTree."""
         path = os.path.join(HERE, "pdfs/2023-06-20-PV.pdf")
         pdf = pdfplumber.open(path)
-        root = resolve1(pdf.doc.catalog["StructTreeRoot"])
+        root = resolve(pdf.doc.catalog["StructTreeRoot"])
         del root["ParentTree"]
         assert pdf.pages[1].structure_tree == PVSTRUCT1
 
