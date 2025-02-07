@@ -6,6 +6,7 @@ from typing import (
     Callable,
     Dict,
     Generator,
+    Iterator,
     List,
     Optional,
     Pattern,
@@ -28,6 +29,8 @@ from paves.miner import (
     extract_page,
 )
 from playa.color import Color
+from playa.page import ContentObject, GlyphObject, ImageObject, PathObject, PathSegment
+from playa.utils import mult_matrix, translate_matrix
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
@@ -139,6 +142,62 @@ def _normalize_box(box_raw: T_bbox, rotation: T_num = 0) -> T_bbox:
 def _invert_box(box_raw: T_bbox, mb_height: T_num) -> T_bbox:
     x0, y0, x1, y1 = box_raw
     return (x0, mb_height - y1, x1, mb_height - y0)
+
+
+def flatten_contents(objs: Union[PDFPage, ContentObject]) -> Iterator[ContentObject]:
+    """Traverse a PDF page, recursing into text, path, and xobjects."""
+    if isinstance(objs, PathObject):
+        # PathObjects are a bit special since they always contain at
+        # least one subpath, and these are a flat list (do not recurse)
+        yield from objs
+    else:
+        # Other ContentObjects are iterable and possibly multiply
+        # nested (in the case of XObjects), but only some of them
+        # actually contain other objects.  We *could* check the length
+        # of an object first but this is wasteful, so we don't.
+        count = 0
+        for obj in objs:
+            yield from flatten_contents(obj)
+            count += 1
+        if count == 0 and not isinstance(objs, PDFPage):
+            yield objs
+
+
+def is_closed(segs: List[PathSegment]) -> bool:
+    """Detect a closed shape."""
+    if segs[-1].operator == "h":  # Easy, it tells us it's closed!
+        return True
+    if segs[-1].points[-1] == segs[0].points[-1]:
+        return True
+    return False
+
+
+def is_rectangular(segs: List[PathSegment]) -> bool:
+    """Detect a rectangular shape.
+
+    TODO: Rectangular here is defined in device space, what about
+    rotated rectangles?  Are they not rectangles too?  If you prick
+    yourself on them, do you not bleed?
+    """
+    # A rectangle has four sides (exception for a redundant 'h')
+    if len(segs) > 5 or (len(segs) == 5 and segs[4].operator != "h"):
+        return False
+    xs = []
+    ys = []
+    # TODO: This could be done with fancy list comprehensions which
+    # might be slightly faster but much less easy to understand.
+    for seg in segs[:4]:
+        if seg.operator == "h":
+            x, y = segs[0].points[-1]
+        else:
+            x, y = seg.points[-1]
+        xs.append(x)
+        ys.append(y)
+    if xs[0] == xs[1] and ys[1] == ys[2] and xs[2] == xs[3] and ys[3] == ys[0]:
+        return True
+    if ys[0] == ys[1] and xs[1] == xs[2] and ys[2] == ys[3] and xs[3] == xs[0]:
+        return True
+    return False
 
 
 class Page(Container):
@@ -400,10 +459,124 @@ class Page(Container):
 
     def parse_objects(self) -> Dict[str, T_obj_list]:
         objects: Dict[str, T_obj_list] = {}
+        if self.pdf.laparams is None:
+            return self.parse_playa_objects()
         for obj in self.iter_layout_objects(self.layout._objs):
             kind = obj["object_type"]
             if kind in ["anno"]:
                 continue
+            if objects.get(kind) is None:
+                objects[kind] = []
+            objects[kind].append(obj)
+        return objects
+
+    def process_playa_object(self, content_object: ContentObject) -> T_obj:
+        kind = content_object.object_type
+        obj: T_obj = {"object_type": kind, "page_number": self.page_number}
+
+        if content_object.mcs is not None:
+            obj["mcid"] = content_object.mcs.mcid
+            obj["tag"] = content_object.mcs.tag
+
+        gstate = content_object.gstate
+        # These cannot be None, but they might be the defaults
+        obj["ncs"] = resolve_and_decode(gstate.ncs.name)
+        obj["scs"] = resolve_and_decode(gstate.scs.name)
+        obj["stroking_color"] = gstate.scolor.values
+        obj["stroking_pattern"] = gstate.scolor.pattern
+        obj["non_stroking_color"] = gstate.ncolor.values
+        obj["non_stroking_pattern"] = gstate.ncolor.pattern
+        obj["linewidth"] = gstate.linewidth
+
+        # As noted in #1181, `pdfminer.six` (and `playa` by default) adjust objects'
+        # coordinates relative to the MediaBox:
+        # https://github.com/pdfminer/pdfminer.six/blob/1a8bd2f730295b31d6165e4d95fcb5a03793c978/pdfminer/converter.py#L79-L84
+        mb_x0, mb_top = self.mediabox[:2]
+
+        try:
+            x0, y0, x1, y1 = content_object.bbox
+            obj["x0"] = x0 + mb_x0
+            obj["x1"] = x1 + mb_x0
+            obj["y0"] = y0  # FIXME: but... what about the MediaBox?
+            obj["y1"] = y1
+            obj["top"] = (self.height - y1) + mb_top
+            obj["bottom"] = (self.height - y0) + mb_top
+            obj["doctop"] = self.initial_doctop + obj["top"]
+            obj["height"] = abs(y1 - y0)
+            obj["width"] = abs(x1 - x0)
+        except ValueError:
+            # It's an object with no bbox (e.g. a marked content point)
+            pass
+
+        if isinstance(content_object, GlyphObject):
+            text = content_object.text
+            obj["object_type"] = "char"
+            obj["adv"] = content_object.adv
+            textstate = content_object.textstate
+            obj["text"] = (
+                normalize_unicode(self.pdf.unicode_norm, text)
+                if text and self.pdf.unicode_norm is not None
+                else text
+            )
+            obj["render_mode"] = textstate.render_mode
+            # Lazy API does not do this stuff for you
+            if textstate.font is not None:
+                obj["fontname"] = textstate.font.fontname
+                if textstate.font.vertical:
+                    obj["size"] = textstate.fontsize * content_object.matrix[0]
+                else:
+                    obj["size"] = textstate.fontsize * content_object.matrix[3]
+            matrix = mult_matrix(textstate.line_matrix, content_object.ctm)
+            matrix = translate_matrix(matrix, textstate.glyph_offset)
+            obj["matrix"] = matrix
+            (a, b, c, d, e, f) = matrix
+            scaling = textstate.scaling * 0.01  # FIXME: unnecessary?
+            obj["upright"] = a * d * scaling > 0 and b * c <= 0
+            # Handle (rare) byte-encoded fontnames
+            if isinstance(obj["fontname"], bytes):
+                obj["fontname"] = fix_fontname_bytes(obj["fontname"])
+        elif isinstance(content_object, PathObject):
+            segments = list(content_object.segments)
+            # Have to do "rect" and "line" detection ourselves, PLAYA
+            # Does Not Do Heuristics
+            shape = "".join(seg.operator for seg in segments)
+            if shape in ("mlh", "ml"):
+                obj["object_type"] = "line"
+            elif (
+                shape in ("mlllh", "mllll")
+                and is_closed(segments)
+                and is_rectangular(segments)
+            ):
+                obj["object_type"] = "rect"
+            else:
+                obj["object_type"] = "curve"
+
+            obj["pts"] = [
+                self.point2coord(seg.points[-1]) for seg in segments if seg.points
+            ]
+            obj["path"] = [
+                (seg.operator, [self.point2coord(pt) for pt in seg.points])
+                for seg in segments
+            ]
+            obj["evenodd"] = content_object.evenodd
+            obj["stroke"] = content_object.stroke
+            obj["fill"] = content_object.fill
+        elif isinstance(content_object, ImageObject):
+            obj["colorspace"] = content_object.colorspace
+            obj["imagemask"] = content_object.imagemask
+            obj["stream"] = content_object.stream
+            obj["srcsize"] = content_object.srcsize
+            obj["bits"] = content_object.bits
+            obj["name"] = content_object.xobjid
+
+        return obj
+
+    def parse_playa_objects(self) -> Dict[str, T_obj_list]:
+        objects: Dict[str, T_obj_list] = {}
+        # TODO: flatten_contents should go in PLAYA
+        for content_object in flatten_contents(self.page_obj):
+            obj = self.process_playa_object(content_object)
+            kind = obj["object_type"]
             if objects.get(kind) is None:
                 objects[kind] = []
             objects[kind].append(obj)
