@@ -486,7 +486,6 @@ class Page(Container):
         obj["stroking_pattern"] = gstate.scolor.pattern
         obj["non_stroking_color"] = gstate.ncolor.values
         obj["non_stroking_pattern"] = gstate.ncolor.pattern
-        obj["linewidth"] = gstate.linewidth
 
         # As noted in #1181, `pdfminer.six` (and `playa` by default) adjust objects'
         # coordinates relative to the MediaBox:
@@ -561,6 +560,7 @@ class Page(Container):
             obj["evenodd"] = content_object.evenodd
             obj["stroke"] = content_object.stroke
             obj["fill"] = content_object.fill
+            obj["linewidth"] = gstate.linewidth
         elif isinstance(content_object, ImageObject):
             obj["colorspace"] = content_object.colorspace
             obj["imagemask"] = content_object.imagemask
