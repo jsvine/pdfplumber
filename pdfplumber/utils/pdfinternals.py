@@ -1,8 +1,9 @@
 from typing import Any, List, Optional, Union
 
-from pdfminer.pdftypes import PDFObjRef
-from pdfminer.psparser import PSLiteral
-from pdfminer.utils import PDFDocEncoding
+from paves.miner import PDFDocEncoding, PDFObjRef, PSLiteral
+from paves.miner import resolve1 as resolve
+
+__all__ = ["resolve"]
 
 
 def decode_text(s: Union[bytes, str]) -> str:
@@ -44,13 +45,6 @@ def decode_psl_list(_list: List[Union[PSLiteral, str]]) -> List[str]:
     ]
 
 
-def resolve(x: Any) -> Any:
-    if isinstance(x, PDFObjRef):
-        return x.resolve()
-    else:
-        return x
-
-
 def get_dict_type(d: Any) -> Optional[str]:
     if not isinstance(d, dict):
         return None
@@ -73,8 +67,8 @@ def resolve_all(x: Any) -> Any:
             return x
 
         return resolve_all(resolved)
-    elif isinstance(x, (list, tuple)):
-        return type(x)(resolve_all(v) for v in x)
+    elif isinstance(x, list):
+        return [resolve_all(v) for v in x]
     elif isinstance(x, dict):
         exceptions = ["Parent"] if get_dict_type(x) == "Annot" else []
         return {k: v if k in exceptions else resolve_all(v) for k, v in x.items()}

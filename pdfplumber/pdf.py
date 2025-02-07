@@ -5,12 +5,7 @@ from io import BufferedReader, BytesIO
 from types import TracebackType
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
-from pdfminer.layout import LAParams
-from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfinterp import PDFResourceManager
-from pdfminer.pdfpage import PDFPage
-from pdfminer.pdfparser import PDFParser
-from pdfminer.psparser import PSException
+from paves.miner import LAParams, PDFDocument, PSException
 
 from ._typing import T_num, T_obj_list
 from .container import Container
@@ -46,8 +41,7 @@ class PDF(Container):
         self.unicode_norm = unicode_norm
         self.raise_unicode_errors = raise_unicode_errors
 
-        self.doc = PDFDocument(PDFParser(stream), password=password or "")
-        self.rsrcmgr = PDFResourceManager()
+        self.doc = PDFDocument(stream, password=password or "", space="page")
         self.metadata = {}
 
         for info in self.doc.info:
@@ -146,8 +140,8 @@ class PDF(Container):
         doctop: T_num = 0
         pp = self.pages_to_parse
         self._pages: List[Page] = []
-        for i, page in enumerate(PDFPage.create_pages(self.doc)):
-            page_number = i + 1
+        for page in self.doc.pages:
+            page_number = page.page_idx + 1
             if pp is not None and page_number not in pp:
                 continue
             p = Page(self, page, page_number=page_number, initial_doctop=doctop)

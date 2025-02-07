@@ -7,8 +7,7 @@ __all__ = [
     "set_debug",
 ]
 
-import pdfminer
-import pdfminer.pdftypes
+import paves.miner as pdfminer
 
 from . import utils
 from ._version import __version__

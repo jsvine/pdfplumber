@@ -15,8 +15,7 @@ from typing import (
 from unicodedata import normalize as normalize_unicode
 from warnings import warn
 
-from pdfminer.converter import PDFPageAggregator
-from pdfminer.layout import (
+from paves.miner import (
     LTChar,
     LTComponent,
     LTContainer,
@@ -24,17 +23,18 @@ from pdfminer.layout import (
     LTItem,
     LTPage,
     LTTextContainer,
+    MarkedContent,
+    PDFPage,
+    extract_page,
 )
-from pdfminer.pdfinterp import PDFPageInterpreter, PDFStackT
-from pdfminer.pdfpage import PDFPage
-from pdfminer.psparser import PSLiteral
+from playa.color import Color
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_list
 from .container import Container
 from .structure import PDFStructTree, StructTreeMissing
 from .table import T_table_settings, Table, TableFinder, TableSettings
-from .utils import decode_text, resolve_all, resolve_and_decode
+from .utils import resolve_all, resolve_and_decode
 from .utils.text import TextMap
 
 lt_pat = re.compile(r"^LT")
@@ -57,6 +57,7 @@ ALL_ATTRS = set(
         "upright",
         "fontname",
         "text",
+        "render_mode",
         "imagemask",
         "colorspace",
         "evenodd",
@@ -99,26 +100,17 @@ def fix_fontname_bytes(fontname: bytes) -> str:
 
 
 def separate_pattern(
-    color: Tuple[Any, ...]
+    color: Color,
 ) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
-    if isinstance(color[-1], PSLiteral):
-        return (color[:-1] or None), decode_text(color[-1].name)
-    else:
-        return color, None
+    return color.values, color.pattern
 
 
 def normalize_color(
-    color: Any,
+    color: Union[Color, None],
 ) -> Tuple[Optional[Tuple[Union[float, int], ...]], Optional[str]]:
     if color is None:
         return (None, None)
-    elif isinstance(color, tuple):
-        tuplefied = color
-    elif isinstance(color, list):
-        tuplefied = tuple(color)
-    else:
-        tuplefied = (color,)
-    return separate_pattern(tuplefied)
+    return separate_pattern(color)
 
 
 def tuplify_list_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
@@ -126,57 +118,6 @@ def tuplify_list_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
         key: (tuple(value) if isinstance(value, list) else value)
         for key, value in kwargs.items()
     }
-
-
-class PDFPageAggregatorWithMarkedContent(PDFPageAggregator):
-    """Extract layout from a specific page, adding marked-content IDs to
-    objects where found."""
-
-    cur_mcid: Optional[int] = None
-    cur_tag: Optional[str] = None
-
-    def begin_tag(self, tag: PSLiteral, props: Optional[PDFStackT] = None) -> None:
-        """Handle beginning of tag, setting current MCID if any."""
-        self.cur_tag = decode_text(tag.name)
-        if isinstance(props, dict) and "MCID" in props:
-            self.cur_mcid = props["MCID"]
-        else:
-            self.cur_mcid = None
-
-    def end_tag(self) -> None:
-        """Handle beginning of tag, clearing current MCID."""
-        self.cur_tag = None
-        self.cur_mcid = None
-
-    def tag_cur_item(self) -> None:
-        """Add current MCID to what we hope to be the most recent object created
-        by pdfminer.six."""
-        # This is somewhat hacky and would not be necessary if
-        # pdfminer.six supported MCIDs.  In reading the code it's
-        # clear that the `render_*` methods methods will only ever
-        # create one object, but that is far from being guaranteed.
-        # Even if pdfminer.six's API would just return the objects it
-        # creates, we wouldn't have to do this.
-        if self.cur_item._objs:
-            cur_obj = self.cur_item._objs[-1]
-            cur_obj.mcid = self.cur_mcid  # type: ignore
-            cur_obj.tag = self.cur_tag  # type: ignore
-
-    def render_char(self, *args, **kwargs) -> float:  # type: ignore
-        """Hook for rendering characters, adding the `mcid` attribute."""
-        adv = super().render_char(*args, **kwargs)
-        self.tag_cur_item()
-        return adv
-
-    def render_image(self, *args, **kwargs) -> None:  # type: ignore
-        """Hook for rendering images, adding the `mcid` attribute."""
-        super().render_image(*args, **kwargs)
-        self.tag_cur_item()
-
-    def paint_path(self, *args, **kwargs) -> None:  # type: ignore
-        """Hook for rendering lines and curves, adding the `mcid` attribute."""
-        super().paint_path(*args, **kwargs)
-        self.tag_cur_item()
 
 
 def _normalize_box(box_raw: T_bbox, rotation: T_num = 0) -> T_bbox:
@@ -270,14 +211,7 @@ class Page(Container):
     def layout(self) -> LTPage:
         if hasattr(self, "_layout"):
             return self._layout
-        device = PDFPageAggregatorWithMarkedContent(
-            self.pdf.rsrcmgr,
-            pageno=self.page_number,
-            laparams=self.pdf.laparams,
-        )
-        interpreter = PDFPageInterpreter(self.pdf.rsrcmgr, device)
-        interpreter.process_page(self.page_obj)
-        self._layout: LTPage = device.get_result()
+        self._layout: LTPage = extract_page(self.page_obj, self.pdf.laparams)
         return self._layout
 
     @property
@@ -377,12 +311,18 @@ class Page(Container):
         attr["object_type"] = kind
         attr["page_number"] = self.page_number
 
+        # Find the first enclosing marked content section
+        mcs: Union[MarkedContent, None] = None
+        if hasattr(obj, "mcstack"):  # LTAnno does not
+            for mcs in reversed(obj.mcstack):
+                if mcs is not None and mcs.mcid is not None:
+                    break
+        if mcs is not None:
+            attr["mcid"] = mcs.mcid
+            attr["tag"] = mcs.tag
+
         for cs in ["ncs", "scs"]:
-            # Note: As of pdfminer.six v20221105, that library only
-            # exposes ncs for LTChars, and neither attribute for
-            # other objects. Keeping this code here, though,
-            # for ease of addition if color spaces become
-            # more available via pdfminer.six
+            # PAVÈS does expose these attributes unlike pdfminer.six
             if hasattr(obj, cs):
                 attr[cs] = resolve_and_decode(getattr(obj, cs).name)
 
@@ -419,16 +359,18 @@ class Page(Container):
 
         elif isinstance(obj, (LTCurve,)):
             attr["pts"] = list(map(self.point2coord, attr["pts"]))
-
             # Ignoring typing because type signature for obj.original_path
-            # appears to be incorrect
-            attr["path"] = [(cmd, *map(self.point2coord, pts)) for cmd, *pts in obj.original_path]  # type: ignore  # noqa: E501
-
+            # appears to be incorrect (PAVÉS is bug compatible here, oops)
+            attr["path"] = [
+                (cmd, *map(self.point2coord, pts))  # type: ignore
+                for cmd, *pts in obj.original_path
+            ]
             attr["dash"] = obj.dashing_style
 
         # As noted in #1181, `pdfminer.six` adjusts objects'
         # coordinates relative to the MediaBox:
         # https://github.com/pdfminer/pdfminer.six/blob/1a8bd2f730295b31d6165e4d95fcb5a03793c978/pdfminer/converter.py#L79-L84
+        # (PAVÉS does this too, because it is not wrong)
         mb_x0, mb_top = self.mediabox[:2]
 
         if "y0" in attr:
