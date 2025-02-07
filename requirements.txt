@@ -1,3 +1,4 @@
 paves>=0.3.3
 Pillow>=9.1
 pypdfium2>=4.18.0
+playa-pdf[crypto]>=0.2.8
