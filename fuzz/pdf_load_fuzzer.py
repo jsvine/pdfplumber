@@ -7,6 +7,7 @@ from fuzz_helpers import EnhancedFuzzedDataProvider
 with atheris.instrument_imports(include=["pdfplumber"]):
     from pdfminer.pdftypes import PDFException
     from pdfminer.psparser import PSException
+    from pdfplumber.utils.exceptions import MalformedPDFException, PdfminerException
 
     import pdfplumber
 
@@ -38,7 +39,7 @@ def TestOneInput(data: bytes):
             elif cast_ty is CastType.DICT:
                 pdf.to_dict()
 
-    except (PDFException, PSException, AssertionError):
+    except (PDFException, PSException, AssertionError, MalformedPDFException, PdfminerException):
         return -1
     except ValueError as e:
         if "invalid literal for int" in str(e):
