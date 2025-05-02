@@ -55,7 +55,7 @@ def get_page_image(
 
     try:
         pdfium_doc = pypdfium2.PdfDocument(src, password=password)
-    except pypdfium2._helpers.misc.PdfiumError as e:
+    except pypdfium2.PdfiumError as e:
         raise MalformedPDFException(e)
 
     pdfium_page = pdfium_doc.get_page(page_ix)
@@ -69,8 +69,6 @@ def get_page_image(
         # Non-modifiable arguments
         prefer_bgrx=True,
     ).to_pil()
-    # In theory `autoclose` when creating it should make it close...
-    # automatically.  In practice this does not seem to be the case.
     pdfium_doc.close()
 
     return img.convert("RGB")
