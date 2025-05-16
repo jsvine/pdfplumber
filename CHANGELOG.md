@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.11.7] - [Unreleased]
+
+### Changed
+- Upgrade `pdfminer.six` from `20250327` to `20250506`
+
+### Removed
+- Remove `stroking_pattern` and `non_stroking_pattern` object attributes
+
 ## [0.11.6] - 2025-03-27
 ### Changed
 - Upgrade `pdfminer.six` from `20231228` to `20250327` ([3fcb493](https://github.com/jsvine/pdfplumber/commit/3fcb493) + [12a73a2](https://github.com/jsvine/pdfplumber/commit/12a73a2))
@@ -13,7 +21,7 @@ All notable changes to this project will be documented in this file. The format 
 - Catch exceptions from pdfminer and malformed PDFs ([43ccc5b](https://github.com/jsvine/pdfplumber/commit/43ccc5b))
 - More broadly handle RecursionError ([748ff31](https://github.com/jsvine/pdfplumber/commit/748ff31))
 
-## Removed
+### Removed
 - Remove test_issue_1089 ([#1263](https://github.com/jsvine/pdfplumber/issues/1263) + [7e28e76](https://github.com/jsvine/pdfplumber/commit/7e28e76))
 
 ## [0.11.5] - 2025-01-01
