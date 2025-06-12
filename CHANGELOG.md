@@ -2,16 +2,16 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.11.7] - [Unreleased]
+## [0.11.7] - 2025-06-12
 
 ### Added
-- Add access to `Page.trimbox`, `Page.bleedbox`, and `Page.artbox` (h/t @samuelbradshaw). ([#1313](https://github.com/jsvine/pdfplumber/issues/1313))
+- Add access to `Page.trimbox`, `Page.bleedbox`, and `Page.artbox` (h/t @samuelbradshaw). ([#1313](https://github.com/jsvine/pdfplumber/issues/1313) + [7e364e6](https://github.com/jsvine/pdfplumber/commit/7e364e6193c6e8bafa9b46587c0fdd4a46405399))
 
 ### Changed
-- Upgrade `pdfminer.six` from `20250327` to `20250506`
+- Upgrade `pdfminer.six` from `20250327` to `20250506`. ([4c7e092](https://github.com/jsvine/pdfplumber/commit/4c7e092))
 
 ### Removed
-- Remove `stroking_pattern` and `non_stroking_pattern` object attributes
+- Remove `stroking_pattern` and `non_stroking_pattern` object attributes, due to changes in `pdfminer.six`. ([4c7e092](https://github.com/jsvine/pdfplumber/commit/4c7e092))
 
 ## [0.11.6] - 2025-03-27
 ### Changed
