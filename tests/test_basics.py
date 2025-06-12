@@ -246,3 +246,11 @@ class Test(unittest.TestCase):
         # File objects passed to pdfplumber should not be auto-closed
         assert not f.closed
         f.close()
+
+    def test_uncommon_boxes(self):
+        path = os.path.join(HERE, "pdfs/page-boxes-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            assert page.artbox == (42.51969, 70.86613999999997, 552.75591, 827.71653)
+            assert page.bleedbox == (0, 0.0, 623.62205, 870.23622)
+            assert page.trimbox == (28.34646, 56.69290999999998, 566.92913, 841.88976)

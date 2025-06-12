@@ -216,11 +216,14 @@ class Page(Container):
 
         self.mediabox = _invert_box(mb_raw, mb_height)
 
-        if "CropBox" in page_obj.attrs:
-            self.cropbox = _invert_box(
-                _normalize_box(get_attr("CropBox"), self.rotation), mb_height
-            )
-        else:
+        for box_name in ["CropBox", "TrimBox", "BleedBox", "ArtBox"]:
+            if box_name in page_obj.attrs:
+                box_normalized = _invert_box(
+                    _normalize_box(get_attr(box_name), self.rotation), mb_height
+                )
+                setattr(self, box_name.lower(), box_normalized)
+
+        if "CropBox" not in page_obj.attrs:
             self.cropbox = self.mediabox
 
         # Page.bbox defaults to self.mediabox, but can be altered by Page.crop(...)

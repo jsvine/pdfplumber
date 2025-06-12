@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.11.7] - [Unreleased]
 
+### Added
+- Add access to `Page.trimbox`, `Page.bleedbox`, and `Page.artbox` (h/t @samuelbradshaw). ([#1313](https://github.com/jsvine/pdfplumber/issues/1313))
+
 ### Changed
 - Upgrade `pdfminer.six` from `20250327` to `20250506`
 
