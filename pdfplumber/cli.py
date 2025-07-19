@@ -23,9 +23,7 @@ def parse_page_spec(p_str: str) -> List[int]:
 def parse_args(args_raw: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser("pdfplumber")
 
-    parser.add_argument(
-        "infile", nargs="?", type=argparse.FileType("rb"), default=sys.stdin.buffer
-    )
+    parser.add_argument("infile", nargs="?", type=argparse.FileType("rb"))
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--structure",
