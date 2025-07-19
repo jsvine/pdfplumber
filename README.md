@@ -38,7 +38,7 @@ pip install pdfplumber
 
 ```sh
 curl "https://raw.githubusercontent.com/jsvine/pdfplumber/stable/examples/pdfs/background-checks.pdf" > background-checks.pdf
-pdfplumber < background-checks.pdf > background-checks.csv
+pdfplumber background-checks.pdf > background-checks.csv
 ```
 
 The output will be a CSV containing info about every character, line, and rectangle in the PDF.
