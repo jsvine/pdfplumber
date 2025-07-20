@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+- Add `edge_min_length_prefilter` table setting for initial edge filtering. Lowering this setting enables capturing small edge segments (e.g., dashed lines) that would be filtered out with the default minimum length of 1. Raising this setting would be less common but plausible. (h/t @bronislav). ([#1274](https://github.com/jsvine/pdfplumber/issues/1274)).
+
 ## [0.11.7] - 2025-06-12
 
 ### Added

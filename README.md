@@ -402,6 +402,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
     "join_x_tolerance": 3,
     "join_y_tolerance": 3,
     "edge_min_length": 3,
+    "edge_min_length_prefilter": 1,
     "min_words_vertical": 3,
     "min_words_horizontal": 1,
     "intersection_tolerance": 3,
@@ -423,6 +424,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 |`"snap_tolerance"`, `"snap_x_tolerance"`, `"snap_y_tolerance"`| Parallel lines within `snap_tolerance` points will be "snapped" to the same horizontal or vertical position.|
 |`"join_tolerance"`, `"join_x_tolerance"`, `"join_y_tolerance"`| Line segments on the same infinite line, and whose ends are within `join_tolerance` of one another, will be "joined" into a single line segment.|
 |`"edge_min_length"`| Edges shorter than `edge_min_length` will be discarded before attempting to reconstruct the table.|
+|`"edge_min_length_prefilter"`| Edges shorter than `edge_min_length_prefilter` will be discarded during initial edge filtering from the page. Lowering this value (e.g., to `0.5`) can help capture small dashed lines that might otherwise be filtered out.|
 |`"min_words_vertical"`| When using `"vertical_strategy": "text"`, at least `min_words_vertical` words must share the same alignment.|
 |`"min_words_horizontal"`| When using `"horizontal_strategy": "text"`, at least `min_words_horizontal` words must share the same alignment.|
 |`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges must be within `intersection_tolerance` points to be considered intersecting.|

@@ -466,6 +466,7 @@ NON_NEGATIVE_SETTINGS = [
     "join_x_tolerance",
     "join_y_tolerance",
     "edge_min_length",
+    "edge_min_length_prefilter",
     "min_words_vertical",
     "min_words_horizontal",
     "intersection_tolerance",
@@ -494,6 +495,7 @@ class TableSettings:
     join_x_tolerance: T_num = UNSET
     join_y_tolerance: T_num = UNSET
     edge_min_length: T_num = 3
+    edge_min_length_prefilter: T_num = 1
     min_words_vertical: int = DEFAULT_MIN_WORDS_VERTICAL
     min_words_horizontal: int = DEFAULT_MIN_WORDS_HORIZONTAL
     intersection_tolerance: T_num = 3
@@ -637,9 +639,16 @@ class TableFinder(object):
                 )
 
         if v_strat == "lines":
-            v_base = utils.filter_edges(self.page.edges, "v")
+            v_base = utils.filter_edges(
+                self.page.edges, "v", min_length=settings.edge_min_length_prefilter
+            )
         elif v_strat == "lines_strict":
-            v_base = utils.filter_edges(self.page.edges, "v", edge_type="line")
+            v_base = utils.filter_edges(
+                self.page.edges,
+                "v",
+                edge_type="line",
+                min_length=settings.edge_min_length_prefilter,
+            )
         elif v_strat == "text":
             v_base = words_to_edges_v(words, word_threshold=settings.min_words_vertical)
         elif v_strat == "explicit":
@@ -666,9 +675,16 @@ class TableFinder(object):
                 )
 
         if h_strat == "lines":
-            h_base = utils.filter_edges(self.page.edges, "h")
+            h_base = utils.filter_edges(
+                self.page.edges, "h", min_length=settings.edge_min_length_prefilter
+            )
         elif h_strat == "lines_strict":
-            h_base = utils.filter_edges(self.page.edges, "h", edge_type="line")
+            h_base = utils.filter_edges(
+                self.page.edges,
+                "h",
+                edge_type="line",
+                min_length=settings.edge_min_length_prefilter,
+            )
         elif h_strat == "text":
             h_base = words_to_edges_h(
                 words, word_threshold=settings.min_words_horizontal
