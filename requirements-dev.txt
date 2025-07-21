@@ -1,7 +1,7 @@
 black==24.8.0
 flake8==7.1.1
 isort==5.13.2
-jupyterlab==3.6.7
+jupyterlab==3.6.8
 mypy==1.11.1
 nbexec==0.2.0
 pandas-stubs==2.2.2.240805
