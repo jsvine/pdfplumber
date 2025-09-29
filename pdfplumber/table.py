@@ -99,7 +99,9 @@ def merge_edges(
 
 
 def words_to_edges_h(
-    words: T_obj_list, word_threshold: int = DEFAULT_MIN_WORDS_HORIZONTAL
+    words: T_obj_list,
+    word_threshold: int = DEFAULT_MIN_WORDS_HORIZONTAL,
+    page_bbox: Optional[T_bbox] = None,
 ) -> T_obj_list:
     """
     Find (imaginary) horizontal lines that connect the tops
@@ -110,8 +112,12 @@ def words_to_edges_h(
     rects = list(map(utils.objects_to_rect, large_clusters))
     if len(rects) == 0:
         return []
-    min_x0 = min(map(itemgetter("x0"), rects))
-    max_x1 = max(map(itemgetter("x1"), rects))
+
+    if page_bbox is None:
+        min_x0 = min(map(itemgetter("x0"), rects))
+        max_x1 = max(map(itemgetter("x1"), rects))
+    else:
+        min_x0, _, max_x1, _ = page_bbox
 
     edges = []
     for r in rects:
@@ -671,7 +677,9 @@ class TableFinder(object):
             h_base = utils.filter_edges(self.page.edges, "h", edge_type="line")
         elif h_strat == "text":
             h_base = words_to_edges_h(
-                words, word_threshold=settings.min_words_horizontal
+                words,
+                word_threshold=settings.min_words_horizontal,
+                page_bbox=self.page.bbox,
             )
         elif h_strat == "explicit":
             h_base = []
