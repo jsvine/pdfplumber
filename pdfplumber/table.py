@@ -293,6 +293,14 @@ def intersections_to_cells(intersections: T_intersections) -> List[T_bbox]:
     cell_gen = (find_smallest_cell(points, i) for i in range(len(points)))
     return list(filter(None, cell_gen))
 
+def find_edge_cells(
+        cells: List[T_bbox], edges: T_obj_list, x_tolerance: T_num = 1, y_tolerance: T_num = 1
+    ) -> List[T_bbox]:
+    """
+    Given a list of currently known cells and edges, find cells that don't
+    have an outer border.  
+    """
+
 
 def cells_to_tables(cells: List[T_bbox]) -> List[List[T_bbox]]:
     """
