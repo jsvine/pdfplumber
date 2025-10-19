@@ -300,7 +300,20 @@ def find_edge_cells(
     Given a list of currently known cells and edges, find cells that don't
     have an outer border.  
     """
+    # Iterate through each edge, check all cells to find the ones on each end, then add an extra cell for lines that go outside the known cells
+    
+    def cell_intersects_edge(cell: T_bbox, edge: T_obj) -> bool:
+        corners = [[cell.x0, cell.y0],[cell.x0, cell.y1],[cell.x1, cell.y0],[cell.x1, cell.y1]]
+        for point in corners:
+            if edge.orientation == 'h':
+                if (abs(point.y - edge.y1) <= y_tolerance) and (min(cell.x1, cell.x2) - x_tolerance <= point.x <= max(edge.x1, edge.x2) + x_tolerance):
+                    return True
+            elif edge.orientation == 'v':
+                if (abs(point.x - edge.x1) <= x_tolerance) and (min(edge.y1, edge.y2) - y_tolerance <= point.y <= max(edge.y1, edge.y2) + y_tolerance):
+                    return True
+        return False
 
+            
 
 def cells_to_tables(cells: List[T_bbox]) -> List[List[T_bbox]]:
     """
