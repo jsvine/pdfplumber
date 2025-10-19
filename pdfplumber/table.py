@@ -301,17 +301,35 @@ def find_edge_cells(
     have an outer border.  
     """
     # Iterate through each edge, check all cells to find the ones on each end, then add an extra cell for lines that go outside the known cells
-    
-    def cell_intersects_edge(cell: T_bbox, edge: T_obj) -> bool:
-        corners = [[cell.x0, cell.y0],[cell.x0, cell.y1],[cell.x1, cell.y0],[cell.x1, cell.y1]]
-        for point in corners:
-            if edge.orientation == 'h':
-                if (abs(point.y - edge.y1) <= y_tolerance) and (min(cell.x1, cell.x2) - x_tolerance <= point.x <= max(edge.x1, edge.x2) + x_tolerance):
-                    return True
-            elif edge.orientation == 'v':
-                if (abs(point.x - edge.x1) <= x_tolerance) and (min(edge.y1, edge.y2) - y_tolerance <= point.y <= max(edge.y1, edge.y2) + y_tolerance):
-                    return True
+
+    def point_intersects_edge(x: int, y: int, edge: T_obj) -> bool:
+        if edge.orientation == 'h':
+            if (abs(y - edge.y1) <= y_tolerance) and (min(edge.x1, edge.x2) - x_tolerance <= x <= max(edge.x1, edge.x2) + x_tolerance):
+                return True
+        elif edge.orientation == 'v':
+            if (abs(x - edge.x1) <= x_tolerance) and (min(edge.y1, edge.y2) - y_tolerance <= y <= max(edge.y1, edge.y2) + y_tolerance):
+                return True
         return False
+    
+    def cell_intersections(edge: T_obj) -> T_obj_list:
+        min = None
+        max = None
+        for cell in cells:
+            if point_intersects_edge(cell.x0, cell.y0, edge):            
+                if min == None:
+                    min = cell
+                    max = cell
+                elif edge.orientation == 'h':
+                    if cell.x0 < min.x0:
+                        min = cell
+                    if cell.x0 > min.x0:
+                        max = cell
+                elif edge.orientation == 'v':
+                    if cell.y0 < min.y0:
+                        min = cell
+                    if cell.y0 > min.y0:
+                        max = cell
+        return [min, max]
 
             
 
