@@ -304,10 +304,10 @@ def find_edge_cells(
 
     def point_intersects_edge(x: int, y: int, edge: T_obj) -> bool:
         if edge.orientation == 'h':
-            if (abs(y - edge.y1) <= y_tolerance) and (min(edge.x1, edge.x2) - x_tolerance <= x <= max(edge.x1, edge.x2) + x_tolerance):
+            if (abs(y - edge[3]) <= y_tolerance) and (min(edge[2], edge.x2) - x_tolerance <= x <= max(edge[2], edge.x2) + x_tolerance):
                 return True
         elif edge.orientation == 'v':
-            if (abs(x - edge.x1) <= x_tolerance) and (min(edge.y1, edge.y2) - y_tolerance <= y <= max(edge.y1, edge.y2) + y_tolerance):
+            if (abs(x - edge[2]) <= x_tolerance) and (min(edge[3], edge.y2) - y_tolerance <= y <= max(edge[3], edge.y2) + y_tolerance):
                 return True
         return False
     
@@ -315,47 +315,47 @@ def find_edge_cells(
         min = None
         max = None
         for cell in cells:
-            if point_intersects_edge(cell.x0, cell.y0, edge):            
+            if point_intersects_edge(cell[0], cell[1], edge):            
                 if min == None:
                     min = cell
                     max = cell
                 elif edge.orientation == 'h':
-                    if cell.x0 < min.x0:
+                    if cell[0] < min[0]:
                         min = cell
-                    if cell.x0 > min.x0:
+                    if cell[0] > min[0]:
                         max = cell
                 elif edge.orientation == 'v':
-                    if cell.y0 < min.y0:
+                    if cell[1] < min[1]:
                         min = cell
-                    if cell.y0 > min.y0:
+                    if cell[1] > min[1]:
                         max = cell
         return [min, max]
 
     new_cells = []
 
     def already_made_cell(x0: int, y0: int):
-        for c in new_cells:
-            if c.x0 >= x0 - x_tolerance and c.x0 <= x0 + x_tolerance: 
-                if c.y0 >= y0 - y_tolerance and c.y0 <= y0 + y_tolerance:
+        for cell in new_cells:
+            if cell[0] >= x0 - x_tolerance and cell[0] <= x0 + x_tolerance: 
+                if cell[1] >= y0 - y_tolerance and cell[1] <= y0 + y_tolerance:
                     return True
         return False
 
     for edge in edges:
         ints = cell_intersections(edge)
         if edge.orientation == 'h':
-            if edge.x0 < ints[0] - x_tolerance:
-                if not already_made_cell(edge.x0, edge.y0):
-                    new_cells.append((edge.x0, edge.y0, ints[0].x0, ints[0].y1))
-            if edge.x1 > ints[1].x1 + x_tolerance:
-                if not already_made_cell(ints[1].x1, edge.y0):
-                    new_cells.append((ints[1].x1, edge.y0, edge.x1, ints[1].y1))
+            if edge[0] < ints[0] - x_tolerance:
+                if not already_made_cell(edge[0], edge[1]):
+                    new_cells.append((edge[0], edge[1], ints[0][0], ints[0][3]))
+            if edge[2] > ints[1][2] + x_tolerance:
+                if not already_made_cell(ints[1][2], edge[1]):
+                    new_cells.append((ints[1][2], edge[1], edge[2], ints[1][3]))
         if edge.orientation == 'v':
-            if edge.y0 < ints[0].y0 - y_tolerance:
-                if not already_made_cell(edge.x0, edge.y0):
-                    new_cells.append((edge.x0, edge.y0, ints[0].x0, ints[0].y1))
-            if edge.y1 > ints[1].y1 + y_tolerance:
-                if not already_made_cell(ints[1].x1, edge.y0):
-                    new_cells.append((ints[1].x1, edge.y0, edge.x1, ints[1].y1))
+            if edge[1] < ints[0][1] - y_tolerance:
+                if not already_made_cell(edge[0], edge[1]):
+                    new_cells.append((edge[0], edge[1], ints[0][0], ints[0][3]))
+            if edge[3] > ints[1][3] + y_tolerance:
+                if not already_made_cell(ints[1][2], edge[1]):
+                    new_cells.append((ints[1][2], edge[1], edge[2], ints[1][3]))
     return new_cells
 
             
@@ -660,7 +660,7 @@ class TableFinder(object):
             self.settings.intersection_x_tolerance,
             self.settings.intersection_y_tolerance,
         )
-        self.cells = intersections_to_cells(self.intersections)
+        self.cells = (intersections_to_cells(self.intersections)+find_edge_cells(intersections_to_cells(self.intersections), self.edges))
         self.tables = [
             Table(self.page, cell_group) for cell_group in cells_to_tables(self.cells)
         ]
