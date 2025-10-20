@@ -303,11 +303,12 @@ def find_edge_cells(
     # Iterate through each edge, check all cells to find the ones on each end, then add an extra cell for lines that go outside the known cells
 
     def point_intersects_edge(x: int, y: int, edge: T_obj) -> bool:
+        print(edge)
         if edge["orientation"] == 'h':
-            if (abs(y - edge["y1"]) <= y_tolerance) and (min(edge["x1"], edge.x2) - x_tolerance <= x <= max(edge["x1"], edge.x2) + x_tolerance):
+            if (abs(y - edge["y0"]) <= y_tolerance) and (min(edge["x0"], edge["x1"]) - x_tolerance <= x <= max(edge["x0"], edge["x1"]) + x_tolerance):
                 return True
         elif edge["orientation"] == 'v':
-            if (abs(x - edge["x1"]) <= x_tolerance) and (min(edge["y1"], edge.y2) - y_tolerance <= y <= max(edge["y1"], edge.y2) + y_tolerance):
+            if (abs(x - edge["x0"]) <= x_tolerance) and (min(edge["y0"], edge["y1"]) - y_tolerance <= y <= max(edge["y0"], edge["y1"]) + y_tolerance):
                 return True
         return False
     
@@ -342,8 +343,10 @@ def find_edge_cells(
 
     for edge in edges:
         ints = cell_intersections(edge)
+        if ints[0] == None:
+            continue
         if edge["orientation"] == 'h':
-            if edge["x0"] < ints[0] - x_tolerance:
+            if edge["x0"] < ints[0][0] - x_tolerance:
                 if not already_made_cell(edge["x0"], edge["y0"]):
                     new_cells.append((edge["x0"], edge["y0"], ints[0][0], ints[0][3]))
             if edge["x1"] > ints[1][2] + x_tolerance:
