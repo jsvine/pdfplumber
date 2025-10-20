@@ -303,10 +303,10 @@ def find_edge_cells(
     # Iterate through each edge, check all cells to find the ones on each end, then add an extra cell for lines that go outside the known cells
 
     def point_intersects_edge(x: int, y: int, edge: T_obj) -> bool:
-        if edge.orientation == 'h':
+        if edge["orientation"] == 'h':
             if (abs(y - edge[3]) <= y_tolerance) and (min(edge[2], edge.x2) - x_tolerance <= x <= max(edge[2], edge.x2) + x_tolerance):
                 return True
-        elif edge.orientation == 'v':
+        elif edge["orientation"] == 'v':
             if (abs(x - edge[2]) <= x_tolerance) and (min(edge[3], edge.y2) - y_tolerance <= y <= max(edge[3], edge.y2) + y_tolerance):
                 return True
         return False
@@ -319,12 +319,12 @@ def find_edge_cells(
                 if min == None:
                     min = cell
                     max = cell
-                elif edge.orientation == 'h':
+                elif edge["orientation"] == 'h':
                     if cell[0] < min[0]:
                         min = cell
                     if cell[0] > min[0]:
                         max = cell
-                elif edge.orientation == 'v':
+                elif edge["orientation"] == 'v':
                     if cell[1] < min[1]:
                         min = cell
                     if cell[1] > min[1]:
@@ -342,14 +342,14 @@ def find_edge_cells(
 
     for edge in edges:
         ints = cell_intersections(edge)
-        if edge.orientation == 'h':
+        if edge["orientation"] == 'h':
             if edge[0] < ints[0] - x_tolerance:
                 if not already_made_cell(edge[0], edge[1]):
                     new_cells.append((edge[0], edge[1], ints[0][0], ints[0][3]))
             if edge[2] > ints[1][2] + x_tolerance:
                 if not already_made_cell(ints[1][2], edge[1]):
                     new_cells.append((ints[1][2], edge[1], edge[2], ints[1][3]))
-        if edge.orientation == 'v':
+        if edge["orientation"] == 'v':
             if edge[1] < ints[0][1] - y_tolerance:
                 if not already_made_cell(edge[0], edge[1]):
                     new_cells.append((edge[0], edge[1], ints[0][0], ints[0][3]))
