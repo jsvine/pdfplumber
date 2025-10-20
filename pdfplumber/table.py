@@ -348,14 +348,14 @@ def find_edge_cells(
                     new_cells.append((edge.x0, edge.y0, ints[0].x0, ints[0].y1))
             if edge.x1 > ints[1].x1 + x_tolerance:
                 if not already_made_cell(ints[1].x1, edge.y0):
-                    new_cells.append((ints[1].x1, edge.y0, ))
+                    new_cells.append((ints[1].x1, edge.y0, edge.x1, ints[1].y1))
         if edge.orientation == 'v':
             if edge.y0 < ints[0].y0 - y_tolerance:
                 if not already_made_cell(edge.x0, edge.y0):
                     new_cells.append((edge.x0, edge.y0, ints[0].x0, ints[0].y1))
             if edge.y1 > ints[1].y1 + y_tolerance:
                 if not already_made_cell(ints[1].x1, edge.y0):
-                    new_cells.append((ints[1].x1, edge.y0, ))
+                    new_cells.append((ints[1].x1, edge.y0, edge.x1, ints[1].y1))
     return new_cells
 
             
