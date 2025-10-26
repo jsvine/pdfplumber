@@ -749,8 +749,8 @@ class TableFinder(object):
                 if abs(edge["x0"] - corners[1][0]) < 0.1 and abs(edge["y0"] - corners[1][1]):
                     borderEdges[3] = True # Right
             
-            temp.append([edge['x0'], page.height - edge['y0']])
-            temp.append([edge['x1'], page.height - edge['y1']])
+            #temp.append([edge['x0'], page.height - edge['y0']])
+           # temp.append([edge['x1'], page.height - edge['y1']])
                     
         map = [
             [corners[0][0], page.height - corners[0][1], corners[1][0], page.height - corners[1][1]],
@@ -797,10 +797,9 @@ class TableFinder(object):
                 edge["width"] = abs(edge["x1"] - edge["x0"])
                 edge["orientation"] = 'v' if i % 2 == 0 else 'h'
                 
-                edge["top"] = edge["y0"]
-                edge["bottom"] = edge["y1"]
+                edge["top"] = edge["y1"]
+                edge["bottom"] = edge["y0"]
                 
-                edge["SPECIAL"] = True
                 #print(edge) 0 2 are top and bottom
                 if i % 2 == 0: # Top / Bottom
                     for edge2 in self.edges:    
@@ -818,15 +817,27 @@ class TableFinder(object):
                     for edge2 in self.edges: 
                         if abs(edge2["x0"] - edge["x0"]) > 0.1 and abs(edge["x1"] - edge2["x1"]) > 0.1 :
                             continue
-                        state = abs(edge2["x0"] - edge["x0"]) > 0.1    
+                        if edge2["orientation"] == 'v':
+                            continue
+                        
+                        state = abs(edge2["x0"] - edge["x0"]) < 0.1    
                              
-                        vertex = (edge2["x1" if state else "x0"], edge["y0"])
+                        vertex = (edge["x1" if state else "x0"], edge2["top"])
                         if vertex not in self.intersections:
                             self.intersections[vertex] = {"v": [], "h": []}
                         self.intersections[vertex]["v"].append(edge2)
                         self.intersections[vertex]["h"].append(edge) 
-        
+                        
+                        temp.append([vertex[0], vertex[1]])
+        #print(temp)
         #print(self.intersections)
+        
+        #temp = []
+        #
+        #for m in map:
+        #    temp.append([m[0], m[1]])
+        #    temp.append([m[2], m[3]])
+        print(temp)
         
         self.cells = (intersections_to_cells(self.intersections)+find_edge_cells(intersections_to_cells(self.intersections), self.edges))
         self.tables = [
