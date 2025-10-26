@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.11.8] - 2025-10-26
+#### Fixed
+- Fixed floating-point precision error in line_to_edge by introducing an epsilon tolerance 
+(h/t @terur331). (#1276)
+
 ## [0.11.7] - 2025-06-12
 
 ### Added
@@ -663,4 +668,5 @@ Whoops.
 
 ### Fixed
 - Fix find_gutters — should ignore `" "` chars
+
 
