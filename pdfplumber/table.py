@@ -228,7 +228,7 @@ def edges_to_intersections(
                     intersections[vertex] = {"v": [], "h": []}
                 intersections[vertex]["v"].append(v)
                 intersections[vertex]["h"].append(h)
- 
+  
     return intersections
 
 
@@ -734,6 +734,9 @@ class TableFinder(object):
                 corners[3][1] = edge["y1"] 
         
         borderEdges = [False, False, False, False] # Top; Left; Bottom; Right    
+        
+        
+        temp = []
         for edge in self.edges:
             if abs(edge["x0"] - corners[0][0]) < 0.1 and abs(edge["y0"] - corners[0][1]):
                 if abs(edge["x1"] - corners[1][0]) < 0.1 and abs(edge["y1"] - corners[1][1]):
@@ -745,12 +748,36 @@ class TableFinder(object):
                     borderEdges[2] = True # Bottom
                 if abs(edge["x0"] - corners[1][0]) < 0.1 and abs(edge["y0"] - corners[1][1]):
                     borderEdges[3] = True # Right
+            
+            temp.append([edge['x0'], page.height - edge['y0']])
+            temp.append([edge['x1'], page.height - edge['y1']])
                     
-        # for i in range(4):       
-        #     if not borderEdges[i]:     
-        #         self.edges.append(
-        #             
-        #         )
+        map = [
+            [corners[0][0], page.height - corners[0][1], corners[1][0], page.height - corners[1][1]],
+            [corners[0][0], page.height - corners[0][1], corners[2][0], page.height - corners[2][1]],
+            [corners[2][0], page.height - corners[2][1], corners[3][0], page.height - corners[3][1]],
+            [corners[1][0], page.height - corners[1][1], corners[3][0], page.height - corners[3][1]]
+        ]
+        
+        #print(corners)
+                        
+        #          exampleEdge = {'x0': 42.5195, 
+        #   'y0': 307.50800000000004, 
+        #   'x1': 390.68600000000004, 
+        #   'y1': 307.50800000000004, 
+        #   'width': 348.16650000000004, 
+        #   'height': 0.0, 
+        #   'pts': [(42.5195, 301.942), 
+        #           (129.561, 301.942)], 
+        #   'linewidth': 4.95, 'stroke': True, 
+        #   'fill': False, 'evenodd': False, 
+        #   'stroking_color': (0.0, 0.0, 0.0), 
+        #   'non_stroking_color': (0.0, 0.0, 0.0), 
+        #   'mcid': None, 'tag': None, 
+        #   'object_type': 'line', 
+        #   'page_number': 2, 'path': 
+        #  [('m', (42.5195, 301.942)), ('l', (129.561, 301.942))], 
+        #  'dash': None, 'top': 301.942, 'bottom': 301.942, 'doctop': 1092.808, 'orientation': 'h'}
                
         self.intersections = edges_to_intersections(
             self.edges,
@@ -758,7 +785,48 @@ class TableFinder(object):
             self.settings.intersection_y_tolerance,
         )
         
+        for i in range(4):       
+            if not borderEdges[i]:  
+                print(i)
+                edge = self.edges[0]
+                edge['x0'] = map[i][0]
+                edge['y0'] = map[i][1]
+                edge['x1'] = map[i][2]
+                edge['y1'] = map[i][3]           
+                edge["height"] = abs(edge["y1"] - edge["y0"])
+                edge["width"] = abs(edge["x1"] - edge["x0"])
+                edge["orientation"] = 'v' if i % 2 == 0 else 'h'
+                
+                edge["top"] = edge["y0"]
+                edge["bottom"] = edge["y1"]
+                
+                edge["SPECIAL"] = True
+                #print(edge) 0 2 are top and bottom
+                if i % 2 == 0: # Top / Bottom
+                    for edge2 in self.edges:    
+                        if abs(edge["y0"] - edge2["y0"]) > 0.1 and abs(edge["y1"] - edge2["y1"]) > 0.1:
+                            continue  
+                        state = abs(edge2["y0"] - edge["y0"]) > 0.1  
+                        
+                        vertex = (edge["x0"], edge2["y1" if state else "y0"])
+                        if vertex not in self.intersections:
+                            self.intersections[vertex] = {"v": [], "h": []}
+                        self.intersections[vertex]["v"].append(edge)
+                        self.intersections[vertex]["h"].append(edge2)
+                        
+                else: # Sides
+                    for edge2 in self.edges: 
+                        if abs(edge2["x0"] - edge["x0"]) > 0.1 and abs(edge["x1"] - edge2["x1"]) > 0.1 :
+                            continue
+                        state = abs(edge2["x0"] - edge["x0"]) > 0.1    
+                             
+                        vertex = (edge2["x1" if state else "x0"], edge["y0"])
+                        if vertex not in self.intersections:
+                            self.intersections[vertex] = {"v": [], "h": []}
+                        self.intersections[vertex]["v"].append(edge2)
+                        self.intersections[vertex]["h"].append(edge) 
         
+        #print(self.intersections)
         
         self.cells = (intersections_to_cells(self.intersections)+find_edge_cells(intersections_to_cells(self.intersections), self.edges))
         self.tables = [

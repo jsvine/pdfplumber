@@ -23,8 +23,18 @@ class Test(unittest.TestCase):
             #pdf.pages[1].to_image(300).debug_tablefinder(table_settings={}).show()
             p1 = pdf.pages[1]
             p1 = p1.within_bbox((30, 295, p1.width-30, p1.height-60)) 
-            p1.to_image(600).debug_tablefinder(table_settings={}).show()
-            # bbox is (posXstart posYstart posXend posYend)
+              
+            #p1.to_image(600).debug_tablefinder(table_settings={})
+            # bbox is (posXstart posYstart posXend posYend)  
+            #corners = [[42.5195, 69.1691], [390.68600000000004, 69.1691], [42.5195, 307.50800000000004], [390.68600000000004, 307.50800000000004]]
+            corners =[[42.5195, 301.942], [390.68600000000004, 301.942], [42.5195, 326.44200000000006], [390.68600000000004, 326.44200000000006], [42.5195, 389.812], [390.68600000000004, 389.812], [42.5195, 443.27200000000005], [390.68600000000004, 443.27200000000005], [42.5195, 486.821], [390.68600000000004, 486.821], [42.5195, 540.2809000000001], [390.68600000000004, 540.2809000000001], [129.561, 540.0332000000001], [129.561, 302.19100000000003], [216.603, 540.0332000000001], [216.603, 302.19100000000003], [303.644, 540.0332000000001], [303.644, 302.19100000000003]]
+            img = p1.to_image(1200).debug_tablefinder(table_settings={})
+
+            for corner in corners:
+                img.draw_circle((corner[0], corner[1]), fill=(0,255,160))
+
+            #print(corner)
+            img.show()
             
             extract = p1.extract_table(table_settings={})
                 
