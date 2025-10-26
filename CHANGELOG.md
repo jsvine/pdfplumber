@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [0.11.7] - 2025-06-12
 
+## [Unreleased]
+
+### Added
+- Added `PDF.table_of_contents` and `Page.table_of_contents` properties to expose document outlines (bookmarks) directly through pdfplumber.  
+  This enables easy access to a document’s Table of Contents for navigation or metadata extraction.  
+  ([#1034](https://github.com/jsvine/pdfplumber/issues/1034) by @AbdullahMehmoodAwan)
+
 ### Added
 - Add access to `Page.trimbox`, `Page.bleedbox`, and `Page.artbox` (h/t @samuelbradshaw). ([#1313](https://github.com/jsvine/pdfplumber/issues/1313) + [7e364e6](https://github.com/jsvine/pdfplumber/commit/7e364e6193c6e8bafa9b46587c0fdd4a46405399))
 

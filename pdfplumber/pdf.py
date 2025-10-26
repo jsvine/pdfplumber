@@ -203,3 +203,31 @@ class PDF(Container):
             "metadata": self.metadata,
             "pages": [page.to_dict(object_types) for page in self.pages],
         }
+    
+    @property
+    def table_of_contents(self) -> List[Dict[str, Any]]:
+        """
+        Returns the document's outline (Table of Contents) if available.
+        Each entry is represented as a dictionary:
+        {"title": str, "page_number": int or None}.
+        """
+        outlines: List[Dict[str, Any]] = []
+        try:
+            if hasattr(self.doc, "get_outlines"):
+                for (level, title, dest, a, se) in self.doc.get_outlines():
+                    page_number = None
+                    # Get page number safely if destination is valid
+                    if dest and hasattr(dest, "page") and dest.page:
+                        try:
+                            page_number = self.doc.pageid2num(dest.page.idnum)
+                        except Exception:
+                            pass
+                    outlines.append({
+                        "title": title,
+                        "page_number": page_number,
+                        "level": level
+                    })
+        except Exception as e:
+            logger.debug(f"Unable to extract outlines: {e}")
+        return outlines
+

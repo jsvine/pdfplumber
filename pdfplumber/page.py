@@ -251,6 +251,15 @@ class Page(Container):
             return [elem.to_dict() for elem in PDFStructTree(self.pdf, self)]
         except StructTreeMissing:
             return []
+    
+    @property
+    def table_of_contents(self):
+        """
+        Returns the document-level Table of Contents.
+        This is the same as pdfplumber.PDF.table_of_contents, but accessible from a page.
+        """
+        return self.pdf.table_of_contents
+
 
     @property
     def layout(self) -> LTPage:
