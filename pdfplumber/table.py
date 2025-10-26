@@ -251,6 +251,11 @@ def intersections_to_cells(intersections: T_intersections) -> List[T_bbox]:
                 edges_to_set(intersections[p2]["v"])
             )
             if len(common):
+                if 'SPECIAL' in p1 and 'SPECIAL' in p2:
+                    print("Specials note connected")
+                    print(p1)
+                    print(p2)
+                    print("-------------------------------------")
                 return True
 
         if p1[1] == p2[1]:
@@ -258,17 +263,25 @@ def intersections_to_cells(intersections: T_intersections) -> List[T_bbox]:
                 edges_to_set(intersections[p2]["h"])
             )
             if len(common):
+                if 'SPECIAL' in p1 and 'SPECIAL' in p2:
+                    print("Specials note connected")
+                    print(p1)
+                    print(p2)
+                    print("-------------------------------------")
                 return True
+        
         return False
 
     points = list(sorted(intersections.keys()))
     n_points = len(points)
 
     def find_smallest_cell(points: List[T_point], i: int) -> Optional[T_bbox]:
+        #print(points)    
         if i == n_points - 1:
             return None
         pt = points[i]
         rest = points[i + 1 :]
+        
         # Get all the points directly below and directly right
         below = [x for x in rest if x[0] == pt[0]]
         right = [x for x in rest if x[1] == pt[1]]
@@ -293,118 +306,7 @@ def intersections_to_cells(intersections: T_intersections) -> List[T_bbox]:
 
     cell_gen = (find_smallest_cell(points, i) for i in range(len(points)))
     return list(filter(None, cell_gen))
-
-#def find_edge_cells(
-#        cells: List[T_bbox], edges: T_obj_list, x_tolerance: T_num = 1, y_tolerance: T_num = 1
-#    ) -> List[T_bbox]:
-#    """
-#    Given a list of currently known cells and edges, find cells that don't
-#    have an outer border.  
-#    """
-#    # Iterate through each edge, check all cells to find the ones on each end, then add an extra cell for lines that go outside the known cells
-#    def point_intersects_edge(x: int, y: int, edge: T_obj) -> bool:
-#        # print(edge)
-#        if edge["orientation"] == 'h':
-#            if (abs(y - edge["y0"]) <= y_tolerance) and (min(edge["x0"], edge["x1"]) - x_tolerance <= x <= max(edge["x0"], edge["x1"]) + x_tolerance):
-#                print("intersection")
-#                return True
-#        elif edge["orientation"] == 'v':
-#            if (abs(x - edge["x0"]) <= x_tolerance) and (min(edge["y0"], edge["y1"]) - y_tolerance <= y <= max(edge["y0"], edge["y1"]) + y_tolerance):
-#                print("intersection")
-#                return True
-#        return False
-#    
-#    def cell_intersections(edge: T_obj) -> T_obj_list:
-#        min = None
-#        max = None
-#        for cell in cells:
-#            if point_intersects_edge(cell[0], cell[1], edge):            
-#                if min == None:
-#                    min = cell
-#                    max = cell
-#                elif edge["orientation"] == 'h':
-#                    if cell[0] < min[0]:
-#                        min = cell
-#                    if cell[0] > min[0]:
-#                        max = cell
-#                elif edge["orientation"] == 'v':
-#                    if cell[1] < min[1]:
-#                        min = cell
-#                    if cell[1] > min[1]:
-#                        max = cell
-#        return [min, max]
-#
-#    new_cells = []
-#
-#    def already_made_cell(x0: int, y0: int):
-#        for cell in new_cells:
-#            if abs(cell[0]-x0) <= x_tolerance: 
-#                if abs(cell[1]-y0) <= y_tolerance:
-#                    return True
-#                
-#            if cell[0] >= x0 - x_tolerance and cell[0] <= x0 + x_tolerance: 
-#                if cell[1] >= y0 - y_tolerance and cell[1] <= y0 + y_tolerance:
-#                    return True
-#        return False
-#
-#    for edge in edges:
-#        ints = cell_intersections(edge)
-#        if ints[0] == None:
-#            continue
-#        if edge["orientation"] == 'h':
-#            if edge["x0"] < ints[0][0] - x_tolerance:
-#                if not already_made_cell(edge["x0"], edge["y0"]):
-#                    new_cells.append((edge["x0"], edge["y0"], ints[0][0], ints[0][3]))
-#            if edge["x1"] > ints[1][2] + x_tolerance:
-#                if not already_made_cell(ints[1][2], edge["y0"]):
-#                    new_cells.append((ints[1][2], edge["y0"], edge["x1"], ints[1][3]))
-#        if edge["orientation"] == 'v':
-#            if edge["y0"] < ints[0][1] - y_tolerance:
-#                if not already_made_cell(edge["x0"], edge["y0"]):
-#                    new_cells.append((edge["x0"], edge["y0"], ints[0][0], ints[0][3]))
-#            if edge["y1"] > ints[1][3] + y_tolerance:
-#                if not already_made_cell(ints[1][2], edge["y0"]):
-#                    new_cells.append((ints[1][2], edge["y0"], edge["x1"], ints[1][3]))
-#    print(new_cells)
-#    return new_cells #new_cells
-
-# Approach 2: Loop through all edges, and find the ends of the edges. If no intersection is near the end of the edge, assume cells!           
-def find_edge_cells(
-        cells: List[T_bbox], edges: T_obj_list, x_tolerance: T_num = 1, y_tolerance: T_num = 1
-    ) -> List[T_bbox]:
-    """
-    Given a list of currently known cells and edges, find cells that don't
-    have an outer border.  
-    """
-    
-    new_cells = []
-    
-    def getDisconnectedEnds():
-        return
-    
-    for edge in edges:
-        break
-    exampleEdge = {'x0': 42.5195, 
-         'y0': 307.50800000000004, 
-         'x1': 390.68600000000004, 
-         'y1': 307.50800000000004, 
-         'width': 348.16650000000004, 
-         'height': 0.0, 
-         'pts': [(42.5195, 301.942), 
-                 (129.561, 301.942)], 
-         'linewidth': 4.95, 'stroke': True, 
-         'fill': False, 'evenodd': False, 
-         'stroking_color': (0.0, 0.0, 0.0), 
-         'non_stroking_color': (0.0, 0.0, 0.0), 
-         'mcid': None, 'tag': None, 
-         'object_type': 'line', 
-         'page_number': 2, 'path': 
-        [('m', (42.5195, 301.942)), ('l', (129.561, 301.942))], 
-        'dash': None, 'top': 301.942, 'bottom': 301.942, 'doctop': 1092.808, 'orientation': 'h'}
-    
-    return new_cells
-
-
+        
 def cells_to_tables(cells: List[T_bbox]) -> List[List[T_bbox]]:
     """
     Given a list of bounding boxes (`cells`), return a list of tables that
@@ -701,7 +603,13 @@ class TableFinder(object):
         self.settings = TableSettings.resolve(settings)
         self.edges = self.get_edges()
         
-        # new plan: find the four corners, check if there's edges connecting them, and if not, add them.
+        self.intersections = edges_to_intersections(
+            self.edges,
+            self.settings.intersection_x_tolerance,
+            self.settings.intersection_y_tolerance,
+        )
+        
+        # START OF MODIFIED CODE
         corners = [[], [], [], []] # TL, TR, BL, BR
         
         runOnce = True
@@ -735,8 +643,6 @@ class TableFinder(object):
         
         borderEdges = [False, False, False, False] # Top; Left; Bottom; Right    
         
-        
-        temp = []
         for edge in self.edges:
             if abs(edge["x0"] - corners[0][0]) < 0.1 and abs(edge["y0"] - corners[0][1]):
                 if abs(edge["x1"] - corners[1][0]) < 0.1 and abs(edge["y1"] - corners[1][1]):
@@ -748,9 +654,6 @@ class TableFinder(object):
                     borderEdges[2] = True # Bottom
                 if abs(edge["x0"] - corners[1][0]) < 0.1 and abs(edge["y0"] - corners[1][1]):
                     borderEdges[3] = True # Right
-            
-            #temp.append([edge['x0'], page.height - edge['y0']])
-           # temp.append([edge['x1'], page.height - edge['y1']])
                     
         map = [
             [corners[0][0], page.height - corners[0][1], corners[1][0], page.height - corners[1][1]],
@@ -758,36 +661,11 @@ class TableFinder(object):
             [corners[2][0], page.height - corners[2][1], corners[3][0], page.height - corners[3][1]],
             [corners[1][0], page.height - corners[1][1], corners[3][0], page.height - corners[3][1]]
         ]
-        
-        #print(corners)
-                        
-        #          exampleEdge = {'x0': 42.5195, 
-        #   'y0': 307.50800000000004, 
-        #   'x1': 390.68600000000004, 
-        #   'y1': 307.50800000000004, 
-        #   'width': 348.16650000000004, 
-        #   'height': 0.0, 
-        #   'pts': [(42.5195, 301.942), 
-        #           (129.561, 301.942)], 
-        #   'linewidth': 4.95, 'stroke': True, 
-        #   'fill': False, 'evenodd': False, 
-        #   'stroking_color': (0.0, 0.0, 0.0), 
-        #   'non_stroking_color': (0.0, 0.0, 0.0), 
-        #   'mcid': None, 'tag': None, 
-        #   'object_type': 'line', 
-        #   'page_number': 2, 'path': 
-        #  [('m', (42.5195, 301.942)), ('l', (129.561, 301.942))], 
-        #  'dash': None, 'top': 301.942, 'bottom': 301.942, 'doctop': 1092.808, 'orientation': 'h'}
-               
-        self.intersections = edges_to_intersections(
-            self.edges,
-            self.settings.intersection_x_tolerance,
-            self.settings.intersection_y_tolerance,
-        )
-        
+
+
         for i in range(4):       
             if not borderEdges[i]:  
-                print(i)
+                #print(i)
                 edge = self.edges[0]
                 edge['x0'] = map[i][0]
                 edge['y0'] = map[i][1]
@@ -795,12 +673,11 @@ class TableFinder(object):
                 edge['y1'] = map[i][3]           
                 edge["height"] = abs(edge["y1"] - edge["y0"])
                 edge["width"] = abs(edge["x1"] - edge["x0"])
-                edge["orientation"] = 'v' if i % 2 == 0 else 'h'
-                
+                edge["orientation"] = 'h' if i % 2 == 0 else 'v'
                 edge["top"] = edge["y1"]
                 edge["bottom"] = edge["y0"]
+                edge["points"] = [(edge['x0'], edge["y0"]), (edge["x1"], edge["y1"])]
                 
-                #print(edge) 0 2 are top and bottom
                 if i % 2 == 0: # Top / Bottom
                     for edge2 in self.edges:    
                         if abs(edge["y0"] - edge2["y0"]) > 0.1 and abs(edge["y1"] - edge2["y1"]) > 0.1:
@@ -827,19 +704,11 @@ class TableFinder(object):
                             self.intersections[vertex] = {"v": [], "h": []}
                         self.intersections[vertex]["v"].append(edge2)
                         self.intersections[vertex]["h"].append(edge) 
-                        
-                        temp.append([vertex[0], vertex[1]])
-        #print(temp)
-        #print(self.intersections)
-        
-        #temp = []
-        #
-        #for m in map:
-        #    temp.append([m[0], m[1]])
-        #    temp.append([m[2], m[3]])
-        print(temp)
-        
-        self.cells = (intersections_to_cells(self.intersections)+find_edge_cells(intersections_to_cells(self.intersections), self.edges))
+                        self.intersections[vertex]['SPECIAL'] = True
+
+        ## END OF MODIFIED CODE
+        self.cells = intersections_to_cells(self.intersections)
+                
         self.tables = [
             Table(self.page, cell_group) for cell_group in cells_to_tables(self.cells)
         ]
