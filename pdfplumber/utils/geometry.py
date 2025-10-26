@@ -245,9 +245,23 @@ def rect_to_edges(rect: T_obj) -> T_obj_list:
     return [top, bottom, left, right]
 
 
-def line_to_edge(line: T_obj) -> T_obj:
+def line_to_edge(line: dict, epsilon: float = 1e-3) -> dict:
+    """
+    Converts a line object into an edge object, determining its orientation ('h' or 'v').
+
+    Uses an epsilon-based tolerance (default: 1e-3) to classify near-horizontal lines as 'h', 
+    addressing floating-point inconsistencies.
+    
+    If the absolute vertical difference (top - bottom) is less than epsilon, 
+    the line is considered horizontal ('h'). 
+    Otherwise, it is classified as vertical ('v') for the purpose of table finding logic.
+    """
     edge = dict(line)
-    edge["orientation"] = "h" if (line["top"] == line["bottom"]) else "v"
+    # Use epsilon to determine if the line is essentially horizontal
+    if abs(line["top"] - line["bottom"]) < epsilon:
+        edge["orientation"] = "h" 
+    else:
+        edge["orientation"] = "v"    
     return edge
 
 

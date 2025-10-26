@@ -669,6 +669,49 @@ class Test(unittest.TestCase):
         a_new, b_new, c_new = utils.snap_objects(iter([a, b, c]), "x0", 1)
         assert a_new == b_new == c_new
 
+
+    
+    def test_line_to_edge_floating_point_precision(self):
+        """
+        Tests line_to_edge using small floating-point differences 
+        to ensure correct 'h'/'v' classification using the epsilon threshold.
+        """
+        # Note: EPSILON is defined within the implementation of line_to_edge itself
+        # We assume the default 1e-3 is used here.
+        EPSILON = 1e-3
+        
+        # Horizontal line with tiny vertical noise (dy < EPSILON) -> 'h'
+        h_line_clear = {
+            "x0": 100, "x1": 300, 
+            "top": 50.000, 
+            "bottom": 50.00001
+        }
+        # Truly vertical line (dy > EPSILON) -> 'v'
+        v_line_clear = {
+            "x0": 150, "x1": 150.0001, 
+            "top": 50.000, 
+            "bottom": 51.000
+        }
+        # Exactly the threshold (dy = EPSILON). Should be 'v' (not strictly horizontal)
+        v_line_edge_case = {
+            "x0": 200, "x1": 200, 
+            "top": 50.000, 
+            "bottom": 50.001
+        }
+        # Just under the threshold (dy < EPSILON) -> 'h'
+        h_line_edge_case = {
+            "x0": 250, "x1": 250.5, 
+            "top": 50.000, 
+            "bottom": 50.000999
+        }
+        
+        # Execute tests
+        assert utils.line_to_edge(h_line_clear)["orientation"] == "h"
+        assert utils.line_to_edge(v_line_clear)["orientation"] == "v"
+        assert utils.line_to_edge(v_line_edge_case)["orientation"] == "v" 
+        assert utils.line_to_edge(h_line_edge_case)["orientation"] == "h"
+
+
     def test_filter_edges(self):
         with pytest.raises(ValueError):
             utils.filter_edges([], "x")
