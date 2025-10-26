@@ -23,12 +23,12 @@ class Test(unittest.TestCase):
             #pdf.pages[1].to_image(300).debug_tablefinder(table_settings={}).show()
             p1 = pdf.pages[1]
             p1 = p1.within_bbox((30, 295, p1.width-30, p1.height-60)) 
-            #p1.to_image(600).debug_tablefinder(table_settings={}).show()
+            p1.to_image(600).debug_tablefinder(table_settings={}).show()
             # bbox is (posXstart posYstart posXend posYend)
             
             extract = p1.extract_table(table_settings={})
                 
-            with open("output.json", "w") as F: # TODO make it not output!
+            with open("output.json", "w") as F: # TODO remove all this before publishing
                 json.dump(extract, F, indent=4)
                 
                 if extract[1] == ["kognitive\nLernvoraussetzungen","motivationale\nLernvoraussetzungen","emotionale\nLernvoraussetzungen", "inhaltliche\Bedingungen"]:
