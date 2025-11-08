@@ -228,6 +228,7 @@ def edges_to_intersections(
                     intersections[vertex] = {"v": [], "h": []}
                 intersections[vertex]["v"].append(v)
                 intersections[vertex]["h"].append(h)
+  
     return intersections
 
 
@@ -250,6 +251,11 @@ def intersections_to_cells(intersections: T_intersections) -> List[T_bbox]:
                 edges_to_set(intersections[p2]["v"])
             )
             if len(common):
+                if 'SPECIAL' in p1 and 'SPECIAL' in p2:
+                    print("Specials note connected")
+                    print(p1)
+                    print(p2)
+                    print("-------------------------------------")
                 return True
 
         if p1[1] == p2[1]:
@@ -257,17 +263,25 @@ def intersections_to_cells(intersections: T_intersections) -> List[T_bbox]:
                 edges_to_set(intersections[p2]["h"])
             )
             if len(common):
+                if 'SPECIAL' in p1 and 'SPECIAL' in p2:
+                    print("Specials note connected")
+                    print(p1)
+                    print(p2)
+                    print("-------------------------------------")
                 return True
+        
         return False
 
     points = list(sorted(intersections.keys()))
     n_points = len(points)
 
     def find_smallest_cell(points: List[T_point], i: int) -> Optional[T_bbox]:
+        #print(points)    
         if i == n_points - 1:
             return None
         pt = points[i]
         rest = points[i + 1 :]
+        
         # Get all the points directly below and directly right
         below = [x for x in rest if x[0] == pt[0]]
         right = [x for x in rest if x[1] == pt[1]]
@@ -292,8 +306,7 @@ def intersections_to_cells(intersections: T_intersections) -> List[T_bbox]:
 
     cell_gen = (find_smallest_cell(points, i) for i in range(len(points)))
     return list(filter(None, cell_gen))
-
-
+        
 def cells_to_tables(cells: List[T_bbox]) -> List[List[T_bbox]]:
     """
     Given a list of bounding boxes (`cells`), return a list of tables that
@@ -589,12 +602,113 @@ class TableFinder(object):
         self.page = page
         self.settings = TableSettings.resolve(settings)
         self.edges = self.get_edges()
+        
         self.intersections = edges_to_intersections(
             self.edges,
             self.settings.intersection_x_tolerance,
             self.settings.intersection_y_tolerance,
         )
+        
+        # START OF MODIFIED CODE
+        corners = [[], [], [], []] # TL, TR, BL, BR
+        
+        runOnce = True
+        for edge in self.edges:
+            if runOnce:
+                corners[0] = [edge["x0"], edge["y0"]]
+                corners[1] = [edge["x1"], edge["y0"]]
+                corners[2] = [edge["x0"], edge["y1"]]
+                corners[3] = [edge["x1"], edge["y1"]]
+                runOnce = False
+                
+            if corners[0][0] > edge["x0"]:
+                corners[0][0] = edge["x0"]    
+            if corners[0][1] > edge["y0"]:
+                corners[0][1] = edge["y0"]
+                
+            if corners[1][0] < edge["x1"]:
+                corners[1][0] = edge["x1"]    
+            if corners[1][1] > edge["y0"]:
+                corners[1][1] = edge["y0"]
+                
+            if corners[2][0] > edge["x0"]:
+                corners[2][0] = edge["x0"]    
+            if corners[2][1] < edge["y1"]:
+                corners[2][1] = edge["y1"]
+                
+            if corners[3][0] < edge["x1"]:
+                corners[3][0] = edge["x1"]    
+            if corners[3][1] < edge["y1"]:
+                corners[3][1] = edge["y1"] 
+        
+        borderEdges = [False, False, False, False] # Top; Left; Bottom; Right    
+        
+        for edge in self.edges:
+            if abs(edge["x0"] - corners[0][0]) < 0.1 and abs(edge["y0"] - corners[0][1]):
+                if abs(edge["x1"] - corners[1][0]) < 0.1 and abs(edge["y1"] - corners[1][1]):
+                    borderEdges[0] = True # Top
+                if abs(edge["x1"] - corners[2][0]) < 0.1 and abs(edge["y1"] - corners[2][1]):
+                    borderEdges[1] = True # Left
+            elif abs(edge["x1"] - corners[3][0]) < 0.1 and abs(edge["y1"] - corners[3][1]):
+                if abs(edge["x0"] - corners[2][0]) < 0.1 and abs(edge["y0"] - corners[2][1]):
+                    borderEdges[2] = True # Bottom
+                if abs(edge["x0"] - corners[1][0]) < 0.1 and abs(edge["y0"] - corners[1][1]):
+                    borderEdges[3] = True # Right
+                    
+        map = [
+            [corners[0][0], page.height - corners[0][1], corners[1][0], page.height - corners[1][1]],
+            [corners[0][0], page.height - corners[0][1], corners[2][0], page.height - corners[2][1]],
+            [corners[2][0], page.height - corners[2][1], corners[3][0], page.height - corners[3][1]],
+            [corners[1][0], page.height - corners[1][1], corners[3][0], page.height - corners[3][1]]
+        ]
+
+
+        for i in range(4):       
+            if not borderEdges[i]:  
+                #print(i)
+                edge = self.edges[0]
+                edge['x0'] = map[i][0]
+                edge['y0'] = map[i][1]
+                edge['x1'] = map[i][2]
+                edge['y1'] = map[i][3]           
+                edge["height"] = abs(edge["y1"] - edge["y0"])
+                edge["width"] = abs(edge["x1"] - edge["x0"])
+                edge["orientation"] = 'h' if i % 2 == 0 else 'v'
+                edge["top"] = edge["y1"]
+                edge["bottom"] = edge["y0"]
+                edge["points"] = [(edge['x0'], edge["y0"]), (edge["x1"], edge["y1"])]
+                
+                if i % 2 == 0: # Top / Bottom
+                    for edge2 in self.edges:    
+                        if abs(edge["y0"] - edge2["y0"]) > 0.1 and abs(edge["y1"] - edge2["y1"]) > 0.1:
+                            continue  
+                        state = abs(edge2["y0"] - edge["y0"]) > 0.1  
+                        
+                        vertex = (edge["x0"], edge2["y1" if state else "y0"])
+                        if vertex not in self.intersections:
+                            self.intersections[vertex] = {"v": [], "h": []}
+                        self.intersections[vertex]["v"].append(edge)
+                        self.intersections[vertex]["h"].append(edge2)
+                        
+                else: # Sides
+                    for edge2 in self.edges: 
+                        if abs(edge2["x0"] - edge["x0"]) > 0.1 and abs(edge["x1"] - edge2["x1"]) > 0.1 :
+                            continue
+                        if edge2["orientation"] == 'v':
+                            continue
+                        
+                        state = abs(edge2["x0"] - edge["x0"]) < 0.1    
+                             
+                        vertex = (edge["x1" if state else "x0"], edge2["top"])
+                        if vertex not in self.intersections:
+                            self.intersections[vertex] = {"v": [], "h": []}
+                        self.intersections[vertex]["v"].append(edge2)
+                        self.intersections[vertex]["h"].append(edge) 
+                        self.intersections[vertex]['SPECIAL'] = True
+
+        ## END OF MODIFIED CODE
         self.cells = intersections_to_cells(self.intersections)
+                
         self.tables = [
             Table(self.page, cell_group) for cell_group in cells_to_tables(self.cells)
         ]
@@ -705,3 +819,4 @@ class TableFinder(object):
         )
 
         return utils.filter_edges(edges, min_length=settings.edge_min_length)
+    

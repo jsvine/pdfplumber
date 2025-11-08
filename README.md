@@ -574,6 +574,8 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Brandon Roberts](https://github.com/brandonrobertz)
 - [@ennamarie19](https://github.com/ennamarie19)
 - [Anton Ilin](https://github.com/bronislav)
+- [Yonah Tal-Meyer](https://github.com/DoomGuy77)
+- [@u7923257-ANU](https://github.com/u7923257-ANU)
 
 ## Contributing
 

@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file. The format 
 ### Added
 - Add `edge_min_length_prefilter` table setting for initial edge filtering. Lowering this setting enables capturing small edge segments (e.g., dashed lines) that would be filtered out with the default minimum length of 1. Raising this setting would be less common but plausible. (h/t @bronislav). ([#1274](https://github.com/jsvine/pdfplumber/issues/1274)).
 
+### Changed
+- Changed lines table finding strategy to add functionality for detecting outer cells on tables without an outer border. ([#1325](https://github.com/jsvine/pdfplumber/issues/1325))
+
 ## [0.11.7] - 2025-06-12
 
 ### Added
