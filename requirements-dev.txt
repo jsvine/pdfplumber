@@ -4,8 +4,8 @@ isort==5.13.2
 jupyterlab>=4.4.8
 mypy==1.11.1
 nbexec==0.2.0
-pandas-stubs==2.2.2.240805
-pandas==2.2.2
+pandas-stubs>=2.2.2.240805
+pandas>=2.2.2
 py==1.11.0
 pytest-cov==5.0.0
 pytest-parallel==0.1.1
