@@ -1,3 +1,3 @@
-pdfminer.six==20251107
+pdfminer.six==20251227
 Pillow>=9.1
 pypdfium2>=4.18.0
