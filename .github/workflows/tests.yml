@@ -71,7 +71,7 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest --workers auto
+        python -m pytest -n auto
         python -m coverage html
 
     - name: Upload code coverage
