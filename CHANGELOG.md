@@ -2,10 +2,10 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [Unreleased]
+## 0.11.9 — 2026-01-05
 
 ### Changed
-- Upgrade `pdfminer.six` from `20251107` to `20251228`. ([75bbed3](https://github.com/jsvine/pdfplumber/commit/75bbed3) + [1524ce4](https://github.com/jsvine/pdfplumber/commit/1524ce4))
+- Upgrade `pdfminer.six` from `20251107` to `20251230`. ([75bbed3](https://github.com/jsvine/pdfplumber/commit/75bbed3) + [1524ce4](https://github.com/jsvine/pdfplumber/commit/1524ce4) + [26687c3](https://github.com/jsvine/pdfplumber/commit/26687c3) + [9555532](https://github.com/jsvine/pdfplumber/commit/9555532))
 
 ## [0.11.8] - 2025-11-08
 
