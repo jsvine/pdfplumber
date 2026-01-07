@@ -1,38 +1,38 @@
 .PHONY: venv tests check-black check-flake lint format examples build
-PYTHON := venv/bin/python
-PIP = venv/bin/pip
+VENV ?= .venv
+PYTHON = ${VENV}/bin/python
 
 venv:
 	python3 -m venv venv
-	${PIP} install --upgrade pip
-	${PIP} install -r requirements.txt
-	${PIP} install -r requirements-dev.txt
-	${PIP} install -e .
+	${VENV}/bin/pip install --upgrade pip
+	${VENV}/bin/pip install -r requirements.txt
+	${VENV}/bin/pip install -r requirements-dev.txt
+	${VENV}/bin/pip install -e .
 
 tests:
-	${PYTHON} -m pytest
+	${PYTHON} -m pytest -n auto
 	${PYTHON} -m coverage html
 
 check-black:
-	${PYTHON} -m black --check pdfplumber tests
+	${VENV}/bin/black --check pdfplumber tests
 
 check-isort:
-	${PYTHON} -m isort --profile black --check-only pdfplumber tests
+	${VENV}/bin/isort --profile black --check-only pdfplumber tests
 
 check-flake:
-	${PYTHON} -m flake8 pdfplumber tests
+	${VENV}/bin/flake8 pdfplumber tests
 
 check-mypy:
-	${PYTHON} -m mypy --strict --implicit-reexport pdfplumber
+	${VENV}/bin/mypy --strict --implicit-reexport pdfplumber
 
 lint: check-flake check-mypy check-black check-isort
 
 format:
-	${PYTHON} -m black pdfplumber tests
-	${PYTHON} -m isort --profile black pdfplumber tests
+	${VENV}/bin/black pdfplumber tests
+	${VENV}/bin/isort --profile black pdfplumber tests
 
 examples:
-	${PYTHON} -m nbexec.cli examples/notebooks
+	${VENV}/bin/nbexec examples/notebooks
 
 build:
 	${PYTHON} -m build
