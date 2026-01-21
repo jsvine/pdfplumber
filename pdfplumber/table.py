@@ -141,6 +141,57 @@ def words_to_edges_h(
     return edges
 
 
+def _find_nearest_gap_midpoint(edge_x: T_num, words: T_obj_list) -> T_num:
+    """
+    Find the midpoint of the nearest gap between words for an edge position.
+
+    If edge_x intersects a word, find the closest gap (empty space between words)
+    and return its midpoint. If no gap is found, return the original position.
+    """
+    if not words:
+        return edge_x
+
+    # Get all unique x-boundaries from words, sorted
+    boundaries = sorted(
+        set(w["x0"] for w in words) | set(w["x1"] for w in words)
+    )
+
+    if len(boundaries) < 2:
+        return edge_x
+
+    # Build a set of intervals covered by words for fast lookup
+    word_intervals = [(w["x0"], w["x1"]) for w in words]
+
+    # Find gaps between consecutive boundaries
+    gaps: List[Tuple[T_num, T_num]] = []
+    for i in range(len(boundaries) - 1):
+        left, right = boundaries[i], boundaries[i + 1]
+        # Check if any word spans this range
+        is_covered = any(
+            w_x0 <= left and w_x1 >= right for w_x0, w_x1 in word_intervals
+        )
+        if not is_covered:
+            gaps.append((left, right))
+
+    if not gaps:
+        return edge_x
+
+    # Find the gap whose midpoint is nearest to edge_x
+    best_gap = min(gaps, key=lambda g: abs((g[0] + g[1]) / 2 - edge_x))
+    return (best_gap[0] + best_gap[1]) / 2
+
+
+def _adjust_edge_if_intersects(edge_x: T_num, words: T_obj_list) -> T_num:
+    """
+    If edge_x intersects any word, move it to the nearest gap midpoint.
+    """
+    # Check if edge intersects any word
+    intersects = any(w["x0"] < edge_x < w["x1"] for w in words)
+    if not intersects:
+        return edge_x
+    return _find_nearest_gap_midpoint(edge_x, words)
+
+
 def words_to_edges_v(
     words: T_obj_list, word_threshold: int = DEFAULT_MIN_WORDS_VERTICAL
 ) -> T_obj_list:
@@ -182,25 +233,24 @@ def words_to_edges_v(
     min_top = min(map(itemgetter("top"), sorted_rects))
     max_bottom = max(map(itemgetter("bottom"), sorted_rects))
 
+    # Generate initial edge positions
+    edge_positions = [b["x0"] for b in sorted_rects] + [max_x1]
+
+    # Adjust any edge that intersects a word to the nearest gap midpoint
+    adjusted_positions = [
+        _adjust_edge_if_intersects(pos, words) for pos in edge_positions
+    ]
+
     return [
         {
-            "x0": b["x0"],
-            "x1": b["x0"],
+            "x0": pos,
+            "x1": pos,
             "top": min_top,
             "bottom": max_bottom,
             "height": max_bottom - min_top,
             "orientation": "v",
         }
-        for b in sorted_rects
-    ] + [
-        {
-            "x0": max_x1,
-            "x1": max_x1,
-            "top": min_top,
-            "bottom": max_bottom,
-            "height": max_bottom - min_top,
-            "orientation": "v",
-        }
+        for pos in adjusted_positions
     ]
 
 
