@@ -250,3 +250,15 @@ class Test(unittest.TestCase):
             assert t[-2][-2] == "Uncommon"
 
             assert len(page.extract_tables({"vertical_strategy": "lines_strict"})) == 0
+
+    def test_table_with_one_strat_text_and_one_strat_non_text(self):
+        # See https://github.com/monchin/tablers/issues/8
+        path = os.path.join(HERE, "pdfs/text-lines-tables.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            tables = page.extract_tables({"horizontal_strategy": "text"})
+            assert len(tables) == 1
+            assert tables[0] == [['AAAA', 'BBBB'], ['', ''], ['CCCC', 'DDDD']]
+            tables = page.extract_tables({"vertical_strategy": "text"})
+            assert len(tables) == 1
+            assert tables[0] == [['1111', '2222'], ['3333', '4444']]
