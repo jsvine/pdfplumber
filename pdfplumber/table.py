@@ -1,7 +1,18 @@
 import itertools
 from dataclasses import dataclass
 from operator import itemgetter
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Set, Tuple, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 
 from . import utils
 from ._typing import T_bbox, T_num, T_obj, T_obj_iter, T_obj_list, T_point

@@ -258,7 +258,7 @@ class Test(unittest.TestCase):
             page = pdf.pages[0]
             tables = page.extract_tables({"horizontal_strategy": "text"})
             assert len(tables) == 1
-            assert tables[0] == [['AAAA', 'BBBB'], ['', ''], ['CCCC', 'DDDD']]
+            assert tables[0] == [["AAAA", "BBBB"], ["", ""], ["CCCC", "DDDD"]]
             tables = page.extract_tables({"vertical_strategy": "text"})
             assert len(tables) == 1
-            assert tables[0] == [['1111', '2222'], ['3333', '4444']]
+            assert tables[0] == [["1111", "2222"], ["3333", "4444"]]
