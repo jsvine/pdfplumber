@@ -30,6 +30,7 @@ class Test(unittest.TestCase):
     @classmethod
     def teardown_class(self):
         self.pdf.close()
+        self.pdf_scotus.close()
 
     def test_cluster_list(self):
         a = [1, 2, 3, 4]

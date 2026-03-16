@@ -141,6 +141,11 @@ class PDF(Container):
     ) -> None:
         self.close()
 
+    def __del__(self) -> None:
+        if not getattr(self, "stream_is_external", True) and hasattr(self, "stream"):
+            if not self.stream.closed:
+                self.stream.close()
+
     @property
     def pages(self) -> List[Page]:
         if hasattr(self, "_pages"):
