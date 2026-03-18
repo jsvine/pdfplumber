@@ -1,6 +1,7 @@
 import itertools
 import logging
 import pathlib
+import weakref
 from io import BufferedReader, BytesIO
 from types import TracebackType
 from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Type, Union
@@ -22,6 +23,18 @@ from .utils.exceptions import PdfminerException
 logger = logging.getLogger(__name__)
 
 
+def _close_stream_if_internal(
+    stream: Union[BufferedReader, BytesIO], stream_is_external: bool
+) -> None:
+    if stream_is_external:
+        return
+    try:
+        if not stream.closed:
+            stream.close()
+    except Exception:
+        pass
+
+
 class PDF(Container):
     cached_properties: List[str] = Container.cached_properties + ["_pages"]
 
@@ -39,6 +52,9 @@ class PDF(Container):
     ):
         self.stream = stream
         self.stream_is_external = stream_is_external
+        self._stream_finalizer = weakref.finalize(
+            self, _close_stream_if_internal, stream, stream_is_external
+        )
         self.path = path
         self.pages_to_parse = pages
         self.laparams = None if laparams is None else LAParams(**laparams)
@@ -127,8 +143,7 @@ class PDF(Container):
         for page in self.pages:
             page.close()
 
-        if not self.stream_is_external:
-            self.stream.close()
+        self._stream_finalizer()
 
     def __enter__(self) -> "PDF":
         return self
