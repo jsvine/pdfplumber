@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## Unreleased
 
 - Upgrade `pdfminer.six` from `20251230` to `20260107`. ([07a5ff6](https://github.com/jsvine/pdfplumber/commit/07a5ff6))
+- Ensure internally-opened file streams are closed during garbage collection, preventing `ResourceWarning` leaks when `PDF.close()` is not called. ([#1336](https://github.com/jsvine/pdfplumber/issues/1336))
 
 ## 0.11.9 — 2026-01-05
 
@@ -680,4 +681,3 @@ Whoops.
 
 ### Fixed
 - Fix find_gutters — should ignore `" "` chars
-
