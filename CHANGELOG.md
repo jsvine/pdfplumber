@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Unreleased
 
-- Add `__del__` to `PDF` class to close internally-opened file handles on garbage collection, preventing `ResourceWarning` in Python 3.11+. ([#1336](https://github.com/jsvine/pdfplumber/issues/1336))
+- Fixed `ResourceWarning` for unclosed file handles ([#1336](https://github.com/jsvine/pdfplumber/issues/1336)). The `PDF` class now emits a `ResourceWarning` (matching Python stdlib behavior) when garbage collected without being properly closed, and recommends using the context manager pattern.
 - Upgrade `pdfminer.six` from `20251230` to `20260107`. ([07a5ff6](https://github.com/jsvine/pdfplumber/commit/07a5ff6))
 
 ## 0.11.9 — 2026-01-05
