@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Unreleased
 
+### Fixed
+- Fix `extract_table` dropping columns when `vertical_strategy="explicit"` is paired with text- or lines-derived horizontal edges that don't span the full range of the explicit vertical lines (and symmetrically for explicit horizontal lines). ([#1335](https://github.com/jsvine/pdfplumber/issues/1335))
+
+### Changed
 - Upgrade `pdfminer.six` from `20251230` to `20260107`. ([07a5ff6](https://github.com/jsvine/pdfplumber/commit/07a5ff6))
 
 ## 0.11.9 — 2026-01-05

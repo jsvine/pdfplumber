@@ -694,6 +694,31 @@ class TableFinder(object):
 
         h = h_base + h_explicit
 
+        # Make sure horizontal edges span the x-range of any explicit vertical
+        # lines (and vertical edges span the y-range of any explicit horizontal
+        # lines), so that columns/rows defined by user-supplied lines aren't
+        # dropped at the intersection step when the surrounding text or detected
+        # lines don't reach them. See issue #1335.
+        if v_explicit and h:
+            vx_min = min(e["x0"] for e in v_explicit)
+            vx_max = max(e["x0"] for e in v_explicit)
+            for e in h:
+                if e["x0"] > vx_min:
+                    e["x0"] = vx_min
+                if e["x1"] < vx_max:
+                    e["x1"] = vx_max
+                e["width"] = e["x1"] - e["x0"]
+
+        if h_explicit and v:
+            hy_min = min(e["top"] for e in h_explicit)
+            hy_max = max(e["bottom"] for e in h_explicit)
+            for e in v:
+                if e["top"] > hy_min:
+                    e["top"] = hy_min
+                if e["bottom"] < hy_max:
+                    e["bottom"] = hy_max
+                e["height"] = e["bottom"] - e["top"]
+
         edges = list(v) + list(h)
 
         edges = merge_edges(
