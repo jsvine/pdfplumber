@@ -58,6 +58,12 @@ def get_page_image(
     except pypdfium2.PdfiumError as e:
         raise MalformedPDFException(e)
 
+    # Initialize the PDFium form environment before loading the page so
+    # filled AcroForm widgets are drawn by FPDF_FFLDraw at render time.
+    # init_forms() must run after open and before get_page(); calling it
+    # on a document without a form is a no-op.
+    pdfium_doc.init_forms()
+
     pdfium_page = pdfium_doc.get_page(page_ix)
 
     img: PIL.Image.Image = pdfium_page.render(
