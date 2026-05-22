@@ -192,7 +192,7 @@ my_char_rotation = my_char_ctm.skew_x
 |`x0`| Distance of left-side extremity from left side of page.|
 |`x1`| Distance of right-side extremity from left side of page.|
 |`y0`| Distance of bottom extremity from bottom of page.|
-|`y1`| Distance of top extremity bottom of page.|
+|`y1`| Distance of top extremity from bottom of page.|
 |`top`| Distance of top of line from top of page.|
 |`bottom`| Distance of bottom of the line from top of page.|
 |`doctop`| Distance of top of line from top of document.|
