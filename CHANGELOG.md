@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Unreleased
 
+- Fix `to_image()` / `get_page_image` omitting filled AcroForm widget values from the rasterized PIL bitmap. Calls `pypdfium2.PdfDocument.init_forms()` after open and before page load so PDFium's form-rendering layer (`FPDF_FFLDraw`) draws filled fields. Resolves [#1367](https://github.com/jsvine/pdfplumber/issues/1367).
 - Upgrade `pdfminer.six` from `20251230` to `20260107`. ([07a5ff6](https://github.com/jsvine/pdfplumber/commit/07a5ff6))
 
 ## 0.11.9 — 2026-01-05
