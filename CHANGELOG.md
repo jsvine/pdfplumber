@@ -5,7 +5,8 @@ All notable changes to this project will be documented in this file. The format 
 ## Unreleased
 
 - Upgrade `pdfminer.six` from `20251230` to `20260107`. ([07a5ff6](https://github.com/jsvine/pdfplumber/commit/07a5ff6))
-
+- Upgrade the minimum `Pillow` dependency version from `9.1` to `12.2.0`.
+- 
 ## 0.11.9 — 2026-01-05
 
 ### Changed
