@@ -157,7 +157,7 @@ class PDF(Container):
                     yield next(gen)
                 except StopIteration:
                     break
-                except Exception as e:
+                except Exception as e:  # pragma: nocover
                     raise PdfminerException(e)
 
         for i, page in enumerate(iter_pages()):

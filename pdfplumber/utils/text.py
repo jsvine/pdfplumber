@@ -495,7 +495,7 @@ class WordExtractor:
 
         word = {
             "text": "".join(
-                self.expansions.get(c["text"], c["text"]) for c in ordered_chars
+                self.expansions.get(c["text"], c["text"] or "") for c in ordered_chars
             ),
             "x0": x0,
             "x1": x1,

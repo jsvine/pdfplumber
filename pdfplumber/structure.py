@@ -488,8 +488,7 @@ class PDFStructTree(Findable):
                     raise IndexError("Element no longer on page")
                 return geometry.obj_to_bbox(rects[0])
             else:
-                # Not sure why mypy complains here
-                return bbox  # type: ignore
+                return bbox
         else:
             mcid_objs = []
             for page_number, mcid in el.all_mcids():
