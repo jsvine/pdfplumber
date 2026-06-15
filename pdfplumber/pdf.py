@@ -1,6 +1,7 @@
 import itertools
 import logging
 import pathlib
+import warnings
 from io import BufferedReader, BytesIO
 from types import TracebackType
 from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Type, Union
@@ -39,6 +40,7 @@ class PDF(Container):
     ):
         self.stream = stream
         self.stream_is_external = stream_is_external
+        self._closed = False
         self.path = path
         self.pages_to_parse = pages
         self.laparams = None if laparams is None else LAParams(**laparams)
@@ -83,6 +85,21 @@ class PDF(Container):
         repair_setting: T_repair_setting = "default",
         raise_unicode_errors: bool = True,
     ) -> "PDF":
+        """Open a PDF file for extraction.
+
+        Recommended usage with a context manager to ensure proper cleanup::
+
+            with pdfplumber.open("document.pdf") as pdf:
+                text = pdf.pages[0].extract_text()
+
+        If not using a context manager, call ``pdf.close()`` when done::
+
+            pdf = pdfplumber.open("document.pdf")
+            try:
+                text = pdf.pages[0].extract_text()
+            finally:
+                pdf.close()
+        """
 
         stream: Union[BufferedReader, BytesIO]
 
@@ -122,6 +139,7 @@ class PDF(Container):
             raise
 
     def close(self) -> None:
+        self._closed = True
         self.flush_cache()
 
         for page in self.pages:
@@ -140,6 +158,19 @@ class PDF(Container):
         traceback: Optional[TracebackType],
     ) -> None:
         self.close()
+
+    def __del__(self) -> None:
+        if not getattr(self, "stream_is_external", True) and hasattr(self, "stream"):
+            if not getattr(self, "_closed", True):
+                warnings.warn(
+                    f"unclosed PDF file {self.path or '<stream>'}."
+                    " Use 'with pdfplumber.open(...)'"
+                    " or call pdf.close() explicitly.",
+                    ResourceWarning,
+                    stacklevel=2,
+                )
+                if not self.stream.closed:
+                    self.stream.close()
 
     @property
     def pages(self) -> List[Page]:

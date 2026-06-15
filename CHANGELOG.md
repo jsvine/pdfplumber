@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ## 0.11.10 — 2026-06-14
 
+- Fixed `ResourceWarning` for unclosed file handles ([#1336](https://github.com/jsvine/pdfplumber/issues/1336)). The `PDF` class now emits a `ResourceWarning` (matching Python stdlib behavior) when garbage collected without being properly closed, and recommends using the context manager pattern.
 - Upgrade `pdfminer.six` from `20251230` to `20260107`. ([07a5ff6](https://github.com/jsvine/pdfplumber/commit/07a5ff6))
 - Update minimum version requirement for `Pillow` and `pypdfium2` and update versions in `requirements-dev.txt` (h/t @kjoetang). ([be5c260](https://github.com/jsvine/pdfplumber/commit/be5c260) + [#1374](https://github.com/jsvine/pdfplumber/issues/1374))
 
