@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. The format 
 
 ## 0.11.10 — 2026-06-14
 
+### Fixed
+- Fix `extract_table` dropping columns when `vertical_strategy="explicit"` is paired with text- or lines-derived horizontal edges that don't span the full range of the explicit vertical lines (and symmetrically for explicit horizontal lines). ([#1335](https://github.com/jsvine/pdfplumber/issues/1335))
+
+### Changed
 - Upgrade `pdfminer.six` from `20251230` to `20260107`. ([07a5ff6](https://github.com/jsvine/pdfplumber/commit/07a5ff6))
 - Update minimum version requirement for `Pillow` and `pypdfium2` and update versions in `requirements-dev.txt` (h/t @kjoetang). ([be5c260](https://github.com/jsvine/pdfplumber/commit/be5c260) + [#1374](https://github.com/jsvine/pdfplumber/issues/1374))
 

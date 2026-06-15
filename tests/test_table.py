@@ -173,6 +173,78 @@ class Test(unittest.TestCase):
         assert table.words_to_edges_h([]) == []
         assert table.words_to_edges_v([]) == []
 
+    def test_issue_1335_explicit_outside_text_span(self):
+        """
+        See issue #1335.  When explicit vertical lines fall outside the
+        natural x-span of text-derived horizontal edges, the corresponding
+        columns must still be recovered.
+        """
+
+        class FakePage:
+            def __init__(self, words, bbox=(0, 0, 600, 800)):
+                self._words = words
+                self.bbox = bbox
+                self.edges = []
+
+            def extract_words(self, **_kwargs):
+                return self._words
+
+        def word(text, x0, top):
+            width = 8 * len(text)
+            return {
+                "text": text,
+                "x0": x0,
+                "x1": x0 + width,
+                "top": top,
+                "bottom": top + 12,
+                "doctop": top,
+                "upright": True,
+                "height": 12,
+                "width": width,
+                "fontname": "Helvetica",
+                "size": 10,
+            }
+
+        # Three rows of three columns; the last column's text is narrow
+        # and ends well before the rightmost explicit vertical (x=500).
+        # The leftmost explicit vertical (x=50) sits to the left of any
+        # text.  Both columns must still be detected.
+        rows = [
+            [("Alpha", 60), ("100", 210), ("X", 360)],
+            [("Beta", 60), ("200", 210), ("YY", 360)],
+            [("Gamma", 60), ("300", 210), ("Z", 360)],
+        ]
+        words = [
+            word(text, x0, 100 + 30 * row_idx)
+            for row_idx, row in enumerate(rows)
+            for text, x0 in row
+        ]
+        page = FakePage(words)
+        tf = table.TableFinder(
+            page,
+            {
+                "vertical_strategy": "explicit",
+                "horizontal_strategy": "text",
+                "explicit_vertical_lines": [50, 200, 350, 500],
+                "intersection_tolerance": 5,
+                "snap_tolerance": 3,
+                "join_tolerance": 5,
+            },
+        )
+        xs = sorted({p[0] for p in tf.intersections})
+        assert xs == [50, 200, 350, 500]
+        assert len(tf.tables) == 1
+        # 3 data rows × 3 columns of cells must all be present.
+        cell_xs_by_row = {}
+        for x0, top, _x1, _bottom in tf.tables[0].cells:
+            cell_xs_by_row.setdefault(top, set()).add(x0)
+        full_rows = [
+            top
+            for top, xs_in_row in cell_xs_by_row.items()
+            if {50, 200, 350}.issubset(xs_in_row)
+        ]
+        assert len(full_rows) >= 3
+
     def test_order(self):
         """
         See issue #336
