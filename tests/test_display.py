@@ -125,6 +125,20 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path, password="test") as pdf:
             pdf.pages[0].to_image()
 
+    def test_acroform_widgets_rendered(self):
+        # See https://github.com/jsvine/pdfplumber/issues/1367
+        # Filled AcroForm field content should be drawn into the rendered
+        # bitmap, which requires PDFium's form environment to be initialized.
+        path = os.path.join(HERE, "pdfs/federal-register-2020-17221.pdf")
+        with pdfplumber.open(path) as pdf:
+            im = pdf.pages[0].to_image(resolution=150)
+        # This region contains a filled form field that is blank unless the
+        # form environment is initialized before rendering.
+        region = im.original.crop((88, 26, 171, 67))
+        colors = region.getcolors(maxcolors=region.size[0] * region.size[1])
+        non_white = sum(count for count, color in colors if color != (255, 255, 255))
+        assert non_white > 0
+
     def test_zip(self):
         # See https://github.com/jsvine/pdfplumber/issues/948
         # reproducer.py
