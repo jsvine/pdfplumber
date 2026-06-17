@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+- Initialize PDFium's form environment in `get_page_image` so that filled AcroForm field content is included when rendering pages via `Page.to_image()`. ([#1367](https://github.com/jsvine/pdfplumber/issues/1367))
+
 ## [0.11.10] — 2026-06-14
 
 ### Changed
