@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import io
 import os
 import re
 import unittest
@@ -1073,3 +1074,64 @@ class TestMany(unittest.TestCase):
             assert pdf.pages[0].structure_tree == HELLO1P
         with pdfplumber.open(path, pages=[1]) as pdf:
             assert pdf.structure_tree == HELLO1
+
+
+def _build_inline_struct_pdf():
+    """A minimal tagged PDF whose Document structure element holds an inline
+    (direct dictionary) P structure element in its /K array, rather than an
+    indirect reference. Inline structure elements are permitted by PDF 1.7
+    section 14.7.2."""
+    objs = {
+        1: (
+            b"<< /Type /Catalog /Pages 2 0 R /StructTreeRoot 5 0 R "
+            b"/MarkInfo << /Marked true >> >>"
+        ),
+        2: b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        3: (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] "
+            b"/Contents 4 0 R /Resources << /Font << /F1 7 0 R >> >> "
+            b"/StructParents 0 >>"
+        ),
+        5: b"<< /Type /StructTreeRoot /K 6 0 R >>",
+        6: (
+            b"<< /Type /StructElem /S /Document /K "
+            b"[ << /Type /StructElem /S /P /Pg 3 0 R /K 0 >> ] >>"
+        ),
+        7: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    }
+    content = b"/P << /MCID 0 >> BDC BT /F1 12 Tf 50 100 Td (Hi) Tj ET EMC"
+    objs[4] = b"<< /Length %d >>\nstream\n%s\nendstream" % (len(content), content)
+
+    out = bytearray(b"%PDF-1.7\n")
+    offsets = {}
+    for i in sorted(objs):
+        offsets[i] = len(out)
+        out += b"%d 0 obj\n" % i + objs[i] + b"\nendobj\n"
+    xref_pos = len(out)
+    n = len(objs) + 1
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % n
+    for i in sorted(objs):
+        out += b"%010d 00000 n \n" % offsets[i]
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (
+        n,
+        xref_pos,
+    )
+    return bytes(out)
+
+
+class TestInlineStructureElement(unittest.TestCase):
+    """A structure element embedded inline (a direct dictionary, not an
+    indirect reference) in another element's /K must parse rather than raise
+    KeyError. See PDF 1.7 section 14.7.2."""
+
+    def test_inline_structure_element(self):
+        with pdfplumber.open(io.BytesIO(_build_inline_struct_pdf())) as pdf:
+            assert pdf.structure_tree == [
+                {
+                    "type": "Document",
+                    "children": [{"type": "P", "page_number": 1, "mcids": [0]}],
+                }
+            ]
+            assert pdf.pages[0].structure_tree == [
+                {"type": "Document", "children": [{"type": "P", "mcids": [0]}]}
+            ]
