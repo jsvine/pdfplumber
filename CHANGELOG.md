@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 - Initialize PDFium's form environment in `get_page_image` so that filled AcroForm field content is included when rendering pages via `Page.to_image()`. ([#1367](https://github.com/jsvine/pdfplumber/issues/1367))
 - Include the wrapped exception's class name in `PdfminerException`'s message when `pdfminer.six` raises an exception without one (e.g. `PDFPasswordIncorrect`), which previously surfaced as a blank error message.
+- Fix `Serializer.do_bytes` to continue to the next entry in `ENCODINGS_TO_TRY` instead of returning `None` on the first failed encoding, so non-UTF-8 `bytes` attributes (e.g. an annotation's `Contents`) are no longer dropped to `null` by `.to_json()`/`.to_csv()`/`.to_dict()`.
 
 ## [0.11.10] — 2026-06-14
 
@@ -688,4 +689,3 @@ Whoops.
 
 ### Fixed
 - Fix find_gutters — should ignore `" "` chars
-
