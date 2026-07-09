@@ -316,6 +316,38 @@ class Test(unittest.TestCase):
                 ["", "", ""],
             ]
 
+    def test_issue_1332(self):
+        """
+        The vertical flip must subtract the MediaBox origin, so that pages
+        whose MediaBox does not begin at `y == 0` are not shifted vertically.
+
+        `issue-1181.pdf`'s first page has a MediaBox of
+        `[0, 200, 420.9449, 585.2756]`. Before the fix, its origin's `y0`
+        (200) was not subtracted, so the page's `top` coordinates were
+        shifted by -200 (yielding negative `top` values) and its
+        `mediabox`/`bbox` began at `y == -200`.
+        """
+        path = os.path.join(HERE, "pdfs/issue-1181.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+
+            # The (inverted) MediaBox top edge should map to top == 0,
+            # regardless of the MediaBox's raw y-origin.
+            assert page.mediabox[1] == 0
+            assert page.bbox[1] == 0
+            assert page.mediabox[3] == pytest.approx(page.height)
+
+            # No on-page object should have a negative `top` (previously
+            # every object was shifted -200 into negative territory).
+            objs = page.rects + page.lines + page.chars
+            assert objs
+            assert min(obj["top"] for obj in objs) >= 0
+
+            # Spot-check a specific character's corrected coordinates.
+            first_char = page.chars[0]
+            assert first_char["top"] == pytest.approx(236.4637, abs=1e-3)
+            assert first_char["bottom"] == pytest.approx(244.4637, abs=1e-3)
+
     def test_pr_1195(self):
         """
         In certain scenarios, annotations may include invalid or extraneous
