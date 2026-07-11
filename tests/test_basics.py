@@ -146,6 +146,27 @@ class Test(unittest.TestCase):
         )
         assert len(crop_right_again_rel.chars)
 
+    def test_crop_preserves_y0_y1(self):
+        # Cropping vertically clips an object's top/bottom edges; the
+        # PDF-space y0/y1 coordinates must stay in sync so that the
+        # top/bottom <-> y0/y1 invariant still holds. Previously clip_obj
+        # updated top/bottom (and height) but left y0/y1 stale.
+        page = self.pdf_2.pages[0]
+        height = page.height
+        c = page.chars[0]
+        # Crop through the vertical middle of the first char, so it is
+        # clipped along its top edge.
+        bbox = (c["x0"] - 1, (c["top"] + c["bottom"]) / 2, c["x1"] + 1, c["bottom"] + 5)
+        cropped = page.crop(bbox)
+        clipped = [ch for ch in cropped.chars if "y0" in ch and "y1" in ch]
+        assert len(clipped)
+        # At least one char must actually have been shortened by the crop.
+        assert any(ch["height"] < c["height"] for ch in clipped)
+        for ch in clipped:
+            assert ch["y1"] - ch["y0"] == pytest.approx(ch["height"])
+            assert ch["top"] == pytest.approx(height - ch["y1"])
+            assert ch["bottom"] == pytest.approx(height - ch["y0"])
+
     def test_invalid_crops(self):
         page = self.pdf.pages[0]
         with pytest.raises(ValueError):

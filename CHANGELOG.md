@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## [Unreleased]
 
 ### Fixed
+- Update an object's `y0`/`y1` coordinates when it is clipped by `.crop(...)` / `.within_bbox(...)` / `.outside_bbox(...)`, so that they stay consistent with the object's `top`/`bottom`/`height`. Previously `clip_obj` updated only the top-based coordinates, leaving `y0`/`y1` stale for vertically-clipped objects.
 - Initialize PDFium's form environment in `get_page_image` so that filled AcroForm field content is included when rendering pages via `Page.to_image()`. ([#1367](https://github.com/jsvine/pdfplumber/issues/1367))
 
 ## [0.11.10] — 2026-06-14
