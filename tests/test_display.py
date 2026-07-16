@@ -94,6 +94,7 @@ class Test(unittest.TestCase):
             stroke_width=2,
             x_tolerance=5,
             y_tolerance=5,
+            keep_blank_chars=True,
         )
 
     def test_outline_chars(self):
