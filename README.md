@@ -575,6 +575,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [@ennamarie19](https://github.com/ennamarie19)
 - [Anton Ilin](https://github.com/bronislav)
 - [Sebastian Cao](https://github.com/cycsmail)
+- [Kaspar Naraghi](https://github.com/kaninaba94)
 
 ## Contributing
 
