@@ -380,7 +380,7 @@ class PageImage:
         stroke_width: int = DEFAULT_STROKE_WIDTH,
         x_tolerance: T_num = utils.DEFAULT_X_TOLERANCE,
         y_tolerance: T_num = utils.DEFAULT_Y_TOLERANCE,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> "PageImage":
 
         words = self.page.extract_words(
