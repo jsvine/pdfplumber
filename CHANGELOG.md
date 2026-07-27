@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added
+- Add a "Coordinates" section to README.md, explaining the relationship between the `y0`/`y1` and `top`/`bottom`/`doctop` coordinate systems, why bounding boxes are expressed as `(x0, top, x1, bottom)`, and which objects carry which properties (h/t @soodoku). ([#389](https://github.com/jsvine/pdfplumber/issues/389))
+
 ### Fixed
 - Initialize PDFium's form environment in `get_page_image` so that filled AcroForm field content is included when rendering pages via `Page.to_image()`. ([#1367](https://github.com/jsvine/pdfplumber/issues/1367))
 
