@@ -3,7 +3,7 @@ VENV ?= .venv
 PYTHON = ${VENV}/bin/python
 
 venv:
-	python3 -m venv venv
+	python3 -m venv ${VENV}
 	${VENV}/bin/pip install --upgrade pip
 	${VENV}/bin/pip install -r requirements.txt
 	${VENV}/bin/pip install -r requirements-dev.txt
