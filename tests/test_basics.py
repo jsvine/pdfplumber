@@ -192,6 +192,14 @@ class Test(unittest.TestCase):
         with pdfplumber.open(path, password="test") as pdf:
             assert len(pdf.chars) > 0
 
+    def test_missing_password_message(self):
+        # pdfminer.six raises some exceptions without a message, which would
+        # otherwise be re-raised here as a blank PdfminerException.
+        path = os.path.join(HERE, "pdfs/password-example.pdf")
+        with pytest.raises(pdfplumber.utils.exceptions.PdfminerException) as exc:
+            pdfplumber.open(path)
+        assert "PDFPasswordIncorrect" in str(exc.value)
+
     def test_unicode_normalization(self):
         path = os.path.join(HERE, "pdfs/issue-905.pdf")
 
