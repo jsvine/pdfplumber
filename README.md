@@ -156,20 +156,18 @@ Horizontal coordinates are unambiguous: `x0` and `x1` are both measured from the
 
 The `y0`/`y1` pair follows the PDF specification's own coordinate system, and is retained for compatibility with `pdfminer.six`. Everything else in `pdfplumber` places the origin in the __top-left__ corner. In particular, bounding boxes are expressed as `(x0, top, x1, bottom)` — *not* `(x0, y0, x1, y1)` — which is what `.crop(...)`, `.within_bbox(...)`, and the visual-debugging methods expect.
 
-The top-left origin was chosen because ([#198](https://github.com/jsvine/pdfplumber/issues/198)) people generally read PDFs from the top-left toward the bottom-right; because measuring from the top is what makes `doctop` — the distance from the top of the *whole document* — able to distinguish objects at similar heights on different pages; and because most adjacent layout systems (SVG, Canvas, PIL/Pillow, which `pdfplumber` itself uses for visual debugging) also put the origin in the top-left.
+The top-left origin was chosen because ([#198](https://github.com/jsvine/pdfplumber/issues/198)) people generally read PDFs from the top-left toward the bottom-right, and because most adjacent layout systems (SVG, Canvas, PIL/Pillow, which `pdfplumber` itself uses for visual debugging) also put the origin in the top-left.
 
 For a page whose `MediaBox` begins at the origin — the typical case — the two systems convert simply:
 
 ```python
-y1 == page.height - top
-y0 == page.height - bottom
+top == page.height - y1
+bottom == page.height - y0
 ```
 
 If the `MediaBox` does not begin at `(0, 0)`, both conversions are shifted by its vertical offset, `page.mediabox[1]`.
 
 Not every object carries both varieties. Objects parsed directly from the PDF — `char`, `line`, `rect`, `curve`, `image`, `annot`, and `hyperlink` — have all of the properties above. Objects that `pdfplumber` computes for you use only the top-down properties: the dicts returned by `.extract_words(...)` provide `top`, `bottom`, and `doctop` but no `y0`/`y1`, and those returned by `.search(...)` provide `top` and `bottom`. Relatedly, a `line`'s or `curve`'s `pts` are `(x, top)` tuples.
-
-Because object bounding boxes are normalized, `top` is never greater than `bottom`, and `height` (equal to `bottom - top`) is never negative.
 
 #### `char` properties
 
