@@ -383,7 +383,9 @@ class PDFStructTree(Findable):
                         child = obj["Obj"]
                     elif "MCID" in obj:
                         continue
-                if isinstance(child, PDFObjRef):
+                # A child may be an indirect reference or, per the spec, a
+                # structure element dictionary embedded directly in /K.
+                if isinstance(child, (PDFObjRef, dict)):
                     d.append(child)
 
         # Traverse depth-first, removing empty elements (unsure how to
@@ -452,8 +454,10 @@ class PDFStructTree(Findable):
                         element.mcids.append(obj["MCID"])
                     elif "Obj" in obj:
                         child = obj["Obj"]
-                # NOTE: if, not elif, in case of OBJR above
-                if isinstance(child, PDFObjRef):
+                # NOTE: if, not elif, in case of OBJR above. An inline child is
+                # a structure element dictionary embedded directly in /K (MCID
+                # dicts were already handled above and are not in `seen`).
+                if isinstance(child, (PDFObjRef, dict)):
                     child_element, _ = seen.get(repr(child), (None, None))
                     if child_element is not None:
                         element.children.append(child_element)

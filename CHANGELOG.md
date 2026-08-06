@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 - Initialize PDFium's form environment in `get_page_image` so that filled AcroForm field content is included when rendering pages via `Page.to_image()`. ([#1367](https://github.com/jsvine/pdfplumber/issues/1367))
 - Fix `make venv`, which created the virtual environment at `venv/` but then installed into `${VENV}` (default `.venv/`), causing the target to fail on a fresh checkout (h/t @soodoku). ([ec96f72](https://github.com/jsvine/pdfplumber/commit/ec96f72))
 - Include the wrapped exception's class name in `PdfminerException`'s message when `pdfminer.six` raises an exception without one (e.g. `PDFPasswordIncorrect`), which previously surfaced as a blank error message.
+- Handle structure elements embedded inline (as direct dictionaries) in another element's `/K`, rather than only as indirect references. Such elements are permitted by the PDF spec but previously caused `structure_tree` to raise a `KeyError`.
 
 ## [0.11.10] — 2026-06-14
 
@@ -689,4 +690,3 @@ Whoops.
 
 ### Fixed
 - Fix find_gutters — should ignore `" "` chars
-
