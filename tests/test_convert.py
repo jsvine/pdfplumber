@@ -173,6 +173,42 @@ class Test(unittest.TestCase):
             c = json.loads(pdf.to_json())
             assert len(c["pages"][0]["images"])
 
+    def test_serialize_bytes_encoding_fallback(self):
+        # Serializer.do_bytes must try each entry in ENCODINGS_TO_TRY until one
+        # decodes, instead of returning None on the first failure. latin-1 (the
+        # second entry) decodes any byte string, so no bytes value is ever lost
+        # to None. Regression test for the broken encoding-fallback loop.
+        from pdfplumber.convert import ENCODINGS_TO_TRY, Serializer
+
+        assert ENCODINGS_TO_TRY[0] == "utf-8"
+        assert "latin-1" in ENCODINGS_TO_TRY
+        serialize = Serializer().serialize
+        # Valid utf-8 (including ascii) still passes through unchanged.
+        assert serialize(b"plain ascii") == "plain ascii"
+        assert serialize("café".encode("utf-8")) == "café"
+        # Bytes that are not valid utf-8 fall back to latin-1 rather than None.
+        assert serialize(b"caf\xe9") == "café"
+        for raw in (b"\xe9", b"\x80\x81", b"\xff\xfe\x00", b"\x91\x92\x93"):
+            decoded = serialize(raw)
+            assert decoded is not None
+            assert isinstance(decoded, str)
+            assert decoded == raw.decode("latin-1")
+
+    def test_json_non_utf8_bytes_preserved(self):
+        # The annotation in this shipped fixture carries a non-UTF-8 (UTF-16BE)
+        # Contents value. Both the top-level "contents" (decoded via page.py)
+        # and the serialized "data.Contents" (via Serializer.do_bytes) must
+        # survive to_json as strings instead of being dropped to null.
+        path = os.path.join(HERE, "pdfs/issue-463-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            annot = json.loads(pdf.to_json(object_types=["annot"]))["pages"][0][
+                "annots"
+            ][0]
+        assert annot["contents"] is not None
+        data_contents = annot["data"]["Contents"]
+        assert data_contents is not None
+        assert isinstance(data_contents, str)
+
     def test_csv(self):
         c = self.pdf.to_csv(precision=3)
         assert c.split("\r\n")[9] == (
