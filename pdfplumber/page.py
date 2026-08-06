@@ -177,10 +177,15 @@ def _normalize_box(box_raw: T_bbox, rotation: T_num = 0) -> T_bbox:
 
 # PDFs coordinate spaces refer to an origin in the bottom-left of the
 # page; pdfplumber flips this vertically, so that the origin is in the
-# top-left.
-def _invert_box(box_raw: T_bbox, mb_height: T_num) -> T_bbox:
+# top-left. The flip is performed about the MediaBox's top edge
+# (`mb_top_edge`, i.e. the raw upper-`y` coordinate) rather than about
+# the MediaBox height, so that the origin is subtracted correctly even
+# when the MediaBox does not start at `y == 0` (see issue #1332). For a
+# MediaBox whose lower-left is `(0, 0)`, `mb_top_edge` equals the height,
+# so this leaves the common case unchanged.
+def _invert_box(box_raw: T_bbox, mb_top_edge: T_num) -> T_bbox:
     x0, y0, x1, y1 = box_raw
-    return (x0, mb_height - y1, x1, mb_height - y0)
+    return (x0, mb_top_edge - y1, x1, mb_top_edge - y0)
 
 
 class Page(Container):
@@ -212,14 +217,17 @@ class Page(Container):
         self.rotation = _rotation % 360
 
         mb_raw = _normalize_box(get_attr("MediaBox"), self.rotation)
-        mb_height = mb_raw[3] - mb_raw[1]
+        # The raw upper-`y` coordinate; used as the axis for the vertical
+        # flip so that the MediaBox origin is subtracted even when the
+        # MediaBox does not begin at `y == 0` (see issue #1332).
+        mb_top_edge = mb_raw[3]
 
-        self.mediabox = _invert_box(mb_raw, mb_height)
+        self.mediabox = _invert_box(mb_raw, mb_top_edge)
 
         for box_name in ["CropBox", "TrimBox", "BleedBox", "ArtBox"]:
             if box_name in page_obj.attrs:
                 box_normalized = _invert_box(
-                    _normalize_box(get_attr(box_name), self.rotation), mb_height
+                    _normalize_box(get_attr(box_name), self.rotation), mb_top_edge
                 )
                 setattr(self, box_name.lower(), box_normalized)
 
