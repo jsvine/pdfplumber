@@ -173,6 +173,15 @@ class Test(unittest.TestCase):
             c = json.loads(pdf.to_json())
             assert len(c["pages"][0]["images"])
 
+    def test_serialize_bytes_encoding_fallback(self):
+        from pdfplumber.convert import Serializer
+
+        s = Serializer()
+        # Bytes that are not valid UTF-8 but decode under a later
+        # encoding in the fallback list must not be dropped to None.
+        assert s.do_bytes(b"\xff\xfe\x41") == "\xff\xfe\x41"
+        assert s.serialize(b"\xff\xfe\x41") == "\xff\xfe\x41"
+
     def test_csv(self):
         c = self.pdf.to_csv(precision=3)
         assert c.split("\r\n")[9] == (
