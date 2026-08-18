@@ -577,6 +577,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Sebastian Cao](https://github.com/cycsmail)
 - [Kaspar Naraghi](https://github.com/kaninaba94)
 - [Siddharth Gaur](https://github.com/siddharthgaur1)
+- [Timothy O'Hare](https://github.com/timothyohare)
 
 ## Contributing
 
