@@ -417,6 +417,76 @@ class Test(unittest.TestCase):
         with pytest.raises(ValueError):
             p.extract_text(layout=True, layout_height=300, layout_height_chars=50)
 
+    def test_extract_text_layout_superscript_asterisk_x_position(self):
+        """
+        Superscript '*' just above a baseline number (issue 1380) must keep
+        its x-position in layout=True output: after the number it annotates,
+        not shifted left on a previous line.
+        """
+
+        def make_char(text, x0, top, width=6.0, size=12.0):
+            return {
+                "text": text,
+                "x0": x0,
+                "x1": x0 + width,
+                "top": top,
+                "doctop": top,
+                "bottom": top + size,
+                "width": width,
+                "height": size,
+                "size": size,
+                "upright": True,
+            }
+
+        # Narrow glyphs to the left make line_len outrun x/x_density, which
+        # is what leaves isolated superscripts shifted left of "328"/"329".
+        baseline_top = 100.0
+        super_top = baseline_top - 3.4
+        chars = []
+        x = 10.0
+        for letter in "AgainstCelsus":
+            chars.append(make_char(letter, x, baseline_top, width=5.0))
+            x += 5.0
+        for i, digit in enumerate("328"):
+            chars.append(make_char(digit, 90.0 + i * 6.0, baseline_top))
+        chars.append(make_char("*", 111.0, super_top))
+        for i, digit in enumerate("329"):
+            chars.append(make_char(digit, 123.0 + i * 6.0, baseline_top))
+        chars.append(make_char("*", 144.0, super_top))
+
+        text = utils.extract_text(
+            chars,
+            layout=True,
+            layout_width=250,
+            layout_height=130,
+            layout_bbox=(0, 0, 250, 130),
+        )
+        lines = [line for line in text.split("\n") if line.strip()]
+        combined = "\n".join(lines)
+        assert "328" in combined and "329" in combined
+        assert combined.count("*") == 2
+
+        star_cols = []
+        num_cols = {}
+        for line in lines:
+            pos = 0
+            while True:
+                found = line.find("*", pos)
+                if found < 0:
+                    break
+                star_cols.append(found)
+                pos = found + 1
+            for number in ("328", "329"):
+                found = line.find(number)
+                if found >= 0:
+                    num_cols[number] = found
+
+        assert "328" in num_cols and "329" in num_cols
+        assert len(star_cols) == 2
+        # Each '*' is at or after the end of the number it annotates.
+        assert star_cols[0] >= num_cols["328"] + 3
+        assert star_cols[1] >= num_cols["329"] + 3
+
     def test_extract_text_nochars(self):
         charless = self.pdf.pages[0].filter(lambda df: df["object_type"] != "char")
         assert charless.extract_text() == ""
