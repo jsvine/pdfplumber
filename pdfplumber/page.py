@@ -235,6 +235,13 @@ class Page(Container):
     def close(self) -> None:
         self.flush_cache()
         self.get_textmap.cache_clear()
+        # `page_obj` is the underlying pdfminer PDFPage, which can retain a
+        # substantial amount of resource/content-stream data on its own;
+        # `flush_cache()` alone doesn't touch it, since other properties
+        # (e.g. `layout`, `annots`) may still need it while the page is in
+        # active use. Once a page is closed, though, nothing should read
+        # from it again, so it's safe to drop the reference here.
+        self.page_obj = None
 
     @property
     def width(self) -> T_num:

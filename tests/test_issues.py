@@ -338,3 +338,17 @@ class Test(unittest.TestCase):
         ):
             for _ in pdf.annots:
                 pass
+
+    def test_issue_1395(self):
+        """
+        page.close() should release the underlying pdfminer PDFPage object,
+        not just the derived caches that flush_cache() already clears.
+        https://github.com/jsvine/pdfplumber/issues/1395
+        """
+        path = os.path.join(HERE, "pdfs/pr-136-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            _ = page.extract_text()
+            assert page.page_obj is not None
+            page.close()
+            assert page.page_obj is None
