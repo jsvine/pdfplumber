@@ -9,6 +9,9 @@ All notable changes to this project will be documented in this file. The format 
 - Fix `make venv`, which created the virtual environment at `venv/` but then installed into `${VENV}` (default `.venv/`), causing the target to fail on a fresh checkout (h/t @soodoku). ([ec96f72](https://github.com/jsvine/pdfplumber/commit/ec96f72))
 - Include the wrapped exception's class name in `PdfminerException`'s message when `pdfminer.six` raises an exception without one (e.g. `PDFPasswordIncorrect`), which previously surfaced as a blank error message.
 
+### Security
+- Run Ghostscript under `-dSAFER` when repairing PDFs (via `repair=True` or `pdfplumber.repair(...)`), so that processing an untrusted document cannot reach Ghostscript's file/pipe operators on builds where the sandbox is not enabled by default (Ghostscript < 9.50).
+
 ## [0.11.10] — 2026-06-14
 
 ### Changed
