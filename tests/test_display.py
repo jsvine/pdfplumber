@@ -2,6 +2,8 @@
 import io
 import logging
 import os
+import shutil
+import tempfile
 import unittest
 from zipfile import ZipFile
 
@@ -139,6 +141,23 @@ class Test(unittest.TestCase):
         colors = region.getcolors(maxcolors=region.size[0] * region.size[1])
         non_white = sum(count for count, color in colors if color != (255, 255, 255))
         assert non_white > 0
+
+    def test_rendered_bytes_match_parsed_bytes(self):
+        # The bitmap must come from the bytes `pdfplumber.open(...)` parsed,
+        # not from whatever the path resolves to at render time.
+        parsed = os.path.join(HERE, "pdfs/pdffill-demo.pdf")  # 612 x 792
+        other = os.path.join(HERE, "pdfs/issue-140-example.pdf")  # 842 x 595
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = os.path.join(tmp, "doc.pdf")
+            swap = os.path.join(tmp, "swap.pdf")
+            shutil.copy(parsed, dest)
+            shutil.copy(other, swap)
+            with pdfplumber.open(dest) as pdf:
+                page = pdf.pages[0]
+                # Replace the path's contents; the open stream still holds
+                # the document that was parsed.
+                os.replace(swap, dest)
+                assert page.to_image().original.size == (612, 792)
 
     def test_zip(self):
         # See https://github.com/jsvine/pdfplumber/issues/948
