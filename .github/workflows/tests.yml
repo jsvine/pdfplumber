@@ -76,7 +76,7 @@ jobs:
 
     - name: Upload code coverage
       uses: codecov/codecov-action@v3
-      if: matrix.python-version == 3.9
+      if: matrix.python-version == '3.12'
 
     - name: Build package
       run: python setup.py build sdist
