@@ -313,6 +313,20 @@ class Test(unittest.TestCase):
         target = open(target_path).read()
         assert res.decode("utf-8") == target
 
+    def test_cli_password(self):
+        path = os.path.join(HERE, "pdfs/password-example.pdf")
+        res = run(
+            [
+                sys.executable,
+                "-m",
+                "pdfplumber.cli",
+                path,
+                "--password=test",
+            ]
+        )
+
+        assert len(res) > 0
+
     def test_page_to_dict(self):
         x = self.pdf.pages[0].to_dict(object_types=["char"])
         assert len(x["chars"]) == len(self.pdf.pages[0].chars)
