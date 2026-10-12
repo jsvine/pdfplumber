@@ -138,3 +138,21 @@ class Test(unittest.TestCase):
                     assert line == text
                 else:
                     assert line == dup_text
+
+    def test_order_follows_the_first_occurrence(self):
+        a = {"upright": True, "text": "a", "fontname": "F", "size": 10}
+        a.update({"doctop": 0, "x0": 0})
+        b = dict(a, text="b", x0=10)
+        assert pdfplumber.utils.dedupe_chars([a, b, a]) == [a, b]
+        assert pdfplumber.utils.dedupe_chars([b, a, dict(a, x0=0.2)]) == [b, a]
+
+    def test_order_is_restored_without_scanning_the_list(self):
+        # `chars.index` scans the list once per kept char: quadratic on a page
+        class Unscannable(list):
+            def index(self, *args, **kwargs):
+                raise AssertionError("dedupe_chars scanned the list")
+
+        a = {"upright": True, "text": "a", "fontname": "F", "size": 10}
+        a.update({"doctop": 0, "x0": 0})
+        chars = Unscannable([a, dict(a, x0=0.2), dict(a, text="b", x0=10)])
+        assert pdfplumber.utils.dedupe_chars(chars) == [chars[0], chars[2]]
