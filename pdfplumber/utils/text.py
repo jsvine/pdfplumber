@@ -198,7 +198,7 @@ class TextMap:
         gen = re.finditer(compiled, self.as_string)
         # Remove zero-length matches (can happen, e.g., with optional
         # patterns in regexes) and whitespace-only matches
-        filtered = filter(lambda m: bool(m.group(main_group).strip()), gen)
+        filtered = filter(lambda m: bool((m.group(main_group) or "").strip()), gen)
         return [
             self.match_to_dict(
                 m,
