@@ -668,8 +668,9 @@ class WordExtractor:
         grouped_chars = itertools.groupby(chars, grouping_key)
 
         for keyvals, char_group in grouped_chars:
+            upright = keyvals[0] if self.extra_attrs else keyvals
             line_groups = (
-                [(char_group, self.char_dir)]
+                [(char_group, self.get_char_dir(upright))]
                 if self.use_text_flow
                 else self.iter_chars_to_lines(char_group)
             )
