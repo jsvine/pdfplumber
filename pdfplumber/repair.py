@@ -28,6 +28,13 @@ def _repair(
 
     repair_args = [
         executable,
+        # Ghostscript processes the (untrusted) input document here, so run it
+        # under its `-dSAFER` sandbox. SAFER is only the default on Ghostscript
+        # >= 9.50; older builds (still shipped by several long-term-support
+        # distributions) leave it off, letting a crafted PDF reach the
+        # file/pipe operators. Passing it explicitly enforces the sandbox
+        # regardless of the installed Ghostscript's default.
+        "-dSAFER",
         "-sstdout=%stderr",
         "-o",
         "-",

@@ -3,10 +3,12 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 import pytest
 
 import pdfplumber
+from pdfplumber.repair import _repair
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -70,3 +72,28 @@ class Test(unittest.TestCase):
         path = os.path.join(HERE, "pdfs/malformed-from-issue-932.pdf")
         with pdfplumber.open(path, repair=True, gs_path=shutil.which("gs")) as pdf:
             assert len(pdf.pages[0].chars)
+
+    def test_repair_invokes_ghostscript_with_safer(self):
+        # The input document is untrusted, so Ghostscript must run under
+        # `-dSAFER`. That sandbox is only the default on Ghostscript >= 9.50,
+        # so it has to be requested explicitly to be safe on older builds.
+        path = os.path.join(HERE, "pdfs/malformed-from-issue-932.pdf")
+
+        captured = {}
+
+        class FakeProc:
+            returncode = 0
+
+            def communicate(self, _input=None):
+                return (b"%PDF-1.5\n%%EOF\n", b"")
+
+        def fake_popen(args, **kwargs):
+            captured["args"] = args
+            return FakeProc()
+
+        with mock.patch(
+            "pdfplumber.repair.shutil.which", return_value="/usr/bin/gs"
+        ), mock.patch("pdfplumber.repair.subprocess.Popen", fake_popen):
+            _repair(path)
+
+        assert "-dSAFER" in captured["args"]
