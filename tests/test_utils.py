@@ -623,6 +623,34 @@ class Test(unittest.TestCase):
             "y1": 50,
         }
 
+    def test_clip_obj(self):
+        obj = {
+            "x0": 5,
+            "x1": 10,
+            "top": 20,
+            "bottom": 30,
+            "width": 5,
+            "height": 10,
+            "doctop": 120,
+            "y0": 40,
+            "y1": 50,
+        }
+        # Clipping the top and the bottom should move `y1`/`y0` by the same
+        # amounts, in the opposite direction, as `resize_object` does.
+        assert utils.clip_obj(obj, (0, 25, 100, 28)) == {
+            "x0": 5,
+            "x1": 10,
+            "top": 25,
+            "bottom": 28,
+            "width": 5,
+            "height": 3,
+            "doctop": 125,
+            "y0": 42,
+            "y1": 45,
+        }
+        # A clip that does not cross the object leaves it unchanged.
+        assert utils.clip_obj(obj, (0, 0, 100, 100)) == obj
+
     def test_move_object(self):
         a = {
             "x0": 5,

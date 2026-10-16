@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 - Initialize PDFium's form environment in `get_page_image` so that filled AcroForm field content is included when rendering pages via `Page.to_image()`. ([#1367](https://github.com/jsvine/pdfplumber/issues/1367))
 - Fix `make venv`, which created the virtual environment at `venv/` but then installed into `${VENV}` (default `.venv/`), causing the target to fail on a fresh checkout (h/t @soodoku). ([ec96f72](https://github.com/jsvine/pdfplumber/commit/ec96f72))
 - Include the wrapped exception's class name in `PdfminerException`'s message when `pdfminer.six` raises an exception without one (e.g. `PDFPasswordIncorrect`), which previously surfaced as a blank error message.
+- Update `y0`/`y1` in `utils.clip_obj` (and therefore `Page.crop(...)`), which previously adjusted only `top`/`bottom`/`height`/`doctop`, leaving the bottom-up coordinates of clipped objects at their pre-crop values.
 
 ## [0.11.10] — 2026-06-14
 
