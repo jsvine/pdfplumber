@@ -4,6 +4,7 @@ import os
 import unittest
 
 import pytest
+from pdfminer.pdfpage import PDFPage
 
 import pdfplumber
 
@@ -262,3 +263,76 @@ class Test(unittest.TestCase):
             assert page.artbox == (42.51969, 70.86613999999997, 552.75591, 827.71653)
             assert page.bleedbox == (0, 0.0, 623.62205, 870.23622)
             assert page.trimbox == (28.34646, 56.69290999999998, 566.92913, 841.88976)
+
+
+@pytest.mark.parametrize("pages", [[2], [1, 3], [3, 1], [], None])
+def test_selected_pages_preserve_document_coordinates(pages):
+    path = os.path.join(HERE, "pdfs/pdffill-demo.pdf")
+    with pdfplumber.open(path) as full, pdfplumber.open(path, pages=pages) as selected:
+        expected = [p for p in full.pages if pages is None or p.page_number in pages]
+        assert [p.page_number for p in selected.pages] == [
+            p.page_number for p in expected
+        ]
+        for actual, original in zip(selected.pages, expected):
+            assert not hasattr(actual, "_layout")
+            assert actual.initial_doctop == original.initial_doctop
+            assert actual.chars == original.chars
+            assert actual.extract_words() == original.extract_words()
+
+
+@pytest.mark.parametrize("rotation", [0, 90, 180, 270])
+def test_selected_pages_preserve_mixed_page_height_offsets(monkeypatch, rotation):
+    create_pages = PDFPage.create_pages
+
+    def rotated_pages(doc):
+        for i, page in enumerate(create_pages(doc)):
+            if i == 0:
+                page.attrs["Rotate"] = rotation
+            yield page
+
+    monkeypatch.setattr(PDFPage, "create_pages", rotated_pages)
+    path = os.path.join(HERE, "pdfs/issue-1181.pdf")
+    with pdfplumber.open(path) as full, pdfplumber.open(path, pages=[2]) as selected:
+        assert full.pages[0].height != full.pages[1].height
+        assert selected.pages[0].initial_doctop == full.pages[0].height
+        assert selected.pages[0].chars == full.pages[1].chars
+
+
+@pytest.mark.parametrize("box", ["CropBox", "TrimBox", "BleedBox", "ArtBox"])
+def test_selected_pages_ignore_omitted_optional_boxes(monkeypatch, box):
+    create_pages = PDFPage.create_pages
+
+    def malformed_pages(doc):
+        for i, page in enumerate(create_pages(doc)):
+            if i == 0:
+                page.attrs[box] = [0, 0, 10]
+            yield page
+
+    monkeypatch.setattr(PDFPage, "create_pages", malformed_pages)
+    path = os.path.join(HERE, "pdfs/pdffill-demo.pdf")
+    with pdfplumber.open(path, pages=[2]) as pdf:
+        assert len(pdf.pages) == 1
+        assert pdf.pages[0].page_number == 2
+        assert pdf.pages[0].initial_doctop == 792
+        assert pdf.pages[0].chars
+
+
+@pytest.mark.parametrize("pages", [[], [1], [999], [1, 999]])
+@pytest.mark.parametrize(
+    "attr, value", [("MediaBox", [0, 0, 10]), ("Rotate", "invalid")]
+)
+def test_selected_pages_ignore_unneeded_trailing_geometry(
+    monkeypatch, pages, attr, value
+):
+    create_pages = PDFPage.create_pages
+
+    def malformed_pages(doc):
+        for i, page in enumerate(create_pages(doc)):
+            if i == 1:
+                page.attrs[attr] = value
+            yield page
+
+    monkeypatch.setattr(PDFPage, "create_pages", malformed_pages)
+    path = os.path.join(HERE, "pdfs/pdffill-demo.pdf")
+    with pdfplumber.open(path, pages=pages) as pdf:
+        assert [p.page_number for p in pdf.pages] == [n for n in pages if n != 999]
