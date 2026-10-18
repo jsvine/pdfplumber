@@ -338,3 +338,26 @@ class Test(unittest.TestCase):
         ):
             for _ in pdf.annots:
                 pass
+
+    def test_issue_1339(self):
+        """
+        PDF.close() closed the wrong Page instances: flush_cache() ran
+        first and deleted the cached `_pages` list, so the subsequent
+        `for page in self.pages: page.close()` re-parsed and closed a
+        fresh, never-otherwise-referenced set of pages instead of the ones
+        the caller actually used -- leaving the real pages' `_objects` /
+        `_layout` / `get_textmap` caches unreleased after close().
+        https://github.com/jsvine/pdfplumber/issues/1339
+        """
+        path = os.path.join(HERE, "pdfs/issue-33-lorem-ipsum.pdf")
+        pdf = pdfplumber.open(path)
+        pages = pdf.pages
+        for page in pages:
+            page.extract_text()
+            assert hasattr(page, "_objects")
+
+        pdf.close()
+
+        for page in pages:
+            assert not hasattr(page, "_objects")
+            assert page.get_textmap.cache_info().currsize == 0
