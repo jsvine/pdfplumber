@@ -271,13 +271,21 @@ class Page(Container):
 
     @property
     def annots(self) -> T_obj_list:
+        mb_x0, mb_y0, _, _ = _normalize_box(self.page_obj.mediabox)
+        mb_left, mb_top = self.root_page.mediabox[:2]
+
         def rotate_point(pt: Tuple[float, float], r: int) -> Tuple[float, float]:
+            if r == 0:
+                return pt
+            # Rotate relative to the original MediaBox, then restore the
+            # page's coordinate offsets, as process_object does for layouts.
+            pt = (pt[0] - mb_x0, pt[1] - mb_y0)
             turns = r // 90
             for i in range(turns):
                 x, y = pt
-                comp = self.width if i == turns % 2 else self.height
+                comp = self.root_page.width if i == turns % 2 else self.root_page.height
                 pt = (y, (comp - x))
-            return pt
+            return (pt[0] + mb_left, pt[1] - mb_top)
 
         def parse(annot: T_obj) -> T_obj:
             _a, _b, _c, _d = annot["Rect"]
