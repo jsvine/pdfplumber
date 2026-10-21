@@ -1,4 +1,5 @@
 venv/
+.venv
 notebooks/
 nonpublic/
 .ipynb_checkpoints
