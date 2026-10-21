@@ -119,8 +119,8 @@ class Serializer:
         for e in ENCODINGS_TO_TRY:
             try:
                 return obj.decode(e)
-            except UnicodeDecodeError:  # pragma: no cover
-                return None
+            except UnicodeDecodeError:
+                continue
         # If none of the decodings work, raise whatever error
         # decoding with utf-8 causes
         obj.decode(ENCODINGS_TO_TRY[0])  # pragma: no cover
