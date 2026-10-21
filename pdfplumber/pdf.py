@@ -148,7 +148,7 @@ class PDF(Container):
 
         doctop: T_num = 0
         pp = self.pages_to_parse
-        self._pages: List[Page] = []
+        pages: List[Page] = []
 
         def iter_pages() -> Generator[PDFPage, None, None]:
             gen = PDFPage.create_pages(self.doc)
@@ -165,8 +165,11 @@ class PDF(Container):
             if pp is not None and page_number not in pp:
                 continue
             p = Page(self, page, page_number=page_number, initial_doctop=doctop)
-            self._pages.append(p)
+            pages.append(p)
             doctop += p.height
+        # Do not cache an incomplete document if iteration or page construction
+        # raises. A later access must retry rather than return partial results.
+        self._pages: List[Page] = pages
         return self._pages
 
     @property
