@@ -618,7 +618,14 @@ class TableFinder(object):
         h_strat = settings.horizontal_strategy
 
         if v_strat == "text" or h_strat == "text":
-            words = self.page.extract_words(**(settings.text_settings or {}))
+            # text_settings may also contain arguments that only apply to
+            # text extraction (e.g., `layout`), which WordExtractor rejects
+            word_settings = {
+                k: v
+                for k, v in (settings.text_settings or {}).items()
+                if k in utils.text.WORD_EXTRACTOR_KWARGS
+            }
+            words = self.page.extract_words(**word_settings)
 
         v_explicit = []
         for desc in settings.explicit_vertical_lines or []:
