@@ -1,3 +1,4 @@
+import copy
 import pathlib
 from io import BufferedReader, BytesIO
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
@@ -180,7 +181,9 @@ class PageImage:
         )
 
     def copy(self) -> "PageImage":
-        return self.__class__(self.page, self.original)
+        # Re-running __init__ would crop the (already-cropped) original a
+        # second time and reset the resolution, so copy the attributes instead.
+        return copy.copy(self).reset()
 
     def draw_line(
         self,
