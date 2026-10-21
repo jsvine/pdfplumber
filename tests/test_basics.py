@@ -262,3 +262,25 @@ class Test(unittest.TestCase):
             assert page.artbox == (42.51969, 70.86613999999997, 552.75591, 827.71653)
             assert page.bleedbox == (0, 0.0, 623.62205, 870.23622)
             assert page.trimbox == (28.34646, 56.69290999999998, 566.92913, 841.88976)
+
+    def test_flush_cache_clears_textmap(self):
+        """Page.flush_cache() should release the textmap cache, which is the
+        largest of a page's caches and is not a `cached_properties` entry."""
+        path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            page.extract_text()
+            assert page.get_textmap.cache_info().currsize == 1
+            assert hasattr(page, "_layout")
+
+            page.flush_cache()
+            assert page.get_textmap.cache_info().currsize == 0
+            assert not hasattr(page, "_layout")
+
+            # ... and a cropped page, whose textmap cache is built after its
+            # constructor calls flush_cache(Container.cached_properties)
+            cropped = pdf.pages[0].crop((0, 0, 100, 100))
+            cropped.extract_text()
+            assert cropped.get_textmap.cache_info().currsize == 1
+            cropped.flush_cache()
+            assert cropped.get_textmap.cache_info().currsize == 0

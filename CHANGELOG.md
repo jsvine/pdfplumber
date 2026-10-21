@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file. The format 
 - Initialize PDFium's form environment in `get_page_image` so that filled AcroForm field content is included when rendering pages via `Page.to_image()`. ([#1367](https://github.com/jsvine/pdfplumber/issues/1367))
 - Fix `make venv`, which created the virtual environment at `venv/` but then installed into `${VENV}` (default `.venv/`), causing the target to fail on a fresh checkout (h/t @soodoku). ([ec96f72](https://github.com/jsvine/pdfplumber/commit/ec96f72))
 - Include the wrapped exception's class name in `PdfminerException`'s message when `pdfminer.six` raises an exception without one (e.g. `PDFPasswordIncorrect`), which previously surfaced as a blank error message.
+- Clear the textmap cache in `Page.flush_cache()`. That cache is not a `cached_properties` entry, so it survived the flush, even though it is the largest of a page's caches: on a 65-page test PDF, `flush_cache()` released 79 MB where `close()` released 180 MB. ([#1395](https://github.com/jsvine/pdfplumber/issues/1395))
 
 ## [0.11.10] — 2026-06-14
 
