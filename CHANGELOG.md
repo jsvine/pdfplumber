@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+- Speed up `Page.objects` (and therefore everything built on it) by roughly 30% on text-heavy pages: `Page.process_object` no longer calls `resolve_all` on attribute values that are exact scalars (or tuples of scalars) and therefore cannot contain a `PDFObjRef`, and caches the object-type name per `pdfminer.six` layout class instead of running a regex for each object. Output is unchanged.
+
 ### Fixed
 - Initialize PDFium's form environment in `get_page_image` so that filled AcroForm field content is included when rendering pages via `Page.to_image()`. ([#1367](https://github.com/jsvine/pdfplumber/issues/1367))
 - Fix `make venv`, which created the virtual environment at `venv/` but then installed into `${VENV}` (default `.venv/`), causing the target to fail on a fresh checkout (h/t @soodoku). ([ec96f72](https://github.com/jsvine/pdfplumber/commit/ec96f72))
