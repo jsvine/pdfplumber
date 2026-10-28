@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## [Unreleased]
 
 ### Fixed
+- Make `y_tolerance_ratio` apply when grouping characters and words into lines in `extract_words` and `extract_text` (including `layout=True`). Previously it was accepted but had almost no effect, because lines were always grouped with the fixed `y_tolerance`. Also document the parameter. ([#987](https://github.com/jsvine/pdfplumber/issues/987), [#1380](https://github.com/jsvine/pdfplumber/issues/1380))
 - Initialize PDFium's form environment in `get_page_image` so that filled AcroForm field content is included when rendering pages via `Page.to_image()`. ([#1367](https://github.com/jsvine/pdfplumber/issues/1367))
 - Fix `make venv`, which created the virtual environment at `venv/` but then installed into `${VENV}` (default `.venv/`), causing the target to fail on a fresh checkout (h/t @soodoku). ([ec96f72](https://github.com/jsvine/pdfplumber/commit/ec96f72))
 - Include the wrapped exception's class name in `PdfminerException`'s message when `pdfminer.six` raises an exception without one (e.g. `PDFPasswordIncorrect`), which previously surfaced as a blank error message.
