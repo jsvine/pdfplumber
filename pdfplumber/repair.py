@@ -6,12 +6,19 @@ from typing import Literal, Optional, Union
 
 T_repair_setting = Literal["default", "prepress", "printer", "ebook", "screen"]
 
+# Upper bound for a single Ghostscript repair run. Repairs of well-formed
+# PDFs normally finish in seconds; the timeout exists so a damaged or
+# hostile PDF cannot make Ghostscript run forever. Pass timeout=None to
+# disable it.
+DEFAULT_TIMEOUT: Optional[float] = 60.0
+
 
 def _repair(
     path_or_fp: Union[str, pathlib.Path, BufferedReader, BytesIO],
     password: Optional[str] = None,
     gs_path: Optional[Union[str, pathlib.Path]] = None,
     setting: T_repair_setting = "default",
+    timeout: Optional[float] = DEFAULT_TIMEOUT,
 ) -> BytesIO:
 
     executable = (
@@ -28,6 +35,15 @@ def _repair(
 
     repair_args = [
         executable,
+        # -dSAFER confines Ghostscript's file access to the job's own
+        # inputs/outputs; without it, a PDF under repair can direct
+        # Ghostscript to read or write arbitrary files via PostScript
+        # operators. -dNOPAUSE/-dBATCH make the non-interactive contract
+        # explicit (the "-o -" below already implies it on modern
+        # Ghostscript, but the flags keep older builds honest).
+        "-dSAFER",
+        "-dNOPAUSE",
+        "-dBATCH",
         "-sstdout=%stderr",
         "-o",
         "-",
@@ -52,7 +68,17 @@ def _repair(
         stderr=subprocess.PIPE,
     )
 
-    stdout, stderr = proc.communicate(stdin.read() if stdin else None)
+    try:
+        stdout, stderr = proc.communicate(
+            stdin.read() if stdin else None, timeout=timeout
+        )
+    except subprocess.TimeoutExpired:
+        # communicate() alone does not stop the child; kill it and reap it
+        # before surfacing the timeout, so no Ghostscript process is left
+        # running against the caller's input.
+        proc.kill()
+        proc.communicate()
+        raise
 
     if proc.returncode:
         raise Exception(f"{stderr.decode('utf-8')}")
@@ -66,8 +92,11 @@ def repair(
     password: Optional[str] = None,
     gs_path: Optional[Union[str, pathlib.Path]] = None,
     setting: T_repair_setting = "default",
+    timeout: Optional[float] = DEFAULT_TIMEOUT,
 ) -> Optional[BytesIO]:
-    repaired = _repair(path_or_fp, password, gs_path=gs_path, setting=setting)
+    repaired = _repair(
+        path_or_fp, password, gs_path=gs_path, setting=setting, timeout=timeout
+    )
     if outfile:
         with open(outfile, "wb") as f:
             f.write(repaired.read())
