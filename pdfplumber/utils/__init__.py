@@ -5,6 +5,8 @@ from .geometry import (  # noqa: F401
     calculate_area,
     clip_obj,
     crop_to_bbox,
+    curve_length,
+    curve_points,
     curve_to_edges,
     filter_edges,
     get_bbox_overlap,
