@@ -334,7 +334,9 @@ class Test(unittest.TestCase):
                 pass
 
         with pdfplumber.open(path, raise_unicode_errors=False) as pdf, pytest.warns(
-            UserWarning
+            UserWarning, match="Could not decode contents"
         ):
-            for _ in pdf.annots:
-                pass
+            (annot,) = pdf.annots
+            assert annot["contents"] is None
+            assert isinstance(annot["title"], str)
+            assert isinstance(annot["data"]["Contents"], bytes)

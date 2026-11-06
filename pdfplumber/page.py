@@ -302,6 +302,7 @@ class Page(Container):
                         except UnicodeDecodeError:
                             if self.pdf.raise_unicode_errors:
                                 raise
+                            extras[k] = None
                             warn(
                                 f"Could not decode {k} of annotation."
                                 f" {k} will be missing."
