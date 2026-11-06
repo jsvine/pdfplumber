@@ -51,6 +51,33 @@ class Test(unittest.TestCase):
             tf = table.TableFinder(self.pdf.pages[0], {"join_tolerance": -1})
             tf.get_edges()
 
+        with pytest.raises(ValueError):
+            table.TableFinder(self.pdf.pages[0], {"min_table_cells": -1})
+
+    def test_min_table_cells(self):
+        """
+        See https://github.com/jsvine/pdfplumber/issues/236
+        """
+        page = self.pdf.pages[0]
+        single_cell = {
+            "vertical_strategy": "explicit",
+            "horizontal_strategy": "explicit",
+            "explicit_vertical_lines": [100, 200],
+            "explicit_horizontal_lines": [100, 200],
+        }
+        assert page.find_tables(single_cell) == []
+        tables = page.find_tables({**single_cell, "min_table_cells": 1})
+        assert len(tables) == 1
+        assert tables[0].bbox == (100, 100, 200, 200)
+
+        two_by_two = {
+            **single_cell,
+            "explicit_vertical_lines": [100, 200, 300],
+            "explicit_horizontal_lines": [100, 200, 300],
+        }
+        assert len(page.find_tables(two_by_two)) == 1
+        assert page.find_tables({**two_by_two, "min_table_cells": 5}) == []
+
     def test_edges_strict(self):
         path = os.path.join(HERE, "pdfs/issue-140-example.pdf")
         with pdfplumber.open(path) as pdf:
