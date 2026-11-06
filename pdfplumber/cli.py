@@ -4,12 +4,9 @@ import json
 import sys
 from collections import defaultdict, deque
 from itertools import chain
-from typing import Any, DefaultDict, Dict, List
+from typing import Any, DefaultDict, Dict, List, Optional
 
 from .pdf import PDF
-
-if len(sys.argv) == 1:
-    sys.argv.append("--help")
 
 
 def parse_page_spec(p_str: str) -> List[int]:
@@ -92,7 +89,9 @@ def add_text_to_mcids(pdf: PDF, data: List[Dict[str, Any]]) -> None:
             el["text"] = [text_contents[mcid] for mcid in el["mcids"]]
 
 
-def main(args_raw: List[str] = sys.argv[1:]) -> None:
+def main(args_raw: Optional[List[str]] = None) -> None:
+    if args_raw is None:
+        args_raw = sys.argv[1:] or ["--help"]
     args = parse_args(args_raw)
 
     with PDF.open(args.infile, pages=args.pages, laparams=args.laparams) as pdf:
