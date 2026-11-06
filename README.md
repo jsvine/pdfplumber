@@ -408,6 +408,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
     "intersection_tolerance": 3,
     "intersection_x_tolerance": 3,
     "intersection_y_tolerance": 3,
+    "min_table_cells": 2,
     "text_tolerance": 3,
     "text_x_tolerance": 3,
     "text_y_tolerance": 3,
@@ -428,6 +429,7 @@ By default, `extract_tables` uses the page's vertical and horizontal lines (or r
 |`"min_words_vertical"`| When using `"vertical_strategy": "text"`, at least `min_words_vertical` words must share the same alignment.|
 |`"min_words_horizontal"`| When using `"horizontal_strategy": "text"`, at least `min_words_horizontal` words must share the same alignment.|
 |`"intersection_tolerance"`, `"intersection_x_tolerance"`, `"intersection_y_tolerance"`| When combining edges into cells, orthogonal edges must be within `intersection_tolerance` points to be considered intersecting.|
+|`"min_table_cells"`| Groups of cells with fewer than `min_table_cells` cells are not considered tables. The default of `2` ignores simple rectangles; set it to `1` to treat a single bordered box as a table.|
 |`"text_*"`| All settings prefixed with `text_` are then used when extracting text from each discovered table. All possible arguments to `Page.extract_text(...)` are also valid here.|
 |`"text_x_tolerance"`, `"text_y_tolerance"`| These `text_`-prefixed settings *also* apply to the table-identification algorithm when the `text` strategy is used. I.e., when that algorithm searches for words, it will expect the individual letters in each word to be no more than `text_x_tolerance`/`text_y_tolerance` points apart.|
 
@@ -577,6 +579,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Sebastian Cao](https://github.com/cycsmail)
 - [Kaspar Naraghi](https://github.com/kaninaba94)
 - [Siddharth Gaur](https://github.com/siddharthgaur1)
+- [Rhuthik P](https://github.com/rhuthik)
 
 ## Contributing
 
