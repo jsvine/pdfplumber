@@ -19,6 +19,60 @@ logging.disable(logging.ERROR)
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
+@pytest.mark.parametrize(
+    "line_dir,char_dir,positions",
+    [
+        ("ttb", "ltr", [(0, 0), (0, 2)]),
+        ("btt", "ltr", [(0, 2), (0, 0)]),
+        ("ltr", "ttb", [(0, 0), (2, 0)]),
+        ("rtl", "ttb", [(2, 0), (0, 0)]),
+    ],
+)
+@pytest.mark.parametrize(
+    "line_dir_render,char_dir_render,expected",
+    [
+        ("ttb", "ltr", "A\nB"),
+        ("ttb", "rtl", "A\nB"),
+        ("btt", "ltr", "B\nA"),
+        ("btt", "rtl", "B\nA"),
+        ("ltr", "ttb", "AB"),
+        ("ltr", "btt", "AB"),
+        ("rtl", "ttb", "BA"),
+        ("rtl", "btt", "BA"),
+    ],
+)
+def test_extract_text_render_direction_preserves_lines(
+    line_dir, char_dir, positions, line_dir_render, char_dir_render, expected
+):
+    chars = [
+        {
+            "text": text,
+            "x0": x,
+            "x1": x + 1,
+            "top": y,
+            "bottom": y + 1,
+            "doctop": y,
+            "height": 1,
+            "upright": True,
+        }
+        for text, (x, y) in zip("AB", positions)
+    ]
+    # Only the tolerance perpendicular to the source lines should group them.
+    vertical_lines = line_dir in ("ttb", "btt")
+    assert (
+        utils.extract_text(
+            chars,
+            line_dir=line_dir,
+            char_dir=char_dir,
+            x_tolerance=10 if vertical_lines else 1,
+            y_tolerance=1 if vertical_lines else 10,
+            line_dir_render=line_dir_render,
+            char_dir_render=char_dir_render,
+        )
+        == expected
+    )
+
+
 class Test(unittest.TestCase):
     @classmethod
     def setup_class(self):

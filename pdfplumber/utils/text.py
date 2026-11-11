@@ -753,7 +753,7 @@ def extract_text(
         lines = cluster_objects(
             words,
             line_cluster_key,
-            y_tolerance if line_dir_render in ("ttb", "btt") else x_tolerance,
+            y_tolerance if extractor.line_dir in ("ttb", "btt") else x_tolerance,
         )
 
         return TextMap(

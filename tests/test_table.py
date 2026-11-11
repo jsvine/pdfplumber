@@ -169,6 +169,32 @@ class Test(unittest.TestCase):
             )
             assert table[3][0] == "   FY2013   \n   FY2014   "
 
+    def test_text_render_direction_preserves_lines(self):
+        path = os.path.join(HERE, "pdfs/line-char-render-example.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            extracted = page.extract_table(
+                {
+                    "vertical_strategy": "explicit",
+                    "explicit_vertical_lines": [page.bbox[0], page.bbox[2]],
+                    "horizontal_strategy": "explicit",
+                    "explicit_horizontal_lines": [
+                        page.bbox[1],
+                        page.height / 2,
+                        page.bbox[3],
+                    ],
+                    "text_x_tolerance": 30,
+                    "text_y_tolerance": 1,
+                    "text_line_dir_render": "ltr",
+                    "text_char_dir_render": "ttb",
+                }
+            )
+
+        assert extracted == [
+            ["fst\nieh\nrci\nsor\ntnd\n d \nl l\nili\nnin\nene\n e "],
+            [""],
+        ]
+
     def test_text_without_words(self):
         assert table.words_to_edges_h([]) == []
         assert table.words_to_edges_v([]) == []
