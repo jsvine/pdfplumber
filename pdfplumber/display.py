@@ -40,6 +40,7 @@ def get_page_image(
     resolution: Union[int, float],
     password: Optional[str],
     antialias: bool = False,
+    mediabox: Optional[T_bbox] = None,
 ) -> PIL.Image.Image:
 
     src: Union[pathlib.Path, BufferedReader, BytesIO]
@@ -65,6 +66,9 @@ def get_page_image(
     pdfium_doc.init_forms()
 
     pdfium_page = pdfium_doc.get_page(page_ix)
+    if mediabox is not None:
+        # Override PDFium's clipping box before rendering MediaBox content.
+        pdfium_page.set_cropbox(*mediabox)
 
     img: PIL.Image.Image = pdfium_page.render(
         # Modifiable arguments
@@ -101,11 +105,13 @@ class PageImage:
                 resolution=resolution,
                 antialias=antialias,
                 password=page.pdf.password,
+                mediabox=page.page_obj.mediabox if force_mediabox else None,
             )
         else:
             self.original = original
 
-        self.scale = self.original.size[0] / (page.cropbox[2] - page.cropbox[0])
+        render_bbox = page.mediabox if force_mediabox else page.cropbox
+        self.scale = self.original.size[0] / (render_bbox[2] - render_bbox[0])
 
         # This value represents the coordinates of the page,
         # in page-unit values, that will be displayed.
@@ -115,12 +121,9 @@ class PageImage:
             else (page.mediabox if force_mediabox else page.cropbox)
         )
 
-        # If this value is different than the *Page*'s .cropbox
-        # (e.g., because the mediabox differs from the cropbox or
-        # or because we've used Page.crop(...)), then we'll need to
-        # crop the initially-converted image.
-        if page.bbox != page.cropbox:
-            crop_dims = self._reproject_bbox(page.cropbox)
+        # Crop from the box used for rendering to the requested page bounds.
+        if self.bbox != render_bbox:
+            crop_dims = self._reproject_bbox(render_bbox)
             bbox_dims = self._reproject_bbox(self.bbox)
             self.original = self.original.crop(
                 (

@@ -16,6 +16,72 @@ logging.disable(logging.ERROR)
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
+@pytest.mark.parametrize("sizing", ["default", "resolution", "width", "height"])
+@pytest.mark.parametrize(
+    "page_index,size,red,blue",
+    [
+        (0, (300, 200), (20, 180), (130, 130)),
+        (1, (200, 300), (20, 20), (70, 130)),
+        (2, (300, 200), (280, 20), (170, 70)),
+        (3, (200, 300), (180, 280), (130, 170)),
+    ],
+)
+def test_force_mediabox_renders_content(page_index, size, red, blue, sizing):
+    # Both page boxes are inherited; red is outside the CropBox, blue inside.
+    path = os.path.join(HERE, "pdfs/mediabox-content.pdf")
+    kwargs = {
+        "default": {},
+        "resolution": {"resolution": 144},
+        "width": {"width": size[0] * 2},
+        "height": {"height": size[1] * 2},
+    }[sizing]
+    scale = 1 if sizing == "default" else 2
+    with pdfplumber.open(path) as pdf:
+        page = pdf.pages[page_index]
+        image = page.to_image(force_mediabox=True, **kwargs)
+        assert image.bbox == page.mediabox
+
+    assert image.original.size == tuple(value * scale for value in size)
+    assert image.scale == scale
+    assert image.original.getpixel(tuple(value * scale for value in red)) == (255, 0, 0)
+    assert image.original.getpixel(tuple(value * scale for value in blue)) == (
+        0,
+        0,
+        255,
+    )
+    assert image.original.getpixel((5 * scale, 5 * scale)) == (255, 255, 255)
+
+
+@pytest.mark.parametrize("resolution", [72, 144])
+def test_cropbox_rendering_preserved(resolution):
+    path = os.path.join(HERE, "pdfs/mediabox-content.pdf")
+    scale = resolution // 72
+    with pdfplumber.open(path) as pdf:
+        page = pdf.pages[0]
+        image = page.to_image(resolution=resolution)
+        assert image.bbox == page.cropbox
+
+    assert image.original.size == (150 * scale, 100 * scale)
+    assert image.scale == scale
+    assert image.original.getpixel((30 * scale, 80 * scale)) == (0, 0, 255)
+    assert image.original.getpixel((5 * scale, 5 * scale)) == (255, 255, 255)
+
+
+@pytest.mark.parametrize("resolution", [72, 144])
+def test_force_mediabox_cropped_page(resolution):
+    path = os.path.join(HERE, "pdfs/mediabox-content.pdf")
+    scale = resolution // 72
+    with pdfplumber.open(path) as pdf:
+        page = pdf.pages[0].crop((0, 150, 80, 200))
+        image = page.to_image(force_mediabox=True, resolution=resolution)
+        assert image.bbox == page.bbox
+
+    assert image.original.size == (80 * scale, 50 * scale)
+    assert image.scale == scale
+    assert image.original.getpixel((20 * scale, 30 * scale)) == (255, 0, 0)
+    assert image.original.getpixel((5 * scale, 5 * scale)) == (255, 255, 255)
+
+
 class Test(unittest.TestCase):
     @classmethod
     def setup_class(self):
@@ -82,7 +148,8 @@ class Test(unittest.TestCase):
             im = pdf.pages[0].to_image()
             assert im.original.size == (596, 842)
             im = pdf.pages[0].to_image(force_mediabox=True)
-            assert im.original.size == (2227, 2923)
+            # The rotated MediaBox is 2225.2 x 2919.69 points at 72 DPI.
+            assert im.original.size == (2226, 2920)
 
     def test_copy(self):
         assert self.im.copy().original == self.im.original
