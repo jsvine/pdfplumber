@@ -271,8 +271,14 @@ class PDFStructTree(Findable):
         page_number = None
         if self.page_dict is not None and "Pg" in obj:
             page_objid = obj["Pg"].objid
-            assert page_objid in self.page_dict, "Object on unparsed page: %s" % obj
-            page_number = self.page_dict[page_objid]
+            if page_objid in self.page_dict:
+                page_number = self.page_dict[page_objid]
+            else:
+                # "Pg" names the default page for the content items in "K",
+                # which may carry their own. A reference to something that is
+                # not a page in this document tells us nothing about them, so
+                # keep the element and leave its page number unknown.
+                logger.warning("Page object %r not found in document", page_objid)
         obj_tag = ""
         if "S" in obj:
             obj_tag = decode_text(obj["S"].name)
