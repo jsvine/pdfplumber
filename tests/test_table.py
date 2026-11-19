@@ -51,6 +51,17 @@ class Test(unittest.TestCase):
             tf = table.TableFinder(self.pdf.pages[0], {"join_tolerance": -1})
             tf.get_edges()
 
+    def test_intersection_edge_order(self):
+        vertical = {"orientation": "v", "x0": 5, "top": 0, "bottom": 10}
+        lower = {"orientation": "h", "x0": 0, "x1": 10, "top": 9}
+        right = {"orientation": "h", "x0": 4, "x1": 10, "top": 2}
+        left = {"orientation": "h", "x0": 1, "x1": 8, "top": 2}
+        edges = [lower, right, vertical, left]
+        intersections = table.edges_to_intersections(edges)
+
+        assert list(intersections) == [(5, 2), (5, 9)]
+        assert intersections[(5, 2)]["h"] == [left, right]
+
     def test_edges_strict(self):
         path = os.path.join(HERE, "pdfs/issue-140-example.pdf")
         with pdfplumber.open(path) as pdf:
