@@ -124,11 +124,12 @@ class PDF(Container):
     def close(self) -> None:
         self.flush_cache()
 
-        for page in self.pages:
-            page.close()
-
-        if not self.stream_is_external:
-            self.stream.close()
+        try:
+            for page in getattr(self, "_pages", ()):
+                page.close()
+        finally:
+            if not self.stream_is_external:
+                self.stream.close()
 
     def __enter__(self) -> "PDF":
         return self

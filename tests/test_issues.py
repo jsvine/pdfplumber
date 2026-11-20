@@ -338,3 +338,33 @@ class Test(unittest.TestCase):
         ):
             for _ in pdf.annots:
                 pass
+
+    def test_issue_1431(self):
+        """
+        Calling pdf.close() on a malformed PDF (e.g., missing /MediaBox)
+        should not trigger page parsing or raise TypeError, and should still
+        close an internal stream.
+        """
+        import io
+
+        objs = [
+            b"<< /Type /Catalog /Pages 2 0 R >>",
+            b"<< /Type /Pages /Count 1 /Kids [3 0 R] >>",
+            b"<< /Type /Page /Parent 2 0 R >>",
+        ]
+        out = bytearray(b"%PDF-1.4\n")
+        offsets = []
+        for number, body in enumerate(objs, 1):
+            offsets.append(len(out))
+            out += b"%d 0 obj\n" % number + body + b"\nendobj\n"
+        xref = len(out)
+        out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1)
+        for off in offsets:
+            out += b"%010d 00000 n \n" % off
+        out += (
+            b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n"
+            % (len(objs) + 1, xref)
+        )
+
+        pdf = pdfplumber.open(io.BytesIO(out))
+        pdf.close()
