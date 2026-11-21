@@ -191,8 +191,13 @@ class PageImage:
         # If passing a raw list of points, use those
         if isinstance(points_or_obj, (tuple, list)):
             points = points_or_obj
-        # Else, use the "pts" attribute if available
-        elif isinstance(points_or_obj, dict) and "pts" in points_or_obj:
+        # Edges may have been resized/snapped, so use their current bounds
+        # rather than the original object's points.
+        elif (
+            isinstance(points_or_obj, dict)
+            and "pts" in points_or_obj
+            and points_or_obj.get("orientation") not in ("h", "v")
+        ):
             points = [(x, y) for x, y in points_or_obj["pts"]]
         # Otherwise, just use ((x0, top), (x1, bottom))
         else:
