@@ -73,6 +73,16 @@ class Test(unittest.TestCase):
         cropped = page.crop(h0_bbox)
         assert len(cropped.annots) == len(cropped.hyperlinks) == 1
 
+    def test_annots_not_an_array(self):
+        # /Annots points at an object that is a dictionary, not an array of
+        # annotations, so iterating it yielded the dictionary's keys.
+        path = os.path.join(HERE, "pdfs/annots-not-an-array.pdf")
+        with pdfplumber.open(path) as pdf:
+            with pytest.warns(UserWarning, match="not an array"):
+                assert pdf.annots == []
+            with pytest.warns(UserWarning, match="not an array"):
+                assert pdf.hyperlinks == []
+
     def test_annots_rotated(self):
         def get_annot(filename, n=0):
             path = os.path.join(HERE, "pdfs", filename)

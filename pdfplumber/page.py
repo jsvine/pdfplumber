@@ -329,6 +329,12 @@ class Page(Container):
             return parsed
 
         raw = resolve_all(self.page_obj.annots) or []
+        if not isinstance(raw, (list, tuple)):
+            warn(
+                f"Page {self.page_number}'s /Annots is a"
+                f" {type(raw).__name__}, not an array; ignoring it."
+            )
+            raw = []
         parsed = list(map(parse, raw))
         if isinstance(self, CroppedPage):
             return self._crop_fn(parsed)
