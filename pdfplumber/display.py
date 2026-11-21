@@ -35,26 +35,19 @@ T_contains_points = Union[Tuple[T_point, ...], List[T_point], T_obj]
 
 def get_page_image(
     stream: Union[BufferedReader, BytesIO],
-    path: Optional[pathlib.Path],
     page_ix: int,
     resolution: Union[int, float],
     password: Optional[str],
     antialias: bool = False,
 ) -> PIL.Image.Image:
 
-    src: Union[pathlib.Path, BufferedReader, BytesIO]
-
-    # If we are working with a file object saved to disk
-    if path:
-        src = path
-
-    # If we instead are working with a BytesIO stream
-    else:
-        stream.seek(0)
-        src = stream
+    # Render from the stream that `PDF` parsed, rather than re-opening
+    # `PDF.path`, so that the bitmap cannot be built from different bytes
+    # than the page objects.
+    stream.seek(0)
 
     try:
-        pdfium_doc = pypdfium2.PdfDocument(src, password=password)
+        pdfium_doc = pypdfium2.PdfDocument(stream, password=password)
     except pypdfium2.PdfiumError as e:
         raise MalformedPDFException(e)
 
@@ -96,7 +89,6 @@ class PageImage:
         if original is None:
             self.original = get_page_image(
                 stream=page.pdf.stream,
-                path=page.pdf.path,
                 page_ix=page.page_number - 1,
                 resolution=resolution,
                 antialias=antialias,
