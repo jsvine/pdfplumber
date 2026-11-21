@@ -215,8 +215,9 @@ def edges_to_intersections(
     v_edges, h_edges = [
         list(filter(lambda x: x["orientation"] == o, edges)) for o in ("v", "h")
     ]
+    h_edges.sort(key=itemgetter("top", "x0"))
     for v in sorted(v_edges, key=itemgetter("x0", "top")):
-        for h in sorted(h_edges, key=itemgetter("top", "x0")):
+        for h in h_edges:
             if (
                 (v["top"] <= (h["top"] + y_tolerance))
                 and (v["bottom"] >= (h["top"] - y_tolerance))
