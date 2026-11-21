@@ -815,5 +815,11 @@ def dedupe_chars(
                 ):
                     yield sorted(x_cluster, key=pos_key)[0]
 
+    # Restore the original order by each char's first position in the input.
+    # Looking it up with `chars.index` scanned the list once per kept char,
+    # which made this quadratic (on a laptop, ~40s for 25,000 chars).
+    position: Dict[int, int] = {}
+    for i, char in enumerate(chars):
+        position.setdefault(id(char), i)
     deduped = yield_unique_chars(chars)
-    return sorted(deduped, key=chars.index)
+    return sorted(deduped, key=lambda char: position[id(char)])
