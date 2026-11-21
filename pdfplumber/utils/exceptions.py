@@ -10,4 +10,4 @@ class PdfminerException(Exception):
             # PDFPasswordIncorrect), which would otherwise be surfaced here
             # as a blank error message.
             return type(self.args[0]).__name__
-        return msg
+        return msg  # pragma: no cover
