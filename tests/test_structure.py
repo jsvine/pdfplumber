@@ -973,6 +973,20 @@ class TestUnparsed(unittest.TestCase):
         pdf = pdfplumber.open(path, pages=[2])
         assert pdf.structure_tree == PVSTRUCT2
 
+    def test_unknown_page_object(self):
+        """An element whose "Pg" names no page in the document keeps its subtree."""
+        path = os.path.join(HERE, "pdfs/issue-1147-example.pdf")
+
+        with pdfplumber.open(path) as pdf:
+            tree = pdf.structure_tree
+
+        assert [el["type"] for el in tree] == ["Document"]
+        # "Pg" points at an object that is not in this document, so the page
+        # is unknown, but the children name their own page.
+        assert "page_number" not in tree[0]
+        assert len(tree[0]["children"]) == 24
+        assert {el["page_number"] for el in tree[0]["children"]} == {1}
+
 
 class TestMany(unittest.TestCase):
     """Test various PDFs."""
