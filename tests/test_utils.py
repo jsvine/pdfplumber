@@ -470,6 +470,22 @@ class Test(unittest.TestCase):
         results = page.search(r"10 Tuesday", layout=True)
         assert len(results) == 0
 
+    def test_search_optional_main_group(self):
+        page = self.pdf_scotus.pages[0]
+        assert page.search(r"(sdfsd)?", main_group=1) == []
+
+    def test_search_alternative_main_group(self):
+        page = self.pdf_scotus.pages[0]
+        results = page.search(
+            r"Tuesday|(supreme\s+court)",
+            main_group=1,
+            case=False,
+            return_groups=False,
+        )
+        expected = page.search(r"supreme\s+court", case=False, return_groups=False)
+        assert len(expected) == 2
+        assert results == expected
+
     def test_extract_text_lines(self):
         page = self.pdf_scotus.pages[0]
         results = page.extract_text_lines()
