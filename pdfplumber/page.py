@@ -272,10 +272,13 @@ class Page(Container):
     @property
     def annots(self) -> T_obj_list:
         def rotate_point(pt: Tuple[float, float], r: int) -> Tuple[float, float]:
+            # The turns move the point through the whole page, so they are
+            # measured against the original page, not against a crop of it.
+            root = self.root_page
             turns = r // 90
             for i in range(turns):
                 x, y = pt
-                comp = self.width if i == turns % 2 else self.height
+                comp = root.width if i == turns % 2 else root.height
                 pt = (y, (comp - x))
             return pt
 

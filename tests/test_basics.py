@@ -95,6 +95,37 @@ class Test(unittest.TestCase):
         assert int(a["top"]) == int(b["y0"]) == int(d["x0"])
         assert int(a["bottom"]) == int(b["y1"]) == int(d["x1"])
 
+    def test_annots_rotated_and_cropped(self):
+        rotations = [
+            "annotations.pdf",
+            "annotations-rotated-90.pdf",
+            "annotations-rotated-180.pdf",
+            "annotations-rotated-270.pdf",
+        ]
+
+        # Cropping does not move an object, so an annotation that falls inside
+        # the crop keeps the coordinates it has on the whole page.
+        for filename in rotations:
+            path = os.path.join(HERE, "pdfs", filename)
+            with pdfplumber.open(path) as pdf:
+                page = pdf.pages[0]
+                x0, top, x1, bottom = page.bbox
+                # Take a strip off the width and off the height, so that every
+                # rotation sees the dimension its turns are measured against.
+                inside = page.within_bbox((x0, top, x1 - 10, bottom - 10))
+                on_page = set(map(pdfplumber.utils.obj_to_bbox, page.annots))
+                assert len(inside.annots)
+                for annot in inside.annots:
+                    assert pdfplumber.utils.obj_to_bbox(annot) in on_page
+
+        # And the crop should keep exactly the annotations it covers. On the
+        # 180-degree page, four of the five reach left of x=420.
+        path = os.path.join(HERE, "pdfs/annotations-rotated-180.pdf")
+        with pdfplumber.open(path) as pdf:
+            page = pdf.pages[0]
+            assert len(page.annots) == 5
+            assert len(page.crop((0, 0, 420, page.height)).annots) == 4
+
     def test_crop_and_filter(self):
         def test(obj):
             return obj["object_type"] == "char"
