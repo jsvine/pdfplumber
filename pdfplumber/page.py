@@ -183,6 +183,18 @@ def _invert_box(box_raw: T_bbox, mb_height: T_num) -> T_bbox:
     return (x0, mb_height - y1, x1, mb_height - y0)
 
 
+def _rotate_box(box_raw: T_bbox, rotation: T_num, mb_raw: T_bbox) -> T_bbox:
+    x0, y0, x1, y1 = _normalize_box(box_raw, rotation)
+    # Axis swapping alone is insufficient for a box smaller than MediaBox.
+    # Reflect the appropriate axes within the rotated MediaBox before the
+    # existing top-left inversion, retaining the page's global origin.
+    if rotation in [180, 270]:
+        x0, x1 = mb_raw[0] + (mb_raw[2] - x1), mb_raw[2] - (x0 - mb_raw[0])
+    if rotation in [90, 180]:
+        y0, y1 = mb_raw[1] + (mb_raw[3] - y1), mb_raw[3] - (y0 - mb_raw[1])
+    return (x0, y0, x1, y1)
+
+
 class Page(Container):
     cached_properties: List[str] = Container.cached_properties + ["_layout"]
     is_original: bool = True
@@ -219,7 +231,7 @@ class Page(Container):
         for box_name in ["CropBox", "TrimBox", "BleedBox", "ArtBox"]:
             if box_name in page_obj.attrs:
                 box_normalized = _invert_box(
-                    _normalize_box(get_attr(box_name), self.rotation), mb_height
+                    _rotate_box(get_attr(box_name), self.rotation, mb_raw), mb_height
                 )
                 setattr(self, box_name.lower(), box_normalized)
 
