@@ -43,7 +43,7 @@ setup(
     package_data={"pdfplumber": ["py.typed"]},
     zip_safe=False,
     tests_require=base_reqs + dev_reqs,
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=base_reqs,
     entry_points={"console_scripts": ["pdfplumber = pdfplumber.cli:main"]},
     classifiers=[
