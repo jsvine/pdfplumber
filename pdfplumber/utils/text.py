@@ -251,6 +251,7 @@ class WordMap:
         x_shift: T_num = 0,
         y_shift: T_num = 0,
         y_tolerance: T_num = DEFAULT_Y_TOLERANCE,
+        y_tolerance_ratio: Union[int, float, None] = None,
         line_dir: T_dir = DEFAULT_LINE_DIR,
         char_dir: T_dir = DEFAULT_CHAR_DIR,
         line_dir_rotated: Optional[T_dir] = None,
@@ -269,8 +270,9 @@ class WordMap:
 
         - Sort the words by (top, x0) if not already sorted.
 
-        - Cluster the words by top (taking `y_tolerance` into account), and
-          iterate through them.
+        - Cluster the words by top (taking `y_tolerance` into account, or
+          `y_tolerance_ratio` times the largest character size in the word, if
+          set), and iterate through them.
 
         - For each cluster, divide (top - y_shift) by `y_density` to calculate
           the minimum number of newlines that should come before this cluster.
@@ -341,10 +343,17 @@ class WordMap:
             else sorted(self.tuples, key=lambda x: line_cluster_key(x[0]))
         )
 
+        tolerance: Union[T_num, Callable[[Tuple[T_obj, T_obj_list]], T_num]]
+        if y_tolerance_ratio is None:
+            tolerance = y_tolerance
+        else:
+            ytr = y_tolerance_ratio
+            tolerance = lambda x: ytr * max(c["size"] for c in x[1])  # noqa: E731
+
         tuples_by_line = cluster_objects(
             words_sorted_line_dir,
             lambda x: line_cluster_key(x[0]),
-            y_tolerance,
+            tolerance,
             preserve_order=presorted or use_text_flow,
         )
 
@@ -649,12 +658,17 @@ class WordExtractor:
         line_cluster_key = get_line_cluster_key(line_dir)
         char_sort_key = get_char_sort_key(char_dir)
 
+        tolerance: Union[T_num, Callable[[T_obj], T_num]]
+        if line_dir not in ("ttb", "btt"):
+            tolerance = self.x_tolerance
+        elif self.y_tolerance_ratio is None:
+            tolerance = self.y_tolerance
+        else:
+            ytr = self.y_tolerance_ratio
+            tolerance = lambda c: ytr * c["size"]  # noqa: E731
+
         # Cluster by line
-        subclusters = cluster_objects(
-            chars,
-            line_cluster_key,
-            (self.y_tolerance if line_dir in ("ttb", "btt") else self.x_tolerance),
-        )
+        subclusters = cluster_objects(chars, line_cluster_key, tolerance)
 
         for sc in subclusters:
             # Sort within line
@@ -740,8 +754,6 @@ def extract_text(
         extractor = WordExtractor(
             **{k: kwargs[k] for k in WORD_EXTRACTOR_KWARGS if k in kwargs}
         )
-        words = extractor.extract_words(chars)
-
         line_dir_render = line_dir_render or extractor.line_dir
         char_dir_render = char_dir_render or extractor.char_dir
 
@@ -749,12 +761,21 @@ def extract_text(
 
         x_tolerance = kwargs.get("x_tolerance", DEFAULT_X_TOLERANCE)
         y_tolerance = kwargs.get("y_tolerance", DEFAULT_Y_TOLERANCE)
+        y_tolerance_ratio = kwargs.get("y_tolerance_ratio")
 
-        lines = cluster_objects(
-            words,
-            line_cluster_key,
-            y_tolerance if line_dir_render in ("ttb", "btt") else x_tolerance,
+        tolerance: Union[T_num, Callable[[T_obj], T_num]]
+        if line_dir_render not in ("ttb", "btt"):
+            tolerance = x_tolerance
+        elif y_tolerance_ratio is None:
+            tolerance = y_tolerance
+        else:
+            ytr = y_tolerance_ratio
+            tolerance = lambda w: ytr * max(c["size"] for c in w["chars"])  # noqa: E731
+
+        words = extractor.extract_words(
+            chars, return_chars=y_tolerance_ratio is not None
         )
+        lines = cluster_objects(words, line_cluster_key, tolerance)
 
         return TextMap(
             [

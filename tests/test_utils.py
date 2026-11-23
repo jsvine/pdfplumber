@@ -47,6 +47,15 @@ class Test(unittest.TestCase):
         assert utils.cluster_objects(b, "x", 0) == [[b[0], b[1]], [b[2], b[3]]]
         assert utils.cluster_objects(b, 7, 0) == [[b[0]], [b[1], b[2], b[3]]]
 
+    def test_cluster_objects_callable_tolerance(self):
+        # The tolerance is taken from the previous object in each step
+        a = [{"x": 0, "tol": 1}, {"x": 1, "tol": 5}, {"x": 5, "tol": 1}, {"x": 7}]
+        assert utils.cluster_objects(a, "x", lambda o: o["tol"]) == [a[:3], [a[3]]]
+        assert utils.cluster_objects(a, "x", lambda o: 1) == [a[:2], [a[2]], [a[3]]]
+        assert utils.cluster_objects(
+            a[::-1], "x", lambda o: o.get("tol", 0), preserve_order=True
+        ) == [[a[3]], [a[2], a[1], a[0]]]
+
     def test_resolve(self):
         annot = self.pdf.annots[0]
         annot_ad0 = utils.resolve(annot["data"]["A"]["D"][0])
@@ -74,6 +83,44 @@ class Test(unittest.TestCase):
 
         words = page.extract_words(x_tolerance_ratio=0.15)
         assert "|".join(w["text"] for w in words) == "Big|Text|Small|Text"
+
+    def test_y_tolerance_ratio(self):
+        # Mimics issue #1380: 12pt text with asterisks raised 3.4pt, more than
+        # the default y_tolerance of 3, but less than 0.3 * 12 = 3.6.
+        def char(text, x0, top, size=12):
+            return {
+                "text": text,
+                "x0": x0,
+                "x1": x0 + 6,
+                "top": top,
+                "bottom": top + size,
+                "doctop": top,
+                "width": 6,
+                "height": size,
+                "size": size,
+                "upright": True,
+            }
+
+        chars = [
+            char("3", 100, 100),
+            char("2", 106, 100),
+            char("8", 112, 100),
+            char("*", 118, 96.6),
+            char("A", 100, 115),
+        ]
+
+        assert utils.extract_text(chars) == "*\n328\nA"
+        assert utils.extract_text(chars, y_tolerance_ratio=0.3) == "328*\nA"
+        assert utils.extract_text(chars, y_tolerance_ratio=0.2) == "*\n328\nA"
+
+        words = utils.extract_words(chars, y_tolerance_ratio=0.3)
+        assert [w["text"] for w in words] == ["328*", "A"]
+
+        layout = utils.extract_text(chars, layout=True, y_tolerance_ratio=0.3)
+        assert [line.strip() for line in layout.splitlines() if line.strip()] == [
+            "328*",
+            "A",
+        ]
 
     def test_extract_words(self):
         path = os.path.join(HERE, "pdfs/issue-192-example.pdf")
