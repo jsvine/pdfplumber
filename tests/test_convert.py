@@ -5,7 +5,7 @@ import os
 import sys
 import unittest
 from io import StringIO
-from subprocess import PIPE, Popen
+from subprocess import PIPE, Popen, check_call
 
 import pytest
 
@@ -191,6 +191,16 @@ class Test(unittest.TestCase):
     def test_csv_all_types(self):
         c = self.pdf.to_csv(object_types=None)
         assert c.split("\r\n")[1].split(",")[0] == "line"
+
+    def test_import_cli_preserves_argv(self):
+        check_call(
+            [
+                sys.executable,
+                "-c",
+                "import sys; before = sys.argv.copy(); "
+                "import pdfplumber.cli; assert sys.argv == before",
+            ]
+        )
 
     def test_cli_help(self):
         res = run([sys.executable, "-m", "pdfplumber.cli"])
