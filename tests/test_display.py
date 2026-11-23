@@ -87,6 +87,21 @@ class Test(unittest.TestCase):
     def test_copy(self):
         assert self.im.copy().original == self.im.original
 
+    def test_copy_cropped(self):
+        page = self.pdf.pages[0]
+        im = page.crop((10, 20, page.width / 2, page.height / 2)).to_image(
+            resolution=144
+        )
+        im.draw_rect((20, 30, 40, 50))
+        im_copy = im.copy()
+        assert im_copy.original == im.original
+        assert im_copy.resolution == im.resolution
+        assert im_copy.scale == im.scale
+        assert im_copy.bbox == im.bbox
+        # The copy starts without the original's annotations
+        assert im_copy.annotated == im.original
+        assert im_copy.annotated != im.annotated
+
     def test_outline_words(self):
         self.im.outline_words(
             stroke="blue",
