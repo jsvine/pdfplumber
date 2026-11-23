@@ -64,6 +64,8 @@ def parse_args(args_raw: List[str]) -> argparse.Namespace:
         "--indent", type=int, help="Indent level for JSON pretty-printing."
     )
 
+    parser.add_argument("--password", help="A password to open the file")
+
     args = parser.parse_args(args_raw)
     if args.pages is not None:
         args.pages = list(chain(*args.pages))
@@ -95,7 +97,9 @@ def add_text_to_mcids(pdf: PDF, data: List[Dict[str, Any]]) -> None:
 def main(args_raw: List[str] = sys.argv[1:]) -> None:
     args = parse_args(args_raw)
 
-    with PDF.open(args.infile, pages=args.pages, laparams=args.laparams) as pdf:
+    with PDF.open(
+        args.infile, pages=args.pages, laparams=args.laparams, password=args.password
+    ) as pdf:
         if args.structure:
             print(json.dumps(pdf.structure_tree, indent=args.indent))
         elif args.structure_text:
