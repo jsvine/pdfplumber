@@ -13,10 +13,10 @@ from pdfminer.pdfparser import PDFParser
 
 from ._typing import T_num, T_obj_list
 from .container import Container
-from .page import Page
+from .page import Page, _invert_box, _normalize_box
 from .repair import T_repair_setting, _repair
 from .structure import PDFStructTree, StructTreeMissing
-from .utils import resolve_and_decode
+from .utils import resolve_all, resolve_and_decode
 from .utils.exceptions import PdfminerException
 
 logger = logging.getLogger(__name__)
@@ -148,7 +148,9 @@ class PDF(Container):
 
         doctop: T_num = 0
         pp = self.pages_to_parse
+        last_page = max(pp, default=0) if pp is not None else None
         self._pages: List[Page] = []
+        skipped_geometry: List[Tuple[Any, Any]] = []
 
         def iter_pages() -> Generator[PDFPage, None, None]:
             gen = PDFPage.create_pages(self.doc)
@@ -163,7 +165,18 @@ class PDF(Container):
         for i, page in enumerate(iter_pages()):
             page_number = i + 1
             if pp is not None and page_number not in pp:
+                if last_page is not None and page_number < last_page:
+                    skipped_geometry.append(
+                        (page.attrs.get("MediaBox"), page.attrs.get("Rotate"))
+                    )
                 continue
+            # Resolve skipped geometry only if an actual selected page needs it.
+            for box_raw, rotation_raw in skipped_geometry:
+                rotation = resolve_all(rotation_raw) or 0
+                mediabox = _normalize_box(resolve_all(box_raw), rotation % 360)
+                mediabox = _invert_box(mediabox, mediabox[3] - mediabox[1])
+                doctop += mediabox[3] - mediabox[1]
+            skipped_geometry.clear()
             p = Page(self, page, page_number=page_number, initial_doctop=doctop)
             self._pages.append(p)
             doctop += p.height

@@ -578,6 +578,8 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Kaspar Naraghi](https://github.com/kaninaba94)
 - [Siddharth Gaur](https://github.com/siddharthgaur1)
 
+- [@FanWu-ai](https://github.com/FanWu-ai)
+
 ## Contributing
 
 Pull requests are welcome, but please submit a proposal issue first, as the library is in active development.
