@@ -10,6 +10,7 @@ DEFAULT_SNAP_TOLERANCE = 3
 DEFAULT_JOIN_TOLERANCE = 3
 DEFAULT_MIN_WORDS_VERTICAL = 3
 DEFAULT_MIN_WORDS_HORIZONTAL = 1
+DEFAULT_MIN_TABLE_CELLS = 2
 
 T_intersections = Dict[T_point, Dict[str, T_obj_list]]
 T_table_settings = Union["TableSettings", Dict[str, Any]]
@@ -294,10 +295,13 @@ def intersections_to_cells(intersections: T_intersections) -> List[T_bbox]:
     return list(filter(None, cell_gen))
 
 
-def cells_to_tables(cells: List[T_bbox]) -> List[List[T_bbox]]:
+def cells_to_tables(
+    cells: List[T_bbox], min_cells: int = DEFAULT_MIN_TABLE_CELLS
+) -> List[List[T_bbox]]:
     """
     Given a list of bounding boxes (`cells`), return a list of tables that
-    hold those cells most simply (and contiguously).
+    hold those cells most simply (and contiguously). Tables with fewer than
+    `min_cells` cells are discarded.
     """
 
     def bbox_to_corners(bbox: T_bbox) -> Tuple[T_point, T_point, T_point, T_point]:
@@ -351,7 +355,7 @@ def cells_to_tables(cells: List[T_bbox]) -> List[List[T_bbox]]:
     # Sort the tables top-to-bottom-left-to-right based on the value of the
     # topmost-and-then-leftmost coordinate of a table.
     _sorted = sorted(tables, key=lambda t: min((c[1], c[0]) for c in t))
-    filtered = [t for t in _sorted if len(t) > 1]
+    filtered = [t for t in _sorted if len(t) >= min_cells]
     return filtered
 
 
@@ -472,6 +476,7 @@ NON_NEGATIVE_SETTINGS = [
     "intersection_tolerance",
     "intersection_x_tolerance",
     "intersection_y_tolerance",
+    "min_table_cells",
 ]
 
 
@@ -501,6 +506,7 @@ class TableSettings:
     intersection_tolerance: T_num = 3
     intersection_x_tolerance: T_num = UNSET
     intersection_y_tolerance: T_num = UNSET
+    min_table_cells: int = DEFAULT_MIN_TABLE_CELLS
     text_settings: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
@@ -596,7 +602,8 @@ class TableFinder(object):
         )
         self.cells = intersections_to_cells(self.intersections)
         self.tables = [
-            Table(self.page, cell_group) for cell_group in cells_to_tables(self.cells)
+            Table(self.page, cell_group)
+            for cell_group in cells_to_tables(self.cells, self.settings.min_table_cells)
         ]
 
     def get_edges(self) -> T_obj_list:
