@@ -122,10 +122,15 @@ class PDF(Container):
             raise
 
     def close(self) -> None:
-        self.flush_cache()
-
+        # Must close the pages *before* flush_cache() clears `_pages`; the
+        # `pages` property re-parses (and returns a fresh, never-otherwise-
+        # referenced set of pages) if `_pages` is missing, so flushing first
+        # means the pages actually used by the caller never get their heavy
+        # caches (`_objects`, `_layout`, `get_textmap`) released. See #1339.
         for page in self.pages:
             page.close()
+
+        self.flush_cache()
 
         if not self.stream_is_external:
             self.stream.close()
