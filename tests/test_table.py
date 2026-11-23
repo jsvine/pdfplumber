@@ -250,3 +250,77 @@ class Test(unittest.TestCase):
             assert t[-2][-2] == "Uncommon"
 
             assert len(page.extract_tables({"vertical_strategy": "lines_strict"})) == 0
+
+class TestEdgeAdjustmentIntegration(unittest.TestCase):
+    """Integration tests for edge adjustment with realistic table scenarios.
+
+    These tests simulate real-world cases where table headers are longer than
+    the data columns below them, which previously caused edges to incorrectly
+    intersect the header text.
+
+    Key insight: words_to_edges_v clusters words by x0, x1, or center, and needs
+    at least `word_threshold` (default 3) words aligned to create an edge.
+    Bounding boxes from clusters that overlap get condensed, so we need clusters
+    that DON'T overlap with larger clusters to trigger the bug.
+    """
+
+    def _make_word(self, x0, x1, top, bottom, text=""):
+        """Helper to create a word-like dict with all typical fields."""
+        return {
+            "x0": x0,
+            "x1": x1,
+            "top": top,
+            "bottom": bottom,
+            "text": text,
+            "doctop": top,
+            "upright": True,
+        }
+
+    def test_short_aligned_data_under_wide_header(self):
+        """Test that edges from short aligned data don't cut through wide headers.
+
+        Creates a scenario where column 2's data cluster creates an edge
+        that would fall inside column 1's wide header.
+
+        The key is that the column 2 data cluster bbox must NOT overlap
+        with any previously accepted condensed bbox, so it doesn't get
+        filtered out by the overlap check.
+
+        Layout:
+        | Wide Header Here       | Col2 |
+        |                   data | val  |  (many rows)
+
+        Column 1 header: x=10-200
+        Column 1 data: x=160-190 (right-aligned, doesn't share x0 with header)
+        Column 2 data: x=100-120 (x0=100 is inside the header 10-200)
+
+        The column 2 cluster at x0=100 won't overlap with column 1 data cluster
+        (which is at x=160-190), so it won't be condensed away.
+        """
+        words = [
+            # Wide header spanning most of the width
+            self._make_word(10, 200, 0, 10, "Wide Header Here"),
+            self._make_word(250, 300, 0, 10, "Col2"),
+        ]
+
+        # Add many rows where:
+        # - Column 1 data is right-aligned (x=160-190), NOT overlapping with col2
+        # - Column 2 data starts at x=100, which is INSIDE the header (10-200)
+        #   but does NOT overlap with column 1 data bbox (160-190)
+        for i in range(10):
+            y_top = 20 + i * 15
+            y_bottom = y_top + 10
+            # Column 1: right-aligned data
+            words.append(self._make_word(160, 190, y_top, y_bottom, "data"))
+            # Column 2: data whose x0 (100) falls inside header (10-200)
+            words.append(self._make_word(100, 130, y_top, y_bottom, "val"))
+
+        edges = table.words_to_edges_v(words, word_threshold=3)
+        x_positions = sorted([e["x0"] for e in edges])
+
+        # The bug: without the fix, there would be an edge at x=100
+        # which is inside "Wide Header Here" (10-200)
+        for x in x_positions:
+            assert not (10 < x < 200), (
+                f"Edge at x={x} incorrectly intersects 'Wide Header Here' (10-200)"
+            )
