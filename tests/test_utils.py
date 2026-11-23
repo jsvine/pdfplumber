@@ -693,3 +693,82 @@ class Test(unittest.TestCase):
         assert utils.to_list(tuple(objs)) == objs
         assert utils.to_list((o for o in objs)) == objs
         assert utils.to_list(pd.DataFrame(objs)) == objs
+
+
+class TestCurveMeasurement(unittest.TestCase):
+    """curve_points + curve_length: bezier control-point measurement.
+
+    The `path` attribute has exposed bezier control points since v0.11.0;
+    these utilities close the missing MEASUREMENT capability — endpoint-only
+    distances under-read curved paths (a quarter-arc by chord is ~10% short).
+    """
+
+    KAPPA = 0.5522847498307936  # the standard circular-arc bezier constant
+
+    def _quarter_arc(self, r=100):
+        """One kappa-approximated quarter-arc from (r, 0) to (0, r)."""
+        k = r * self.KAPPA
+        return {
+            "path": [
+                ("m", (r, 0)),
+                ("c", (r, k), (k, r), (0, r)),
+            ]
+        }
+
+    def test_curve_points_returns_control_points_in_path_order(self):
+        curve = {
+            "path": [
+                ("m", (1, 2)),
+                ("c", (3, 4), (5, 6), (7, 8)),
+                ("l", (9, 10)),
+                ("h",),
+            ]
+        }
+        assert utils.curve_points(curve) == [
+            (1, 2),
+            (3, 4),
+            (5, 6),
+            (7, 8),
+            (9, 10),
+        ]
+
+    def test_curve_length_lines_and_close_are_exact(self):
+        # m -> l -> l -> h: the euclidean total, exactly
+        curve = {
+            "path": [
+                ("m", (0, 0)),
+                ("l", (3, 4)),  # 5
+                ("l", (3, 0)),  # + 4
+                ("h",),  # + 3 (close back to (0, 0))
+            ]
+        }
+        assert utils.curve_length(curve) == 12.0
+
+    def test_curve_length_quarter_arc_converges(self):
+        # r=100: analytic arc length = r * pi/2 = 157.07963267948966. The
+        # kappa-approximated bezier reads ~4e-5 relative ABOVE the analytic
+        # arc at N=32 (the bezier itself deviates outward; the chord
+        # flattening inside it reads correspondingly low — the effects nearly
+        # cancel). The pinned literal is the exact N=32 Bernstein-form value.
+        import math as _math
+
+        length = utils.curve_length(self._quarter_arc(), n=32)
+        analytic = 100 * _math.pi / 2
+        assert abs(length - 157.08587595730572) < 1e-9
+        assert abs(length - analytic) / analytic < 1e-4
+
+    def test_curve_length_default_n_and_multi_segment(self):
+        # the default n=32 equals an explicit n=32; segment lengths sum
+        # across subpaths (the same quarter-arc drawn twice = twice the
+        # single-arc length — an 'm' between them adds no length)
+        arc_path = [
+            ("m", (50, 0)),
+            ("c", (50, 50 * self.KAPPA), (50 * self.KAPPA, 50), (0, 50)),
+        ]
+        single = utils.curve_length({"path": arc_path}, n=32)
+        assert utils.curve_length({"path": arc_path}) == single
+        # the sequential two-subpath sum may differ from the doubling in the
+        # last ulp (addition order) — pinned at 1e-12, not exact equality
+        assert (
+            abs(utils.curve_length({"path": arc_path + arc_path}) - 2 * single) < 1e-12
+        )
