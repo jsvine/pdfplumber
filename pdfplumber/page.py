@@ -41,6 +41,10 @@ from .utils.text import TextMap
 
 lt_pat = re.compile(r"^LT")
 
+# Attribute values of these exact types can never hold (or be) a `PDFObjRef`,
+# so `resolve_all` would return them unchanged.
+SCALAR_TYPES = (float, int, str, bool, type(None))
+
 ALL_ATTRS = set(
     [
         "adv",
@@ -87,6 +91,20 @@ CP936_FONTNAMES = {
     b"\xb7\xc2\xcb\xce_GB2312": "SimFang,Regular",
     b"\xc1\xa5\xca\xe9": "SimLi,Regular",
 }
+
+
+@lru_cache(maxsize=None)
+def get_object_kind(class_name: str) -> str:
+    return re.sub(lt_pat, "", class_name).lower()
+
+
+def is_resolved(v: Any) -> bool:
+    """True if `resolve_all(v)` would return a value equal to `v`, without
+    resolving anything: an exact scalar, or a tuple of exact scalars."""
+    t = type(v)
+    if t in SCALAR_TYPES:
+        return True
+    return t is tuple and all(type(x) in SCALAR_TYPES for x in v)
 
 
 def fix_fontname_bytes(fontname: bytes) -> str:
@@ -351,12 +369,12 @@ class Page(Container):
         return (self.mediabox[0] + pt[0], self.mediabox[1] + self.height - pt[1])
 
     def process_object(self, obj: LTItem) -> T_obj:
-        kind = re.sub(lt_pat, "", obj.__class__.__name__).lower()
+        kind = get_object_kind(obj.__class__.__name__)
 
         def process_attr(item: Tuple[str, Any]) -> Optional[Tuple[str, Any]]:
             k, v = item
             if k in ALL_ATTRS:
-                res = resolve_all(v)
+                res = v if is_resolved(v) else resolve_all(v)
                 return (k, res)
             else:
                 return None
