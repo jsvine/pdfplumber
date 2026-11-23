@@ -341,10 +341,18 @@ class WordMap:
             else sorted(self.tuples, key=lambda x: line_cluster_key(x[0]))
         )
 
+        # Keep superscripts (slightly smaller `top`) on the same layout
+        # line as the baseline so their x-position is not computed alone.
+        if layout:
+            line_density = y_density if line_dir in ("ttb", "btt") else x_density
+            line_cluster_tolerance = max(y_tolerance, line_density / 2)
+        else:
+            line_cluster_tolerance = y_tolerance
+
         tuples_by_line = cluster_objects(
             words_sorted_line_dir,
             lambda x: line_cluster_key(x[0]),
-            y_tolerance,
+            line_cluster_tolerance,
             preserve_order=presorted or use_text_flow,
         )
 
@@ -374,7 +382,7 @@ class WordMap:
 
             line_tuples_sorted = (
                 line_tuples
-                if presorted or use_text_flow
+                if use_text_flow or (presorted and not layout)
                 else sorted(line_tuples, key=lambda x: char_sort_key(x[0]))
             )
 
