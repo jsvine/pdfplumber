@@ -232,9 +232,14 @@ class Page(Container):
         # See https://rednafi.com/python/lru_cache_on_methods/
         self.get_textmap = lru_cache()(self._get_textmap)
 
+    def flush_cache(self, properties: Optional[List[str]] = None) -> None:
+        super().flush_cache(properties)
+        # The textmap cache is by far the largest of a Page's caches, and is
+        # not a `cached_properties` entry, so it has to be cleared explicitly.
+        self.get_textmap.cache_clear()
+
     def close(self) -> None:
         self.flush_cache()
-        self.get_textmap.cache_clear()
 
     @property
     def width(self) -> T_num:
@@ -650,8 +655,9 @@ class DerivedPage(Page):
         self.rotation = parent_page.rotation
         self.mediabox = parent_page.mediabox
         self.cropbox = parent_page.cropbox
-        self.flush_cache(Container.cached_properties)
+        # Must precede flush_cache, which now clears this cache.
         self.get_textmap = lru_cache()(self._get_textmap)
+        self.flush_cache(Container.cached_properties)
 
 
 def test_proposed_bbox(bbox: T_bbox, parent_bbox: T_bbox) -> None:
