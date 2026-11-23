@@ -122,9 +122,14 @@ class PDF(Container):
             raise
 
     def close(self) -> None:
+        # Close the pages that were already loaded. Going through
+        # `self.pages` here would parse the whole document again after
+        # `flush_cache()` removes `_pages`, which raises on malformed PDFs
+        # and leaves the stream open.
+        pages = getattr(self, "_pages", [])
         self.flush_cache()
 
-        for page in self.pages:
+        for page in pages:
             page.close()
 
         if not self.stream_is_external:

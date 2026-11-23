@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import os
+import tempfile
 import unittest
 
 import pytest
@@ -262,3 +263,42 @@ class Test(unittest.TestCase):
             assert page.artbox == (42.51969, 70.86613999999997, 552.75591, 827.71653)
             assert page.bleedbox == (0, 0.0, 623.62205, 870.23622)
             assert page.trimbox == (28.34646, 56.69290999999998, 566.92913, 841.88976)
+
+    def test_close_closes_loaded_pages(self):
+        path = os.path.join(HERE, "pdfs/nics-background-checks-2015-11.pdf")
+        pdf = pdfplumber.open(path)
+        page = pdf.pages[0]
+        assert page.chars
+        assert hasattr(page, "_objects")
+        pdf.close()
+        assert not hasattr(page, "_objects")
+        assert pdf.stream.closed
+
+    def test_close_after_page_parsing_fails(self):
+        # A /Page with no /MediaBox, on the page or inherited (#1431)
+        objs = [
+            b"<< /Type /Catalog /Pages 2 0 R >>",
+            b"<< /Type /Pages /Count 1 /Kids [3 0 R] >>",
+            b"<< /Type /Page /Parent 2 0 R >>",
+        ]
+        data = bytearray(b"%PDF-1.4\n")
+        offsets = []
+        for number, body in enumerate(objs, 1):
+            offsets.append(len(data))
+            data += b"%d 0 obj\n" % number + body + b"\nendobj\n"
+        xref = len(data)
+        data += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1)
+        for offset in offsets:
+            data += b"%010d 00000 n \n" % offset
+        data += b"trailer\n<< /Size %d /Root 1 0 R >>\n" % (len(objs) + 1)
+        data += b"startxref\n%d\n%%%%EOF\n" % xref
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "no-mediabox.pdf")
+            with open(path, "wb") as f:
+                f.write(data)
+            pdf = pdfplumber.open(path)
+            with pytest.raises(TypeError):
+                pdf.pages
+            pdf.close()
+            assert pdf.stream.closed
