@@ -120,11 +120,16 @@ class TextMap:
             return base
         else:
             lines = base.split("\n")
+            for line in lines:
+                try:
+                    int(line)
+                except:
+                    continue
             if ld in ("btt", "rtl"):
                 lines = list(reversed(lines))
 
             if cd == "rtl":
-                lines = ["".join(reversed(line)) for line in lines]
+                lines = ["".join(reversed(line) if not line.isdigit() else line) for line in lines]
 
             if ld in ("rtl", "ltr"):
                 max_line_length = max(map(len, lines))
