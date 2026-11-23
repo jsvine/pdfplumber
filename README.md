@@ -284,6 +284,31 @@ Additionally, both `pdfplumber.PDF` and `pdfplumber.Page` provide access to seve
 If you pass the `pdfminer.six`-handling `laparams` parameter to `pdfplumber.open(...)`, then each page's `.objects` dictionary will also contain `pdfminer.six`'s higher-level layout objects, such as `"textboxhorizontal"`.
 
 
+### Coordinates
+
+`pdfplumber` uses `top` and `bottom` for vertical coordinates, increasing downward from the top of the page. It also retains the original `y0` and `y1` properties, which increase upward from the bottom of the page.
+
+| Property | Measured from | Direction |
+|----------|---------------|-----------|
+|`y0`, `y1`| Bottom of the page | Upward |
+|`top`, `bottom`| Top of the page | Downward |
+|`doctop`| Top of the *document* | Downward |
+
+Bounding boxes use `(x0, top, x1, bottom)`, as expected by `.crop(...)`, `.within_bbox(...)`, and the visual-debugging methods. The top-left origin follows typical reading order and the convention used by SVG, Canvas, and PIL/Pillow ([#198](https://github.com/jsvine/pdfplumber/issues/198)).
+
+For objects on an original, **uncropped** page whose `MediaBox` begins at `(0, 0)`, the conversions are:
+
+```python
+top = page.height - y1
+bottom = page.height - y0
+```
+
+For an original page with a nonzero `MediaBox` origin, add `page.mediabox[1]` to both expressions.
+
+Cropping keeps the original page coordinate system; it does not move the origin to the crop's corner. A cropped page has a different `.height`, and objects intersecting its boundary can have clipped `top` and `bottom` values while retaining their original `y0` and `y1`. Use the cropped objects' `top` and `bottom` directly rather than applying the formulas above to the cropped page.
+
+Objects parsed from the PDF carry the coordinate properties listed in their tables above. The dictionaries returned by `.extract_words(...)` provide `top`, `bottom`, and `doctop` but no `y0`/`y1`; `.search(...)` results provide `top` and `bottom`. A line's or curve's `pts` are `(x, top)` tuples.
+
 ## Visual debugging
 
 `pdfplumber`'s visual debugging tools can be helpful in understanding the structure of a PDF and the objects that have been extracted from it.
@@ -576,6 +601,7 @@ Many thanks to the following users who've contributed ideas, features, and fixes
 - [Anton Ilin](https://github.com/bronislav)
 - [Sebastian Cao](https://github.com/cycsmail)
 - [Kaspar Naraghi](https://github.com/kaninaba94)
+- [Gaurav Sood](https://github.com/soodoku)
 - [Siddharth Gaur](https://github.com/siddharthgaur1)
 
 ## Contributing
