@@ -55,7 +55,7 @@ def _repair(
     stdout, stderr = proc.communicate(stdin.read() if stdin else None)
 
     if proc.returncode:
-        raise Exception(f"{stderr.decode('utf-8')}")
+        raise Exception(stderr.decode("utf-8", errors="replace"))
 
     return BytesIO(stdout)
 
