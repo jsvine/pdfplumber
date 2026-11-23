@@ -108,39 +108,59 @@ class TextMap:
         self.tuples = tuples
         self.line_dir_render = line_dir_render
         self.char_dir_render = char_dir_render
-        self.as_string = self.to_string()
+        self._rendered_tuples = self._render_tuples()
+        self.as_string = "".join(map(itemgetter(0), self._rendered_tuples))
 
     def to_string(self) -> str:
+        return "".join(map(itemgetter(0), self._render_tuples()))
+
+    def _render_tuples(self) -> List[Tuple[str, Optional[T_obj]]]:
         cd = self.char_dir_render
         ld = self.line_dir_render
 
-        base = "".join(map(itemgetter(0), self.tuples))
-
         if cd == "ltr" and ld == "ttb":
-            return base
+            rendered_tuples = self.tuples
         else:
-            lines = base.split("\n")
+            # Keep rendered letters paired with their original PDF characters.
+            lines: List[List[Tuple[str, Optional[T_obj]]]] = [[]]
+            newlines = []
+            for item in self.tuples:
+                if item[0] == "\n":
+                    lines.append([])
+                    newlines.append(item)
+                else:
+                    lines[-1].append(item)
+
             if ld in ("btt", "rtl"):
                 lines = list(reversed(lines))
+                newlines.reverse()
 
             if cd == "rtl":
-                lines = ["".join(reversed(line)) for line in lines]
+                lines = [list(reversed(line)) for line in lines]
 
             if ld in ("rtl", "ltr"):
                 max_line_length = max(map(len, lines))
                 if cd == "btt":
                     lines = [
-                        (" " * (max_line_length - len(line))) + line for line in lines
+                        [(" ", None)] * (max_line_length - len(line)) + line
+                        for line in lines
                     ]
                 else:
                     lines = [
-                        line + (" " * (max_line_length - len(line))) for line in lines
+                        line + [(" ", None)] * (max_line_length - len(line))
+                        for line in lines
                     ]
-                return "\n".join(
-                    "".join(line[i] for line in lines) for i in range(max_line_length)
-                )
-            else:
-                return "\n".join(lines)
+                lines = [[line[i] for line in lines] for i in range(max_line_length)]
+                # Transposed line breaks are generated, not source characters.
+                newlines = [("\n", None)] * (len(lines) - 1)
+
+            rendered_tuples = []
+            for i, line in enumerate(lines):
+                if i:
+                    rendered_tuples.append(newlines[i - 1])
+                rendered_tuples.extend(line)
+
+        return rendered_tuples
 
     def match_to_dict(
         self,
@@ -149,7 +169,7 @@ class TextMap:
         return_groups: bool = True,
         return_chars: bool = True,
     ) -> Dict[str, Any]:
-        subset = self.tuples[m.start(main_group) : m.end(main_group)]
+        subset = self._rendered_tuples[m.start(main_group) : m.end(main_group)]
         chars = [c for (text, c) in subset if c is not None]
         x0, top, x1, bottom = objects_to_bbox(chars)
 
