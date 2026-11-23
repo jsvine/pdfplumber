@@ -430,14 +430,14 @@ class Table(object):
 
         # Index character midpoints once so each row only visits nearby text.
         # Keep the original indices to preserve the PDF's text flow.
-        midpoints: List[Tuple[T_num, T_num]] = [
+        centers: List[Tuple[T_num, T_num]] = [
             ((char["x0"] + char["x1"]) / 2, (char["top"] + char["bottom"]) / 2)
             for char in chars
         ]
         row_top = rows[0].bbox[1]
         table_bottom = max(row.bbox[3] for row in rows)
         sorted_positions = sorted(
-            (y, i) for i, (_, y) in enumerate(midpoints) if row_top <= y < table_bottom
+            (y, i) for i, (_, y) in enumerate(centers) if row_top <= y < table_bottom
         )
         sorted_heights = [y for y, _ in sorted_positions]
 
@@ -447,7 +447,7 @@ class Table(object):
             start = bisect_left(sorted_heights, top)
             stop = bisect_left(sorted_heights, bottom)
             row_indices = sorted(
-                i for _, i in sorted_positions[start:stop] if x0 <= midpoints[i][0] < x1
+                i for _, i in sorted_positions[start:stop] if x0 <= centers[i][0] < x1
             )
 
             for cell in row.cells:
@@ -458,7 +458,7 @@ class Table(object):
                     cell_chars = [
                         chars[i]
                         for i in row_indices
-                        if x0 <= midpoints[i][0] < x1 and top <= midpoints[i][1] < bottom
+                        if x0 <= centers[i][0] < x1 and top <= centers[i][1] < bottom
                     ]
 
                     if len(cell_chars):
