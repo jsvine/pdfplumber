@@ -336,6 +336,47 @@ class Test(unittest.TestCase):
             re.search("2015 RICE PAYMENT 26406576 0 1207631 Cr", not_using_flow) is None
         )
 
+    def test_text_flow_rotated(self):
+        path = os.path.join(HERE, "pdfs/issue-848.pdf")
+        expected = ["The", "movie", "opens", "with", "a", "news", "report"]
+
+        with pdfplumber.open(path) as pdf:
+            for page_index, char_dir, line_dir in [
+                (4, "ttb", "rtl"),
+                (6, "btt", "ltr"),
+            ]:
+                for extra_attrs in [[], ["fontname"]]:
+                    words = pdf.pages[page_index].extract_words(
+                        use_text_flow=True,
+                        char_dir_rotated=char_dir,
+                        line_dir_rotated=line_dir,
+                        extra_attrs=extra_attrs,
+                        return_chars=True,
+                    )
+                    assert [w["text"] for w in words[:7]] == expected
+                    assert all(w["direction"] == char_dir for w in words)
+                    assert [c for w in words for c in w["chars"]] == [
+                        c
+                        for c in pdf.pages[page_index].chars
+                        if not c["text"].isspace()
+                    ]
+
+    def test_text_flow_legacy_directions(self):
+        path = os.path.join(HERE, "pdfs/issue-848.pdf")
+        expected = ["The", "movie", "opens", "with", "a", "news", "report"]
+
+        with pdfplumber.open(path) as pdf:
+            for page_index, kwargs, direction in [
+                (2, {"horizontal_ltr": False}, "rtl"),
+                (6, {"vertical_ttb": False}, "btt"),
+            ]:
+                for extra_attrs in [[], ["fontname"]]:
+                    words = pdf.pages[page_index].extract_words(
+                        use_text_flow=True, extra_attrs=extra_attrs, **kwargs
+                    )
+                    assert [w["text"] for w in words[:7]] == expected
+                    assert all(w["direction"] == direction for w in words)
+
     def test_text_flow_words_mixed_lines(self):
         path = os.path.join(HERE, "pdfs/issue-1279-example.pdf")
 
