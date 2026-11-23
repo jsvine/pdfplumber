@@ -169,6 +169,21 @@ class Test(unittest.TestCase):
             )
             assert table[3][0] == "   FY2013   \n   FY2014   "
 
+    def test_text_layout_with_text_strategy(self):
+        path = os.path.join(HERE, "pdfs/senate-expenditures.pdf")
+        with pdfplumber.open(path) as pdf:
+            bbox = (70.332, 130.986, 420, 509.106)
+            cropped = pdf.pages[0].crop(bbox)
+            settings = {
+                "horizontal_strategy": "text",
+                "vertical_strategy": "text",
+                "min_words_vertical": 20,
+            }
+            t = cropped.extract_table(settings)
+            t_layout = cropped.extract_table({**settings, "text_layout": True})
+
+        assert [[cell.strip() for cell in row] for row in t_layout] == t
+
     def test_text_without_words(self):
         assert table.words_to_edges_h([]) == []
         assert table.words_to_edges_v([]) == []
