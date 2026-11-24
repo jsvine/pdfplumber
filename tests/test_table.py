@@ -2,15 +2,64 @@
 import logging
 import os
 import unittest
+from unittest.mock import Mock
 
 import pytest
 
 import pdfplumber
 from pdfplumber import table
+from pdfplumber.page import Page
 
 logging.disable(logging.ERROR)
 
 HERE = os.path.abspath(os.path.dirname(__file__))
+
+
+def _table_char(text, x, top, height=2):
+    return {
+        "text": text,
+        "x0": x,
+        "x1": x + 2,
+        "top": top,
+        "bottom": top + height,
+        "doctop": top,
+        "upright": True,
+        "size": height,
+    }
+
+
+def test_extract_with_overlapping_row_bounds_and_text_flow():
+    # The first cell spans two rows. Characters are in PDF stream order,
+    # which need not be the same as their coordinate order.
+    cells = [(0, 0, 20, 20), (20, 0, 40, 10), (20, 10, 40, 20)]
+    chars = [
+        _table_char("B", 25, 12),
+        _table_char("a", 4, 5),
+        _table_char("A", 25, 3),
+        _table_char("C", 23, 11),
+        _table_char("X", 22, 19),  # Midpoint lies on the excluded bottom boundary.
+        _table_char("d", 4, 12),
+    ]
+    extracted = table.Table(Mock(spec=Page, chars=chars), cells).extract(
+        use_text_flow=True
+    )
+    assert extracted == [["a\nd", "A"], [None, "B C"]]
+
+
+def test_extract_assigns_boundary_midpoint_to_the_lower_row():
+    cells = [(0, 0, 20, 10), (0, 10, 20, 20)]
+    chars = [_table_char("A", 4, 6, height=8)]
+    assert table.Table(Mock(spec=Page, chars=chars), cells).extract() == [[""], ["A"]]
+
+
+def test_extract_preserves_empty_row_between_populated_rows():
+    cells = [(0, 0, 20, 10), (0, 10, 20, 20), (0, 20, 20, 30)]
+    chars = [_table_char("C", 4, 24), _table_char("A", 4, 3)]
+    assert table.Table(Mock(spec=Page, chars=chars), cells).extract() == [
+        ["A"],
+        [""],
+        ["C"],
+    ]
 
 
 class Test(unittest.TestCase):

@@ -1,4 +1,5 @@
 import itertools
+from bisect import bisect_left
 from dataclasses import dataclass
 from operator import itemgetter
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Type, Union
@@ -423,24 +424,41 @@ class Table(object):
         chars = self.page.chars
         table_arr = []
 
-        def char_in_bbox(char: T_obj, bbox: T_bbox) -> bool:
-            v_mid = (char["top"] + char["bottom"]) / 2
-            h_mid = (char["x0"] + char["x1"]) / 2
-            x0, top, x1, bottom = bbox
-            return bool(
-                (h_mid >= x0) and (h_mid < x1) and (v_mid >= top) and (v_mid < bottom)
-            )
+        rows = self.rows
+        if not rows:
+            return table_arr
 
-        for row in self.rows:
+        # Index character midpoints once so each row only visits nearby text.
+        # Keep the original indices to preserve the PDF's text flow.
+        centers: List[Tuple[T_num, T_num]] = [
+            ((char["x0"] + char["x1"]) / 2, (char["top"] + char["bottom"]) / 2)
+            for char in chars
+        ]
+        row_top = rows[0].bbox[1]
+        table_bottom = max(row.bbox[3] for row in rows)
+        sorted_positions = sorted(
+            (y, i) for i, (_, y) in enumerate(centers) if row_top <= y < table_bottom
+        )
+        sorted_heights = [y for y, _ in sorted_positions]
+
+        for row in rows:
             arr = []
-            row_chars = [char for char in chars if char_in_bbox(char, row.bbox)]
+            x0, top, x1, bottom = row.bbox
+            start = bisect_left(sorted_heights, top)
+            stop = bisect_left(sorted_heights, bottom)
+            row_indices = sorted(
+                i for _, i in sorted_positions[start:stop] if x0 <= centers[i][0] < x1
+            )
 
             for cell in row.cells:
                 if cell is None:
                     cell_text = None
                 else:
+                    x0, top, x1, bottom = cell
                     cell_chars = [
-                        char for char in row_chars if char_in_bbox(char, cell)
+                        chars[i]
+                        for i in row_indices
+                        if x0 <= centers[i][0] < x1 and top <= centers[i][1] < bottom
                     ]
 
                     if len(cell_chars):

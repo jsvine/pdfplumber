@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+
+### Changed
+- Speed up text extraction from tall tables by indexing character midpoints by height instead of rescanning the entire page for each row.
+
 ## [0.11.11] — 2026-11-20
 
 ### Fixed
