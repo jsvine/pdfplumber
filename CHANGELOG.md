@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+- Require Python 3.11 or newer in package metadata, matching the supported versions. ([#1406](https://github.com/jsvine/pdfplumber/pull/1406))
+
 ## [0.11.11] — 2026-11-20
 
 ### Fixed

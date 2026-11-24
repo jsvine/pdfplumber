@@ -538,6 +538,7 @@ It's also helpful to know what features `pdfplumber` does __not__ provide:
 
 Many thanks to the following users who've contributed ideas, features, and fixes:
 
+- [Anshul Singh](https://github.com/ekanshul)
 - [Jacob Fenton](https://github.com/jsfenfen)
 - [Dan Nguyen](https://github.com/dannguyen)
 - [Jeff Barrera](https://github.com/jeffbarrera)
