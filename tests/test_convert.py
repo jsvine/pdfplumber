@@ -188,6 +188,21 @@ class Test(unittest.TestCase):
         c_from_io = io.read()
         assert c == c_from_io
 
+    def test_csv_roundtrip_special_chars(self):
+        # https://github.com/jsvine/pdfplumber/issues/1433
+        import csv
+        import io as io_
+
+        path = os.path.join(HERE, "pdfs/csv-special-chars.pdf")
+        with pdfplumber.open(path, pages=[1]) as pdf:
+            original = "".join(c["text"] for c in pdf.pages[0].chars)
+            rows = list(csv.DictReader(io_.StringIO(pdf.to_csv(), newline="")))
+            exported = "".join(
+                r["text"] for r in rows if r["object_type"] == "char"
+            )
+            assert exported == original
+            assert "\\reports\\" not in pdf.to_csv()
+
     def test_csv_all_types(self):
         c = self.pdf.to_csv(object_types=None)
         assert c.split("\r\n")[1].split(",")[0] == "line"
