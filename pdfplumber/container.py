@@ -170,12 +170,16 @@ class Container(object):
 
         cols = CSV_COLS_REQUIRED + list(filter(serializer.attr_filter, non_req_cols))
 
+        # No escapechar: a backslash is not special in CSV, and setting one
+        # doubles every literal backslash on write without any way for a
+        # reader using the standard dialect to tell, corrupting values such
+        # as Windows paths. QUOTE_MINIMAL quoting already round-trips every
+        # character correctly.
         w = csv.DictWriter(
             stream,
             fieldnames=cols,
             extrasaction="ignore",
             quoting=csv.QUOTE_MINIMAL,
-            escapechar="\\",
         )
         w.writeheader()
         w.writerows(serialized)

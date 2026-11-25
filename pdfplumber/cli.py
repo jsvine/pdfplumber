@@ -103,6 +103,13 @@ def main(args_raw: List[str] = sys.argv[1:]) -> None:
             add_text_to_mcids(pdf, tree)
             print(json.dumps(tree, indent=args.indent, ensure_ascii=False))
         elif args.format == "csv":
+            # csv writes its own \r\n record terminators, so stdout must not
+            # translate newlines: on Windows the default text translation
+            # would otherwise corrupt line breaks inside quoted fields and
+            # double the carriage returns of the record terminators.
+            reconfigure = getattr(sys.stdout, "reconfigure", None)
+            if reconfigure is not None:
+                reconfigure(newline="")
             pdf.to_csv(
                 sys.stdout,
                 args.types,
