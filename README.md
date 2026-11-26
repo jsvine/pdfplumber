@@ -385,6 +385,43 @@ page.extract_table()
 
 [Click here for a more detailed example.](examples/notebooks/extract-table-ca-warn-report.ipynb)
 
+#### Matching URI hyperlinks to table cells
+
+On an original, uncropped, unrotated page with a `(0, 0)` MediaBox origin, use
+`.find_tables()` for cell bounds and `.hyperlinks` for URI annotations. Both use
+`(x0, top, x1, bottom)` bounds measured from the top-left. This example assigns
+each annotation by its center, including a cell's top and left edges and
+excluding its bottom and right edges. On a shared border, the cell on the right
+or below receives the URI. The result associates rectangles with cells and
+preserves `None` for missing cell positions.
+
+```python
+def table_with_uris(page, table):
+    links = [
+        (
+            (link["x0"] + link["x1"]) / 2,
+            (link["top"] + link["bottom"]) / 2,
+            link["uri"],
+        )
+        for link in page.hyperlinks
+    ]
+    rows = []
+    for row, texts in zip(table.rows, table.extract()):
+        cells = []
+        for bbox, text in zip(row.cells, texts):
+            if bbox is None:
+                cells.append(None)
+                continue
+            x0, top, x1, bottom = bbox
+            uris = [uri for x, y, uri in links if x0 <= x < x1 and top <= y < bottom]
+            cells.append({"text": text, "uris": uris})
+        rows.append(cells)
+    return rows
+
+
+tables = [table_with_uris(page, table) for table in page.find_tables()]
+```
+
 ### Table-extraction settings
 
 By default, `extract_tables` uses the page's vertical and horizontal lines (or rectangle edges) as cell-separators. But the method is highly customizable via the `table_settings` argument. The possible settings, and their defaults:
@@ -538,6 +575,7 @@ It's also helpful to know what features `pdfplumber` does __not__ provide:
 
 Many thanks to the following users who've contributed ideas, features, and fixes:
 
+- [@Surfire](https://github.com/Surfire)
 - [Jacob Fenton](https://github.com/jsfenfen)
 - [Dan Nguyen](https://github.com/dannguyen)
 - [Jeff Barrera](https://github.com/jeffbarrera)
